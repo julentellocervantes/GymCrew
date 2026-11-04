@@ -36,6 +36,7 @@ const SB_URL = (process.env.SUPABASE_URL || '').trim().replace(/\/+$/, '');
 const SB_KEY = (process.env.SUPABASE_KEY || '').trim();
 const SB_BUCKET = (process.env.SUPABASE_BUCKET || 'gcmedia').trim();
 const REMOTE = !!(SB_URL && SB_KEY);
+if (SB_URL && !SB_KEY) { console.error('Falta SUPABASE_KEY (la clave secreta de Supabase). Añádela en las variables de entorno del hosting.'); process.exit(1); }
 if (REMOTE && !/^https:\/\//.test(SB_URL) && !/^http:\/\/(127\.0\.0\.1|localhost)(:|\/|$)/.test(SB_URL)) { console.error('SUPABASE_URL debe empezar por https://'); process.exit(1); }
 async function sb(pathq, opt) {
   opt = opt || {};
