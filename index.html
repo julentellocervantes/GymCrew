@@ -1,0 +1,734 @@
+<!doctype html>
+<html lang="es" data-theme="day">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta id="metaTheme" name="theme-color" content="#eef5ff">
+  <title>GymCrew</title>
+  <!-- Tema día/noche antes del primer pintado (día: 6:00 a 20:00) -->
+  <script>
+    (function () {
+      var h = new Date().getHours(), m = 'auto';
+      try { m = (JSON.parse(localStorage.getItem('gymcrew.v1') || '{}').settings || {}).theme || 'auto'; } catch (e) {}
+      document.documentElement.dataset.theme = m === 'day' || m === 'night' ? m : ((h >= 6 && h < 20) ? 'day' : 'night');
+    })();
+  </script>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="GymCrew">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Fondo: burbujas de colores que flotan despacio -->
+  <div class="bg" aria-hidden="true">
+    <b class="orb o1"></b><b class="orb o2"></b><b class="orb o3"></b><b class="orb o4"></b><b class="orb o5"></b>
+    <b class="orb glassy g1"></b><b class="orb glassy g2"></b><b class="orb glassy g3"></b>
+  </div>
+
+  <!-- Bloqueo con PIN y cubierta de privacidad -->
+  <section id="lock" class="lock hidden" role="dialog" aria-modal="true" aria-labelledby="lockTitle">
+    <div class="glass login-card lock-card">
+      <h1>GymCrew</h1>
+      <p id="lockTitle" class="lock-title">Introduce tu PIN</p>
+      <div id="lockDots" class="lock-dots" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      <p id="lockMsg" class="muted small lock-msg" role="status" aria-live="polite"></p>
+      <div id="lockPad" class="lock-pad">
+        <button type="button" data-k="1">1</button><button type="button" data-k="2">2</button><button type="button" data-k="3">3</button>
+        <button type="button" data-k="4">4</button><button type="button" data-k="5">5</button><button type="button" data-k="6">6</button>
+        <button type="button" data-k="7">7</button><button type="button" data-k="8">8</button><button type="button" data-k="9">9</button>
+        <button type="button" data-k="x" aria-label="Borrar dígito">⌫</button><button type="button" data-k="0">0</button><span></span>
+      </div>
+      <button id="lockCancel" class="btn wide hidden" type="button">Cancelar</button>
+      <button id="lockForgot" class="linkbtn" type="button">Olvidé mi PIN</button>
+    </div>
+  </section>
+  <div id="privacyCover" class="privacy-cover hidden" aria-hidden="true"><b>GymCrew</b></div>
+
+  <!-- Pantalla de bienvenida -->
+  <div id="privacyCover" class="privacy-cover hidden" aria-hidden="true"><b>GymCrew</b></div>
+
+  <!-- Pantalla de bienvenida -->
+  <section id="splash" class="splash" tabindex="0" aria-label="Pantalla de bienvenida">
+    <p class="splash-top">TELLO APPS</p>
+    <div class="splash-mid">
+      <div class="splash-glass glass"><h1 class="splash-title">GymCrew</h1><p class="splash-sub">Entrena. Anota. Comparte si quieres.</p></div>
+    </div>
+    <button id="splashHint" class="splash-hint" type="button">
+      <svg viewBox="0 0 24 24"><path d="M6 15l6-6 6 6"/></svg>
+      <span>Desliza hacia arriba</span>
+    </button>
+  </section>
+
+  <!-- Inicio de sesión -->
+  <section id="login" class="login hidden" aria-label="Iniciar sesión">
+    <div class="glass login-card">
+      <h1>GymCrew</h1>
+      <p class="muted">Inicia sesión con Google para crear tu perfil. Para mayores de 16 años.</p>
+      <div id="gBtn" class="g-btn"></div>
+      <button id="gFallback" class="btn wide gbtn" type="button"><b>G</b> Continuar con Google</button>
+      <p id="loginMsg" class="muted small"></p>
+      <button id="loginSkip" class="btn wide" type="button">Continuar sin cuenta</button>
+    </div>
+  </section>
+
+  <!-- App -->
+  <div id="appShell" class="shell">
+    <div id="app" class="app hidden">
+      <header class="top">
+        <button id="hdrAva" class="hdr-ava" aria-label="Mi perfil"></button>
+        <div class="top-txt">
+          <p class="hello-row"><span id="hello" class="muted small nm">Hola</span><span id="streakPill" class="streak-pill"></span></p>
+          <h1 id="viewTitle">Inicio</h1>
+        </div>
+        <button id="bellBtn" class="icon-btn glass bell" aria-label="Notificaciones">
+          <svg viewBox="0 0 24 24"><path d="M6 17V11a6 6 0 1 1 12 0v6l1.5 2h-15z"/><path d="M10 21h4"/></svg>
+          <span id="bellBadge" class="bell-badge hidden">0</span>
+        </button>
+        <button id="openSettings" class="icon-btn glass" aria-label="Ajustes">
+          <svg viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>
+        </button>
+      </header>
+
+      <div class="views">
+        <!-- INICIO -->
+        <section id="view-inicio" class="view active">
+          <div id="homeSeg" class="seg seg2 glass" data-idx="0" role="tablist">
+            <button type="button" data-home="feed" role="tab">Para ti</button>
+            <button type="button" data-home="day" role="tab">Mi día</button>
+          </div>
+          <button id="newPill" class="new-pill hidden" type="button">↑ Publicaciones nuevas</button>
+          <div id="homeFeed">
+            <ul id="crewBox" class="rows crew-box"></ul>
+            <div id="ffChips" class="chips ff-chips" role="group" aria-label="Filtrar el feed">
+              <button class="chip" type="button" data-ff="" aria-pressed="true">Todo</button>
+              <button class="chip" type="button" data-ff="f" aria-pressed="false">Amigos</button>
+              <button class="chip" type="button" data-ff="g" aria-pressed="false">Grupos</button>
+            </div>
+            <ul id="feedList" class="rows"></ul>
+          </div>
+          <div id="homeDay" class="hidden">
+          <div id="todayCard" class="glass card today-card">
+            <span id="todayBurst" class="pl-burst" aria-hidden="true"></span>
+            <h2 id="todayTitle">Hoy</h2>
+            <p id="todaySub" class="muted small"></p>
+            <p class="label">Registro de un toque · tipo</p>
+            <div id="quickType" class="chips" role="group" aria-label="Tipo de entreno"></div>
+            <p class="label">¿Cómo te fue? Toca para guardar</p>
+            <div id="quickFeel" class="quick-mood" role="group" aria-label="Sensación">
+              <button type="button" data-qf="1" aria-label="Mal">😞</button><button type="button" data-qf="2" aria-label="Regular">😕</button>
+              <button type="button" data-qf="3" aria-label="Normal">😐</button><button type="button" data-qf="4" aria-label="Bien">🙂</button>
+              <button type="button" data-qf="5" aria-label="Genial">😄</button>
+            </div>
+            <div class="row2">
+              <button id="todayGo" class="btn primary" type="button">Entreno completo</button>
+              <button id="repeatLast" class="btn" type="button">Repetir el último</button>
+            </div>
+          </div>
+
+          <div id="weekCard" class="glass card streak-card">
+            <div class="week-top"><h3>Tu semana</h3><b id="weekCount">0/3</b></div>
+            <div class="track"><div id="weekFill" class="fill"></div></div>
+            <div id="weekDots" class="week-dots"></div>
+            <p id="weekHint" class="muted small"></p>
+            <p class="muted small"><b id="streakNum" class="num-sm">0</b> semanas de racha · <span id="streakHint"></span></p>
+          </div>
+
+          <div id="prCard" class="hidden">
+            <h2 class="sec">Récords recientes 🏅</h2>
+            <ul id="prList" class="rows"></ul>
+          </div>
+
+          </div>
+          <p class="muted small center">GymCrew no sustituye a un profesional de la salud ni da consejos médicos o de dieta.</p>
+        </section>
+
+        <!-- ENTRENOS -->
+        <section id="view-historial" class="view">
+          <div id="hsegBar" class="seg seg3 glass" data-idx="0">
+            <button data-hseg="hist">Historial</button>
+            <button data-hseg="routines">Rutinas</button>
+            <button data-hseg="progress">Progreso</button>
+          </div>
+
+          <div id="hpane-hist" class="pane">
+            <div class="glass card">
+              <div class="cal-head">
+                <button id="prevMonth" class="icon-btn glass" aria-label="Mes anterior"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+                <strong id="monthTitle"></strong>
+                <button id="nextMonth" class="icon-btn glass" aria-label="Mes siguiente"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+              </div>
+              <div id="calGrid" class="cal-grid"></div>
+            </div>
+            <p class="muted small center">Toca un día para añadir o ver un entreno.</p>
+            <input type="search" id="entrySearch" class="entry-search" placeholder="Buscar por ejercicio o nota" aria-label="Buscar entrenos" maxlength="40" autocomplete="off">
+            <div id="typeFilters" class="chips" role="group" aria-label="Filtrar por tipo"></div>
+            <ul id="monthList" class="rows"></ul>
+          </div>
+
+          <div id="hpane-routines" class="pane hidden">
+            <p class="muted small">Guarda tus entrenos favoritos como plantillas y empieza uno con un toque.</p>
+            <ul id="routineList" class="rows"></ul>
+          </div>
+
+          <div id="hpane-progress" class="pane hidden">
+            <div class="grid2">
+              <div class="glass stat"><p class="muted">Entrenos</p><p id="totalCount" class="num">0</p></div>
+              <div class="glass stat"><p class="muted">Este mes</p><p id="monthCount" class="num">0</p></div>
+              <div class="glass stat"><p class="muted">Récords</p><p id="prTotal" class="num">0</p></div>
+              <div class="glass stat"><p class="muted">Mejor racha (sem.)</p><p id="bestWeeks" class="num">0</p></div>
+            </div>
+            <div class="glass card"><h3>Últimas 8 semanas</h3><div id="chart" class="chart"></div></div>
+            <div class="glass card">
+              <h3>Volumen de esta semana</h3>
+              <div id="volBars"></div>
+              <p id="volEmpty" class="muted small">Apunta ejercicios con series para ver tu volumen por grupo muscular.</p>
+            </div>
+            <h2 class="sec">Tus ejercicios</h2>
+            <ul id="exProgList" class="rows"></ul>
+          </div>
+        </section>
+
+        <!-- SOCIAL -->
+        <section id="view-amigos" class="view">
+          <div id="seg" class="seg seg3 glass" data-idx="0">
+            <button data-seg="groups">Grupos</button>
+            <button data-seg="chats">Chats</button>
+            <button data-seg="friends">Amigos<span id="segBadge" class="badge xs hidden">0</span></button>
+          </div>
+          <p id="srvNotice" class="glass notice small muted">Sin servidor: tus amigos y chats se guardan solo en este móvil. Conecta tu servidor en Ajustes → Servidor para hablar con otros móviles.</p>
+          <p class="muted small">Todo lo social es opcional. Compartes entreno a entreno y puedes bloquear, reportar o salir cuando quieras.</p>
+
+          <div id="reqCard" class="glass card req-card">
+            <button id="reqHead" class="req-head" type="button" aria-expanded="false" aria-controls="reqBody">
+              <span class="req-ico"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><path d="M19 8v6M16 11h6"/></svg></span>
+              <span class="req-title">Solicitudes de amistad</span>
+              <span id="reqCount" class="badge hidden">0</span>
+              <svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+            <div id="reqBody" class="collapse">
+              <div>
+                <div class="mycode-row">
+                  <span class="muted small">Tu código</span>
+                  <button id="copyCode2" class="code-chip" type="button" aria-label="Copiar mi código"><b id="myCode2">0000AAA</b><svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M5 15V6a2 2 0 0 1 2-2h8"/></svg></button>
+                </div>
+                <p class="label">Añadir con el código de otra persona</p>
+                <div class="code-in">
+                  <input id="codeInput" type="text" maxlength="7" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="4827KQM">
+                  <button id="sendReq" class="btn primary sm" type="button">Enviar</button>
+                </div>
+                <p id="codeMsg" class="small code-msg"></p>
+                <p class="label">Solicitudes recibidas</p>
+                <ul id="reqIn" class="rows tight"></ul>
+                <div id="reqOutBox">
+                  <p class="label">Enviadas, pendientes de respuesta</p>
+                  <ul id="reqOut" class="rows tight"></ul>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="groupsBox" class="hidden">
+            <ul id="gymList" class="rows"></ul>
+            <button id="gymOpen" class="btn primary wide" type="button">+ Crear grupo o unirme con código</button>
+          </div>
+          <ul id="chatList" class="rows hidden"></ul>
+          <ul id="friendList" class="rows hidden"></ul>
+          <button id="segAdd" class="btn primary wide hidden">+ Añadir con código</button>
+        </section>
+
+        <!-- PERFIL -->
+        <section id="view-perfil" class="view">
+          <div class="glass card prof-card">
+            <button id="avaBig" class="ava-big" aria-label="Cambiar foto de perfil"></button>
+            <input id="photoInput" type="file" accept="image/*" hidden>
+            <input id="nameInput" class="name-input" type="text" maxlength="20" placeholder="Tu nombre" autocomplete="off">
+            <div class="prof-streak"><span id="profStreak" class="streak-pill"></span></div>
+            <div class="row2">
+              <button id="photoBtn" class="btn" type="button">Cambiar foto</button>
+              <button id="photoDel" class="btn" type="button">Quitar foto</button>
+            </div>
+          </div>
+          <div id="profStats" class="grid3"></div>
+
+          <div class="glass card code-card">
+            <p class="muted small">Tu código de amigo</p>
+            <p id="myCode" class="code" aria-live="polite"></p>
+            <button id="copyCode" class="btn wide" type="button">Copiar código</button>
+          </div>
+
+          <div class="glass card">
+            <h3>Marco de perfil</h3>
+            <div id="frameGrid" class="frame-grid"></div>
+            <p id="frameHint" class="muted small hidden">Desbloquea marcos con tus logros.</p>
+          </div>
+
+          <button id="achDoneTitle" class="fold glass" data-fold="achDone" data-target="achDoneBody" aria-expanded="true">
+            <span class="fold-ico">🏅</span>
+            <span class="fold-t"><strong id="achDoneLbl">Logros completados</strong></span>
+            <svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div id="achDoneBody" class="collapse open"><div><ul id="achDone" class="rows"></ul></div></div>
+
+          <button id="achTodoTitle" class="fold glass" data-fold="achTodo" data-target="achTodoBody" aria-expanded="true">
+            <span class="fold-ico">🎯</span>
+            <span class="fold-t"><strong id="achTodoLbl">Por completar</strong></span>
+            <svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div id="achTodoBody" class="collapse open"><div><ul id="achTodo" class="rows"></ul></div></div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <!-- Barra inferior -->
+  <nav id="tabbar" class="tabbar glass hidden" aria-label="Secciones">
+    <span id="tabInd" class="tab-ind" aria-hidden="true"></span>
+    <button class="tab active" data-tab="inicio" aria-label="Inicio">
+      <svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>
+      <span class="tab-l">Inicio</span>
+    </button>
+    <button class="tab" data-tab="historial" aria-label="Entrenos">
+      <svg viewBox="0 0 24 24"><path d="M3 9v6M6 7v10M18 7v10M21 9v6M6 12h12"/></svg>
+      <span class="tab-l">Entrenos</span>
+    </button>
+    <button id="fab" class="fab" aria-label="Nuevo entreno">
+      <svg viewBox="0 0 24 24" style="stroke-width:2.4"><path d="M12 5v14M5 12h14"/></svg>
+    </button>
+    <button class="tab" data-tab="amigos" aria-label="Social">
+      <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><path d="M16 5a3.5 3.5 0 010 7M18 14.5c2 .7 3.5 2.5 3.5 5.5"/></svg>
+      <span class="tab-l">Social</span>
+      <span id="badge" class="badge hidden">0</span>
+    </button>
+    <button class="tab" data-tab="perfil" aria-label="Perfil">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/></svg>
+      <span class="tab-l">Perfil</span>
+    </button>
+  </nav>
+
+  <!-- Chat (pantalla completa) -->
+  <div id="chat" class="overlay" aria-hidden="true">
+    <header class="ov-head glass">
+      <button id="chatBack" class="icon-btn" aria-label="Volver"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <button id="chatInfo" class="chat-title">
+        <span id="chatAvatar" class="avatar"></span>
+        <span class="titles"><strong id="chatName"></strong><small id="chatMembers" class="muted"></small></span>
+      </button>
+    </header>
+    <div id="msgs" class="msgs"></div>
+    <form id="composer" class="composer glass" autocomplete="off">
+      <input id="msgInput" type="text" placeholder="Escribe un mensaje" maxlength="500">
+      <button class="send" aria-label="Enviar"><svg viewBox="0 0 24 24"><path d="M21 3L10 14M21 3l-7 18-4-7-7-4z"/></svg></button>
+    </form>
+  </div>
+
+  <!-- Grupo de gimnasio (pantalla completa) -->
+  <div id="notes" class="overlay" aria-hidden="true">
+    <header class="ov-head glass">
+      <button id="ntBack" class="icon-btn" aria-label="Volver"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <h2 style="margin:0;flex:1">Notificaciones</h2>
+      <button id="ntRead" class="btn sm" type="button">Marcar leídas</button>
+    </header>
+    <div class="ov-body">
+      <ul id="ntList" class="rows"></ul>
+      <p class="muted small center">Solo ves avisos de lo que pasa en tus publicaciones, tus entrenos compartidos y tus amistades. Sin recordatorios.</p>
+    </div>
+  </div>
+
+  <div id="thread" class="overlay" aria-hidden="true">
+    <header class="ov-head glass">
+      <button id="thBack" class="icon-btn" aria-label="Volver"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <h2 style="margin:0">Publicación</h2>
+    </header>
+    <div class="ov-body">
+      <ul id="thPost" class="rows"></ul>
+      <form id="thForm" class="glass th-form">
+        <input id="thInput" type="text" maxlength="140" placeholder="Escribe tu respuesta" aria-label="Escribe tu respuesta" autocomplete="off">
+        <button class="btn primary sm" type="submit">Responder</button>
+      </form>
+      <ul id="thList" class="rows"></ul>
+    </div>
+  </div>
+
+  <div id="gym" class="overlay" aria-hidden="true">
+    <header class="ov-head glass">
+      <button id="gyBack" class="icon-btn" aria-label="Volver"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <h2 id="gyName" style="margin:0">Grupo</h2>
+    </header>
+    <div class="ov-body">
+      <div class="glass card code-card">
+        <p class="muted small">Código del grupo: compártelo con tu gente</p>
+        <p id="gyCode" class="code"></p>
+        <p id="gyMembersLine" class="muted small"></p>
+        <div class="row2">
+          <button id="gyCopy" class="btn" type="button">Copiar código</button>
+          <button id="gyChat" class="btn primary" type="button">Abrir chat</button>
+        </div>
+      </div>
+
+      <div class="glass card">
+        <h3>Reto de la semana</h3>
+        <p id="gyChal"></p>
+        <div class="track"><div id="gyChalBar" class="fill"></div></div>
+        <p id="gyChalSub" class="muted small"></p>
+        <label id="gyGoalLbl">Reto del grupo (solo quien creó el grupo)
+          <select id="gyGoalSel"><option value="0">Sin reto</option><option value="1">1 entreno</option><option value="2">2 entrenos</option><option value="3">3 entrenos</option><option value="4">4 entrenos</option><option value="5">5 entrenos</option></select>
+        </label>
+      </div>
+
+      <div class="glass card">
+        <h3>Ranking amable</h3>
+        <p class="muted small">Opcional y oculto por defecto. Tres medidas: entrenos de la semana, semanas de racha y récords del último mes. Solo aparece quien decide participar.</p>
+        <label class="switchrow"><span><strong>Participar en el ranking</strong><small class="muted">Comparto mis cifras con este grupo</small></span><input type="checkbox" id="gyRankMe" class="switch"></label>
+        <label class="switchrow"><span><strong>Ver el ranking</strong><small class="muted">Si no te interesa, déjalo oculto</small></span><input type="checkbox" id="gyRankShow" class="switch"></label>
+        <div id="gyRankBody" class="hidden">
+          <div id="gyMetric" class="chips" role="group" aria-label="Medida">
+            <button class="chip" type="button" data-m="n" aria-pressed="true">Entrenos</button>
+            <button class="chip" type="button" data-m="st" aria-pressed="false">Constancia</button>
+            <button class="chip" type="button" data-m="pr" aria-pressed="false">Récords</button>
+          </div>
+          <ul id="gyRank" class="rank-list"></ul>
+        </div>
+      </div>
+
+      <h2 class="sec">Quedadas</h2>
+      <ul id="gyMeets" class="rows"></ul>
+      <p id="gyMeetsEmpty" class="muted small">Nadie ha propuesto nada todavía. Sin presión.</p>
+      <button id="gyMeetNew" class="btn wide" type="button">+ Proponer quedada de entreno</button>
+
+      <h2 class="sec">Feed del grupo</h2>
+      <ul id="gyFeed" class="rows"></ul>
+      <p id="gyFeedEmpty" class="muted small">Todavía no hay entrenos compartidos en este grupo.</p>
+
+      <h2 class="sec">Miembros</h2>
+      <ul id="gyMembers" class="rows"></ul>
+      <button id="gyLeave" class="btn danger wide" type="button">Salir del grupo</button>
+    </div>
+  </div>
+
+  <!-- Editor de entreno (pantalla completa) -->
+  <div id="workout" class="overlay" aria-hidden="true">
+    <header class="ov-head glass">
+      <button id="wBack" class="icon-btn" aria-label="Volver"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <h2 id="wTitle" style="margin:0">Nuevo entreno</h2>
+    </header>
+    <div id="wScroll" class="ov-body">
+      <div id="wLoad" class="row2">
+        <button id="wRepeat" class="btn sm" type="button">Repetir el último</button>
+        <select id="wRoutineSel" aria-label="Cargar una rutina"></select>
+      </div>
+      <div class="two">
+        <label>Fecha<input type="date" id="wDate"></label>
+        <label>Hora<input type="time" id="wTime"></label>
+      </div>
+      <div id="wQuick" class="quick-date" role="group" aria-label="Fecha rápida"><button type="button" data-qd="0" aria-pressed="true">Hoy</button><button type="button" data-qd="1" aria-pressed="false">Ayer</button></div>
+      <label>Duración (min)<input type="number" id="wDur" inputmode="numeric" min="0" max="600" placeholder="45"></label>
+      <p class="label">Tipo</p>
+      <div id="wType" class="chips" role="group" aria-label="Tipo de entreno"></div>
+      <p class="label">Grupos musculares</p>
+      <div id="wMuscles" class="chips" role="group" aria-label="Grupos musculares"></div>
+
+      <h2 class="sec">Ejercicios</h2>
+      <div id="wEx"></div>
+      <p id="wExEmpty" class="muted small">Añade ejercicios para llevar series, repeticiones y peso. También puedes guardar solo la duración y cómo te sentiste.</p>
+      <button id="wAddEx" class="btn wide" type="button">+ Añadir ejercicio</button>
+
+      <p class="label">¿Cómo te sentiste?</p>
+      <div id="wFeel" class="moods">
+        <label><input type="radio" name="feel" value="1" aria-label="Mal"><span>😞</span></label>
+        <label><input type="radio" name="feel" value="2" aria-label="Regular"><span>😕</span></label>
+        <label><input type="radio" name="feel" value="3" aria-label="Normal"><span>😐</span></label>
+        <label><input type="radio" name="feel" value="4" aria-label="Bien"><span>🙂</span></label>
+        <label><input type="radio" name="feel" value="5" aria-label="Genial"><span>😄</span></label>
+      </div>
+      <label>Nota (opcional)<textarea id="wNote" rows="2" maxlength="300"></textarea></label>
+
+      <div id="shareBox" class="glass card">
+        <h3>Compartir este entreno</h3>
+        <p id="shareHint" class="muted small"></p>
+        <label class="switchrow"><span><strong>Con mis amigos</strong><small class="muted">Aparece en su feed</small></span><input type="checkbox" id="shFriends" class="switch"></label>
+        <div id="shGroupsWrap"><p class="label">Con mis grupos</p><div id="shGroups" class="chips"></div></div>
+        <div id="shOpts" class="hidden">
+          <label class="switchrow"><span><strong>Incluir el volumen total</strong><small class="muted">Si no, solo tipo, duración y récords</small></span><input type="checkbox" id="shVol" class="switch"></label>
+          <label class="switchrow"><span><strong>Incluir mi nota</strong><small class="muted">Por defecto no se envía</small></span><input type="checkbox" id="shNote" class="switch"></label>
+        </div>
+      </div>
+
+      <button id="wSave" class="btn primary wide" type="button">Guardar</button>
+      <button id="wSaveRoutine" class="btn wide" type="button">Guardar como rutina</button>
+      <button id="wDelete" class="btn danger wide hidden" type="button">Borrar entreno</button>
+      <div class="rest-spacer"></div>
+    </div>
+    <div id="restBar" class="rest-bar glass" role="timer" aria-label="Temporizador de descanso">
+      <div class="rest-fill" id="restFill"></div>
+      <strong id="restTime">Descanso</strong>
+      <button id="restStart" class="btn sm" type="button">90 s</button>
+      <button id="restStop" class="btn sm hidden" type="button">Parar</button>
+    </div>
+  </div>
+
+  <!-- Ajustes -->
+  <div id="settings" class="overlay" aria-hidden="true">
+    <header class="ov-head glass">
+      <button id="settingsBack" class="icon-btn" aria-label="Volver"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <h2 style="margin:0">Ajustes</h2>
+    </header>
+    <div class="ov-body">
+      <div class="glass card">
+        <h3>Apariencia</h3>
+        <p class="muted small">Tema de la app</p>
+        <div id="themeSeg" class="seg seg3 glass" data-idx="0">
+          <button data-theme-opt="auto">Automático</button>
+          <button data-theme-opt="day">Día</button>
+          <button data-theme-opt="night">Noche</button>
+        </div>
+        <p class="muted small">Automático: día de 6:00 a 20:00 y noche el resto.</p>
+        <p class="muted small" style="margin-top:16px">Idioma</p>
+        <div id="langSeg" class="seg glass" data-idx="0">
+          <button data-lang="es">Español</button>
+          <button data-lang="en">English</button>
+        </div>
+      </div>
+      <div class="glass card">
+        <h3>Cuenta</h3>
+        <div id="accIn" class="hidden">
+          <p><strong id="accName"></strong></p>
+          <p id="accMail" class="muted small" translate="no"></p>
+          <button id="btnLogout" class="btn wide" type="button">Cerrar sesión</button>
+        </div>
+        <div id="accOut">
+          <p class="muted small">No has iniciado sesión.</p>
+          <button id="btnLogin" class="btn primary wide" type="button">Iniciar sesión con Google</button>
+        </div>
+        <p class="muted small">Tus datos se guardan solo en este navegador.</p>
+      </div>
+      <div class="glass card">
+        <h3>Entrenamiento</h3>
+        <label>Objetivo semanal
+          <select id="goalSel"><option value="1">1 entreno</option><option value="2">2 entrenos</option><option value="3">3 entrenos</option><option value="4">4 entrenos</option><option value="5">5 entrenos</option><option value="6">6 entrenos</option><option value="7">7 entrenos</option></select>
+        </label>
+        <p class="muted small">Los días de descanso cuentan: la racha son semanas que cumplen tu objetivo. Si una semana no sale, la siguiente empieza de cero, sin dramas.</p>
+        <label>Descanso entre series
+          <select id="restSel"><option value="30">30 s</option><option value="60">60 s</option><option value="90">90 s</option><option value="120">2 min</option><option value="180">3 min</option><option value="240">4 min</option></select>
+        </label>
+      </div>
+      <div class="glass card">
+        <h3>Ayuda</h3>
+        <p class="muted small">Un repaso guiado por todas las secciones de la app.</p>
+        <button id="btnTour" class="btn wide">Ver el tutorial</button>
+        <p class="muted small">GymCrew no sustituye a un profesional de la salud ni da consejos médicos o de dieta. Pensada para mayores de 16 años.</p>
+      </div>
+      <div class="glass card">
+        <h3>Avisos</h3>
+        <p class="muted small">Recibe una notificación del navegador cuando un amigo escriba. Nunca habrá recordatorios insistentes.</p>
+        <button id="btnBrowserNotif" class="btn wide">Activar avisos del navegador</button>
+        <label class="switchrow"><span><strong>Avisos de actividad</strong><small class="muted">Mensaje breve cuando alguien reacciona, comenta o te añade. La lista siempre se guarda</small></span><input type="checkbox" id="rsNoteToast" class="switch" checked></label>
+        <label class="switchrow"><span><strong>Vibración suave</strong><small class="muted">Un toque corto al guardar o al acabar el descanso</small></span><input type="checkbox" id="rsHaptics" class="switch" checked></label>
+      </div>
+      <div class="glass card" id="privCard">
+        <h3>Privacidad</h3>
+        <label class="switchrow"><span><strong>Bloqueo con PIN</strong><small class="muted">Pide un PIN de 4 dígitos al abrir la app</small></span><input type="checkbox" id="rsLock" class="switch"></label>
+        <div id="lockOpts" class="hidden">
+          <label>Bloquear al volver a la app
+            <select id="lockAfter"><option value="0">Al instante</option><option value="60">Tras 1 minuto</option><option value="300">Tras 5 minutos</option></select>
+          </label>
+          <div class="row2">
+            <button id="lockNow" class="btn" type="button">Bloquear ahora</button>
+            <button id="lockChange" class="btn" type="button">Cambiar PIN</button>
+          </div>
+        </div>
+        <p class="muted small">El PIN solo tapa la pantalla de este móvil y oculta la app en el selector de apps. No cifra los datos guardados.</p>
+      </div>
+      <div class="glass card">
+        <h3>Tus datos</h3>
+        <div class="row2">
+          <button id="exportBtn" class="btn">Exportar</button>
+          <label class="btn filebtn">Importar<input id="importFile" type="file" accept="application/json" hidden></label>
+        </div>
+        <button id="csvBtn" class="btn wide" type="button">Exportar entrenos (CSV, para Excel)</button>
+        <p class="muted small">Copia completa: guarda tus entrenos, rutinas, ejercicios propios, logros y ajustes en un archivo. No incluye amigos ni chats.</p>
+        <div class="row2">
+          <button id="backupBtn" class="btn">Copia completa</button>
+          <label class="btn filebtn">Restaurar copia<input id="restoreFile" type="file" accept="application/json" hidden></label>
+        </div>
+        <button id="wipeShared" class="btn danger wide">Borrar mis datos compartidos</button>
+        <button id="wipeEntries" class="btn danger wide">Borrar mis entrenos</button>
+        <button id="wipeSocial" class="btn danger wide">Borrar amigos y chats</button>
+      </div>
+      <div class="glass card">
+        <h3>Usuarios bloqueados</h3>
+        <ul id="blockedList" class="rows tight"></ul>
+        <p id="blockedEmpty" class="muted small">No has bloqueado a nadie.</p>
+      </div>
+      <div class="glass card" id="srvCard">
+        <h3>Servidor <span id="srvDot" class="srv-dot none" aria-hidden="true"></span></h3>
+        <p id="srvState" class="muted small"></p>
+        <label>Dirección del servidor
+          <input id="srvUrl" type="url" inputmode="url" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="https://tu-servidor.duckdns.org">
+        </label>
+        <button id="srvSave" class="btn wide" type="button">Guardar y conectar</button>
+        <button id="srvNewCode" class="btn danger wide hidden" type="button">Cambiar mi código</button>
+        <p class="muted small">Déjalo vacío si abres la app desde tu propio servidor.</p>
+      </div>
+      <details class="glass card fold-card" id="simCard">
+        <summary>Modo prueba <span class="muted small">para probar sin servidor</span></summary>
+        <p class="muted small">Simula a otras personas para probar chats, avisos y solicitudes sin servidor.</p>
+        <button id="btnSim" class="btn wide">Simular un mensaje de un amigo</button>
+        <button id="btnSimReq" class="btn wide">Simular solicitud de amistad recibida</button>
+        <button id="btnSimAccept" class="btn wide">Simular que aceptan mi solicitud</button>
+      </details>
+    </div>
+  </div>
+
+  <!-- Hojas inferiores -->
+  <div id="backdrop" class="backdrop"></div>
+
+  <div id="sheetEx" class="sheet glass">
+    <div class="grab"></div>
+    <h2>Elige un ejercicio</h2>
+    <input type="search" id="exSearch" class="entry-search" placeholder="Buscar ejercicio" aria-label="Buscar ejercicio" maxlength="40" autocomplete="off">
+    <div id="exList"></div>
+    <p class="label">¿No está? Crea el tuyo</p>
+    <div class="code-in">
+      <input id="exCustom" type="text" maxlength="40" placeholder="Nombre del ejercicio" aria-label="Nombre del ejercicio propio">
+      <select id="exCustomM" aria-label="Grupo muscular"><option value="pecho">Pecho</option><option value="espalda">Espalda</option><option value="hombros">Hombros</option><option value="brazos">Brazos</option><option value="piernas">Piernas</option><option value="gluteos">Glúteos</option><option value="core">Core</option><option value="cuerpo" selected>Cuerpo entero</option></select>
+    </div>
+    <button id="exCustomAdd" class="btn wide" type="button">Crear y añadir</button>
+  </div>
+
+  <div id="sheetRoutine" class="sheet glass">
+    <div class="grab"></div>
+    <h2>Guardar como rutina</h2>
+    <label>Nombre de la rutina<input type="text" id="rName" maxlength="30" placeholder="Ej. Pecho y tríceps"></label>
+    <button id="rSave" class="btn primary wide" type="button">Guardar rutina</button>
+  </div>
+
+  <div id="sheetExD" class="sheet glass">
+    <div class="grab"></div>
+    <h2 id="exdName">Ejercicio</h2>
+    <div id="exdStats" class="grid3"></div>
+    <svg id="exdChart" class="ex-chart hidden" viewBox="0 0 300 80" role="img" aria-label="Evolución"></svg>
+    <p class="label">Últimas sesiones</p>
+    <ul id="exdList" class="exd-list"></ul>
+  </div>
+
+  <div id="sheetNew" class="sheet glass">
+    <div class="grab"></div>
+    <h2>Crear</h2>
+    <div class="nw-grid">
+      <button id="nwQuick" class="nw-card" data-tone="a" style="--i:0" type="button"><span class="nw-ico">⚡</span><b>Registro rápido</b><small>Un toque, lo de hoy</small></button>
+      <button id="nwWorkout" class="nw-card" data-tone="b" style="--i:1" type="button"><span class="nw-ico">🏋️</span><b>Entreno completo</b><small>Series, kilos y récords</small></button>
+      <button id="nwPost" class="nw-card" data-tone="c" style="--i:2" type="button"><span class="nw-ico">✍️</span><b>Publicación</b><small>Texto, fotos o vídeo</small></button>
+      <button id="nwStory" class="nw-card" data-tone="d" style="--i:3" type="button"><span class="nw-ico">⭕</span><b>Historia</b><small>Dura 24 horas</small></button>
+    </div>
+  </div>
+
+  <div id="sheetPost" class="sheet glass">
+    <div class="grab"></div>
+    <h2 id="pTitle">Nueva publicación</h2>
+    <div id="pMode" class="seg seg2 glass" data-idx="0" role="tablist">
+      <button type="button" data-mode="pub" role="tab">Publicación</button>
+      <button type="button" data-mode="story" role="tab">Historia · 24 h</button>
+    </div>
+    <label>Texto<textarea id="pText" maxlength="400" rows="3" placeholder="Cuéntales algo…"></textarea></label>
+    <div id="pPrev" class="post-prev hidden"></div>
+    <div class="pick-row">
+      <label class="btn sm pick" for="pFile">📷 Foto o vídeo<input id="pFile" type="file" accept="image/*,video/*" hidden></label>
+      <label class="btn sm pick" for="pCam">🎥 Cámara<input id="pCam" type="file" accept="image/*,video/*" capture="environment" hidden></label>
+      <button id="pDrop" class="btn sm hidden" type="button">Quitar</button>
+    </div>
+    <p id="pHint" class="muted small">Las fotos se comprimen y se les quitan los datos de ubicación. Los vídeos duran como máximo 15 s y van sin sonido.</p>
+    <p class="label">¿Quién lo ve?</p>
+    <div id="pAud" class="aud"></div>
+    <p id="pMsg" class="small code-msg" role="status"></p>
+    <button id="pSend" class="btn primary wide" type="button">Publicar</button>
+  </div>
+
+  <div id="storyView" class="story-view hidden" role="dialog" aria-modal="true" aria-label="Historias">
+    <div class="sv-bars" id="svBars"></div>
+    <div class="sv-top">
+      <span id="svAva" class="avatar"></span>
+      <div class="sv-who"><strong id="svName"></strong><small id="svWhen"></small></div>
+      <button id="svMore" class="icon-btn plain" type="button" aria-label="Más opciones">⋯</button>
+      <button id="svClose" class="icon-btn plain" type="button" aria-label="Cerrar">✕</button>
+    </div>
+    <div id="svStage" class="sv-stage"></div>
+    <button id="svPrev" class="sv-zone left" type="button" aria-label="Anterior"></button>
+    <button id="svNext" class="sv-zone right" type="button" aria-label="Siguiente"></button>
+    <div class="sv-foot"><button id="svAdd" class="btn sm hidden" type="button">＋ Añadir otra</button><button id="svDel" class="btn sm hidden" type="button">Borrar</button></div>
+  </div>
+
+  <div id="sheetGym" class="sheet glass">
+    <div class="grab"></div>
+    <h2>Grupo de gimnasio</h2>
+    <label>Crear un grupo nuevo<input type="text" id="gjName" maxlength="24" placeholder="Ej. Gym Leganés 7am"></label>
+    <button id="gjCreate" class="btn primary wide" type="button">Crear y obtener código</button>
+    <p class="label">…o únete con un código (5 letras + 3 números)</p>
+    <div class="code-in">
+      <input id="gjCode" type="text" maxlength="8" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="ABCDE123" aria-label="Código del grupo">
+      <button id="gjJoin" class="btn sm" type="button">Unirme</button>
+    </div>
+    <p id="gjMsg" class="small code-msg" role="status"></p>
+  </div>
+
+  <div id="sheetMeet" class="sheet glass">
+    <div class="grab"></div>
+    <h2>Proponer quedada</h2>
+    <div class="two">
+      <label>Día<input type="date" id="mDate"></label>
+      <label>Hora<input type="time" id="mTime"></label>
+    </div>
+    <label>Lugar (opcional)<input type="text" id="mPlace" maxlength="40" placeholder="Nombre del gimnasio"></label>
+    <label>Nota (opcional)<input type="text" id="mNote" maxlength="60" placeholder="Ej. Día de pierna"></label>
+    <p class="muted small">Se envía una vez al grupo. Nadie recibe recordatorios.</p>
+    <button id="mSave" class="btn primary wide" type="button">Proponer</button>
+  </div>
+
+  <div id="sheetMod" class="sheet glass">
+    <div class="grab"></div>
+    <h2 id="modWho">Usuario</h2>
+    <p id="modText" class="muted small hidden"></p>
+    <button id="modReport" class="btn wide" type="button">Reportar</button>
+    <button id="modBlock" class="btn danger wide" type="button">Bloquear</button>
+  </div>
+
+  <div id="sheetGroup" class="sheet glass">
+    <div class="grab"></div>
+    <h2>Nuevo chat de grupo</h2>
+    <label>Nombre del grupo<input type="text" id="groupName" maxlength="30" placeholder="Ej. Los de siempre"></label>
+    <p class="label">Miembros</p>
+    <div id="groupFriends"></div>
+    <button id="saveGroup" class="btn primary wide">Crear grupo</button>
+  </div>
+
+  <div id="sheetGroupInfo" class="sheet glass">
+    <div class="grab"></div>
+    <h2 id="giName">Chat</h2>
+    <p id="giMembers" class="muted"></p>
+    <button id="giDelete" class="btn danger wide">Eliminar chat</button>
+  </div>
+
+  <div id="tour" class="tour hidden" aria-live="polite">
+    <div id="tourHole" class="tour-hole none"></div>
+    <div id="tourCard" class="tour-card glass">
+      <p id="tourN" class="muted small"></p>
+      <h3 id="tourT"></h3>
+      <p id="tourD"></p>
+      <div class="row2">
+        <button id="tourSkip" class="btn" type="button">Saltar</button>
+        <button id="tourPrev" class="btn hidden" type="button">Atrás</button>
+        <button id="tourNext" class="btn primary" type="button">Siguiente</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast glass" role="status" aria-live="polite"></div>
+
+  <script src="config.js"></script>
+  <script src="i18n.js"></script>
+  <script src="srv.js"></script>
+  <script src="app.js"></script>
+  <script src="motion.js"></script>
+</body>

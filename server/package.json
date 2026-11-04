@@ -1,0 +1,10 @@
+{
+  "name": "gymcrew-server",
+  "version": "1.0.0",
+  "description": "Servidor de GymCrew: cuentas por código, amigos, solicitudes, chat, grupos de gimnasio con código (5 letras + 3 números) y relé social.",
+  "main": "server.js",
+  "private": true,
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=18" },
+  "dependencies": { "ws": "^8.18.0" }
+}

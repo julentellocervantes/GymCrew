@@ -1,0 +1,17 @@
+# Plano de Render (plan gratuito, sin tarjeta). Sirve la app y el servidor desde la misma dirección.
+# Las claves de Supabase NO van aquí: se escriben en el panel de Render (Environment).
+services:
+  - type: web
+    name: gymcrew
+    runtime: node
+    plan: free
+    buildCommand: cd server && npm install --omit=dev
+    startCommand: node server/server.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
