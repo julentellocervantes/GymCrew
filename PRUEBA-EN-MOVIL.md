@@ -18,7 +18,7 @@ Objetivo: descubrir qué sobra, qué falla y qué se siente bien. Úsala como la
 - [ ] Cambiar el objetivo semanal en Ajustes. ¿La racha en semanas se siente justa, sin presión?
 
 ## Día 3 — lo social (necesita el servidor: `server/DEPLOY.md`)
-- [ ] Añadir a un amigo por código. Compartir un entreno solo con él (¿queda claro qué se envía?).
+- [ ] Elegir tu @usuario (Social → Amigos), buscar al otro por el suyo y seguiros los dos (con perfil privado, aceptar la solicitud). Al seguiros pasáis a ser amigos. Compartir un entreno solo con él (¿queda claro qué se envía?).
 - [ ] Que tu amigo reaccione y comente. Comprobar que la nota y los kilos NO le llegan.
 - [ ] Crear un grupo del gimnasio y que entren 2–3 personas con el código.
 - [ ] Probar el reto semanal, el ranking opcional (activar y ocultar) y una quedada («voy / no voy»).
@@ -26,6 +26,8 @@ Objetivo: descubrir qué sobra, qué falla y qué se siente bien. Úsala como la
 - [ ] Comprobar que la foto no lleva ubicación (descárgala desde el navegador de tu amigo y mira sus propiedades).
 - [ ] Con 2 móviles: da me gusta y comenta en la publicación de tu amigo. ¿Le sale la campana con el número? ¿Al tocar la notificación se abre el hilo? ¿Se siente como un Twitter sencillo, sin agobiar?
 - [ ] Borrar la publicación: ¿desaparece del feed de tu amigo?
+- [ ] Publicar algo marcando «Público»: ¿lo ve en Inicio una tercera persona sin relación contigo? ¿Puede reaccionar y comentar y te sale la campana? Bloquearla: ¿desaparece?
+- [ ] Abrir la misma cuenta en dos dispositivos: ¿las notificaciones se marcan como leídas en ambos?
 - [ ] Probar bloquear a alguien, reportar un mensaje, salir del grupo y «Borrar mis datos compartidos».
 
 ## Día 4 — datos y cierre

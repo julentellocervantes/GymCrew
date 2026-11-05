@@ -2129,3 +2129,34 @@ body:has(#sheetNew.open) .fab { transform: rotate(135deg) scale(1.08); }
 html.rm .rip, html.rm .fly { display: none; }
 html.rm .nw-card { opacity: 1; animation: none !important; }
 html.rm .rev.pre { opacity: 1; transform: none; }
+
+/* Personas: usuario, búsqueda y seguidores */
+.req-head.static { display: flex; align-items: center; gap: 10px; padding: 2px 2px 8px; }
+.req-head.static .req-title { flex: 1; font-weight: 700; }
+.hdl-box { margin: 4px 0 10px; padding: 12px; border-radius: 18px; background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.code-in.srch input { width: 100%; }
+#srchList, #reqIn, #reqOut { margin-top: 6px; }
+.chips#flChips { display: flex; gap: 8px; flex-wrap: wrap; margin: 4px 0 10px; }
+#flChips .cnt { display: inline-block; min-width: 18px; margin-left: 4px; padding: 0 6px; border-radius: 9px; background: var(--fill); font-size: .75rem; font-weight: 700; text-align: center; }
+.handle-big { font-size: 1.35rem; font-weight: 800; margin: 2px 0 10px; letter-spacing: .01em; word-break: break-all; }
+.profile-card .switchrow { margin: 12px 0; }
+.profile-card .row2 { margin-top: 4px; }
+.profile-card .row2 b { margin-left: 6px; }
+.row.static .btn.sm { flex: none; margin-left: 8px; }
+.code-in.srch input, #hdlInput { font-family: inherit; text-transform: none; letter-spacing: 0; font-size: 1rem; }
+.code-in.srch input::placeholder, #hdlInput::placeholder { text-transform: none; letter-spacing: 0; }
+.row.static .main { min-width: 0; flex: 1; }
+.row.static .acts { display: flex; gap: 6px; flex: none; }
+.row.static .acts .btn { flex: none; margin: 0; padding-inline: 12px; }
+.chips#flChips { flex-wrap: nowrap; gap: 6px; }
+#flChips .chip { flex: 1 1 auto; padding-inline: 8px; white-space: nowrap; font-size: .88rem; }
+#flChips .cnt { margin-left: 3px; padding: 0 5px; }
+/* Solicitudes en pantallas estrechas: los botones bajan para no cortar el @usuario */
+@media (max-width: 400px) {
+  #reqInBox .row.static { flex-wrap: wrap; }
+  #reqInBox .row.static .main { flex: 1 0 100%; }
+  #reqInBox .row.static .acts { flex: 1 0 100%; }
+  #reqInBox .row.static .acts .btn { flex: 1; }
+}
+
+.tw-hdl { color: var(--muted, #8a93a6); font-size: 12px; font-weight: 500; margin-left: 6px; }

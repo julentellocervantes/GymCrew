@@ -19,7 +19,8 @@ Este proyecto es un fork independiente de HandShake (otra carpeta, sin tocarla).
 
 **Social (opcional, privado por defecto)**
 - Feed de amigos y grupos con tarjetas de entreno (tipo, duración, récords). Nunca viajan la nota ni los kilos salvo que los marques al guardar. Reacciones con emoji y comentarios cortos.
-- Amigos por código (`1234ABC`) y grupos de gimnasio por código (5 letras + 3 números).
+- **Seguidores como en Twitter:** eliges un `@usuario` (3–20 letras, números, punto o guion bajo) y buscas a otras personas por él. Perfil **privado por defecto** (hay que aprobar las solicitudes; se puede hacer público en Perfil). Seguirse los dos = **amigos** (chat, mensajes y grupos como antes). Ya no hay códigos de amigo en la pantalla; los grupos de gimnasio siguen entrando por código (5 letras + 3 números). Los usuarios que ya existían tienen que elegir su `@usuario` la primera vez.
+- **Publicaciones públicas:** al publicar puedes marcar «Público (cualquiera en GymCrew)», además de amigos, seguidores y grupos. Las públicas (solo texto y foto o vídeo, nunca entrenos ni historias) salen en Inicio de todo el mundo: pestaña «Todo» y filtro «Público». Hace falta tener `@usuario`; máximo 10 por hora; el servidor guarda las últimas 300 durante 7 días. Cualquiera puede reaccionar y comentar (avisa al autor); bloquear a alguien las oculta en ambos sentidos y el menú «⋯» permite reportar. Se piden al servidor al abrir Inicio (cada ≥10 s) y no se guardan en el móvil.
 - Reto semanal de grupo propuesto por quien lo creó. Ranking opcional por grupo con tres medidas suaves (entrenos de la semana, semanas de racha, récords del último mes); cada miembro decide si participa y puede ocultarlo. No hay ranking global.
 - Quedadas («voy / no voy»), sin recordatorios ni cuentas atrás.
 - Moderación mínima: bloquear, reportar un mensaje, salir de un grupo y «Borrar mis datos compartidos».
@@ -86,7 +87,7 @@ Capturas revisadas a 390×844 y 360×640, día y noche: Inicio, Entrenos, regist
 ## Limitaciones conocidas y cosas sin verificar
 - **Sin verificar con Supabase y Render reales** (no tengo cuentas): el código se probó contra una simulación de su API. Los nombres de rutas de Supabase Storage/REST y los pasos de las guías pueden haber cambiado; si algo falla, el log de Render dice la causa.
 - Las animaciones se han probado en Chromium; la fluidez a 60 fps en un móvil de gama baja está sin verificar (si va justo, activa «reducir movimiento» en el sistema).
-- Las notificaciones se guardan solo en el móvil (no se sincronizan) y no hay aviso del sistema con la app cerrada. No puedes dar me gusta a tus propias publicaciones. El registro rápido está ahora en «Mi día» y en el menú ＋.
+- Las notificaciones se guardan en el servidor (se sincronizan entre dispositivos, máx. 100 y 30 días) y no hay aviso del sistema con la app cerrada. No puedes dar me gusta a tus propias publicaciones. El registro rápido está ahora en «Mi día» y en el menú ＋.
 - **Sin verificar:** móvil real (táctil, vibración, instalación PWA, notificaciones), servidor real con HTTPS (Oracle/Caddy) y el script `setup.sh`; GitHub Pages; inicio de sesión con Google (necesita tu ID de cliente). Todo lo anterior se probó solo con Chromium de escritorio y un servidor local.
 - Las reacciones a entrenos del feed de amigos llegan solo al dueño del entreno (no a otros amigos).
 - El registro de un toque no es compartible; solo se comparte desde el editor completo.
@@ -101,3 +102,4 @@ Capturas revisadas a 390×844 y 360×640, día y noche: Inicio, Entrenos, regist
 - El recodificado de vídeo ocurre en tiempo real (un clip de 15 s tarda unos 15 s) y no se ha probado en móvil real.
 - Los reportes solo se guardan en `db.json` del servidor para revisión manual.
 - Los mensajes y cuentas del servidor no están cifrados de extremo a extremo (ver `server/DEPLOY.md`).
+- **Seguidores y público, sin verificar en móvil real ni en Render/Supabase reales.** Las reacciones y comentarios de seguidores que no son amigos llegan solo al dueño; el contenido «para seguidores» solo lo reciben quienes ya te siguen. Las públicas no se pueden editar (solo borrar). No hay moderación automática: los reportes se revisan a mano en `db.json`. Clientes antiguos (sin `@usuario`) que envíen solicitudes por código siguen funcionando, pero no ven la pantalla nueva.

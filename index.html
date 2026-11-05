@@ -104,8 +104,9 @@
             <ul id="crewBox" class="rows crew-box"></ul>
             <div id="ffChips" class="chips ff-chips" role="group" aria-label="Filtrar el feed">
               <button class="chip" type="button" data-ff="" aria-pressed="true">Todo</button>
-              <button class="chip" type="button" data-ff="f" aria-pressed="false">Amigos</button>
+              <button class="chip" type="button" data-ff="f" aria-pressed="false">Siguiendo</button>
               <button class="chip" type="button" data-ff="g" aria-pressed="false">Grupos</button>
+              <button class="chip" type="button" data-ff="p" aria-pressed="false">Público</button>
             </div>
             <ul id="feedList" class="rows"></ul>
           </div>
@@ -202,31 +203,31 @@
           <p class="muted small">Todo lo social es opcional. Compartes entreno a entreno y puedes bloquear, reportar o salir cuando quieras.</p>
 
           <div id="reqCard" class="glass card req-card">
-            <button id="reqHead" class="req-head" type="button" aria-expanded="false" aria-controls="reqBody">
+            <div class="req-head static">
               <span class="req-ico"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><path d="M19 8v6M16 11h6"/></svg></span>
-              <span class="req-title">Solicitudes de amistad</span>
+              <span class="req-title">Buscar y seguir</span>
               <span id="reqCount" class="badge hidden">0</span>
-              <svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
-            </button>
-            <div id="reqBody" class="collapse">
-              <div>
-                <div class="mycode-row">
-                  <span class="muted small">Tu código</span>
-                  <button id="copyCode2" class="code-chip" type="button" aria-label="Copiar mi código"><b id="myCode2">0000AAA</b><svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M5 15V6a2 2 0 0 1 2-2h8"/></svg></button>
-                </div>
-                <p class="label">Añadir con el código de otra persona</p>
-                <div class="code-in">
-                  <input id="codeInput" type="text" maxlength="7" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="4827KQM">
-                  <button id="sendReq" class="btn primary sm" type="button">Enviar</button>
-                </div>
-                <p id="codeMsg" class="small code-msg"></p>
-                <p class="label">Solicitudes recibidas</p>
-                <ul id="reqIn" class="rows tight"></ul>
-                <div id="reqOutBox">
-                  <p class="label">Enviadas, pendientes de respuesta</p>
-                  <ul id="reqOut" class="rows tight"></ul>
-                </div>
+            </div>
+            <div id="hdlBox" class="hdl-box hidden">
+              <p class="label">Elige tu nombre de usuario</p>
+              <div class="code-in">
+                <input id="hdlInput" type="text" maxlength="20" autocapitalize="none" autocomplete="off" spellcheck="false" placeholder="tu_usuario" aria-label="Nombre de usuario">
+                <button id="hdlSave" class="btn primary sm" type="button">Guardar</button>
               </div>
+              <p id="hdlMsg" class="small code-msg">3 a 20 caracteres: letras, números, punto o guion bajo. Así te encuentran los demás.</p>
+            </div>
+            <div class="code-in srch">
+              <input id="srchInput" type="search" maxlength="21" autocapitalize="none" autocomplete="off" spellcheck="false" placeholder="Buscar por @usuario" aria-label="Buscar personas por nombre de usuario">
+            </div>
+            <p id="srchMsg" class="small code-msg"></p>
+            <ul id="srchList" class="rows tight"></ul>
+            <div id="reqInBox">
+              <p class="label">Solicitudes para seguirte</p>
+              <ul id="reqIn" class="rows tight"></ul>
+            </div>
+            <div id="reqOutBox">
+              <p class="label">Solicitudes enviadas</p>
+              <ul id="reqOut" class="rows tight"></ul>
             </div>
           </div>
 
@@ -235,8 +236,14 @@
             <button id="gymOpen" class="btn primary wide" type="button">+ Crear grupo o unirme con código</button>
           </div>
           <ul id="chatList" class="rows hidden"></ul>
+          <div id="flChips" class="chips hidden" role="tablist">
+            <button type="button" class="chip" data-fl="friends">Amigos <span id="cntFriends" class="cnt">0</span></button>
+            <button type="button" class="chip" data-fl="following">Siguiendo <span id="cntFollowing" class="cnt">0</span></button>
+            <button type="button" class="chip" data-fl="followers">Seguidores <span id="cntFollowers" class="cnt">0</span></button>
+          </div>
           <ul id="friendList" class="rows hidden"></ul>
-          <button id="segAdd" class="btn primary wide hidden">+ Añadir con código</button>
+          <ul id="netList" class="rows hidden"></ul>
+          <button id="segAdd" class="btn primary wide hidden">+ Crear chat de grupo</button>
         </section>
 
         <!-- PERFIL -->
@@ -253,10 +260,15 @@
           </div>
           <div id="profStats" class="grid3"></div>
 
-          <div class="glass card code-card">
-            <p class="muted small">Tu código de amigo</p>
-            <p id="myCode" class="code" aria-live="polite"></p>
-            <button id="copyCode" class="btn wide" type="button">Copiar código</button>
+          <div class="glass card profile-card">
+            <p class="muted small">Tu perfil</p>
+            <p id="myHandle" class="handle-big"></p>
+            <button id="editHandle" class="btn wide" type="button">Cambiar nombre de usuario</button>
+            <label class="switchrow"><span><strong>Perfil privado</strong><small id="privNote" class="muted">Quien quiera seguirte necesita tu aprobación</small></span><input type="checkbox" id="rsPriv" class="switch" role="switch"></label>
+            <div class="row2">
+              <button id="pfFollowers" class="btn" type="button">Seguidores <b id="pfFolN">0</b></button>
+              <button id="pfFollowing" class="btn" type="button">Siguiendo <b id="pfFingN">0</b></button>
+            </div>
           </div>
 
           <div class="glass card">

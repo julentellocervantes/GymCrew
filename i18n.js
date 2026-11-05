@@ -666,6 +666,10 @@
     [/^Tu código: (\S+)$/, m => `Your code: ${m[1]}`],
     [/^Tú y (.+)$/, m => `You and ${m[1]}`],
     [/^(.+) quiere ser tu amigo$/, m => `${m[1]} wants to be your friend`],
+    [/^(.+) quiere seguirte$/, m => `${m[1]} wants to follow you`],
+    [/^(.+) empezó a seguirte$/, m => `${m[1]} started following you`],
+    [/^(.+) aceptó tu solicitud$/, m => `${m[1]} accepted your request`],
+    [/^Racha de (\d+) semanas$/, m => `${m[1]}-week streak`],
     [/^(.+) aceptó tu solicitud 🎉$/, m => `${m[1]} accepted your request 🎉`],
     [/^(.+) y tú ya sois amigos 🎉$/, m => `${m[1]} and you are now friends 🎉`],
     [/^¿Quitar a (.+)\? También saldrá de sus grupos y se borrará vuestro chat directo\.$/, m => `Remove ${m[1]}? They will also leave their groups and your direct chat will be deleted.`],
@@ -1086,6 +1090,33 @@ Object.assign(EX, {
   'Esa publicación ya no está': 'That post is no longer there', 'Avisos de actividad': 'Activity alerts', 'Mensaje breve cuando alguien reacciona, comenta o te añade. La lista siempre se guarda': 'A short message when someone reacts, replies or adds you. The list is always kept',
   'Crear': 'Create', 'Registro rápido': 'Quick log', 'Entreno completo': 'Full workout', 'Publicación': 'Post', 'Historia': 'Story', 'Un toque, lo de hoy': 'One tap, today\'s session', 'Series, kilos y récords': 'Sets, weights and PRs', 'Texto, fotos o vídeo': 'Text, photos or video', 'Dura 24 horas': 'Vanishes in 24 h', '⚡ Registro rápido': '⚡ Quick log', '🏋️ Entreno completo': '🏋️ Full workout', '✍️ Publicación': '✍️ Post', '⭕ Historia · 24 h': '⭕ Story · 24 h', 'Filtrar el feed': 'Filter the feed',
   'Aquí verás los entrenos y publicaciones que tus amigos y tus grupos decidan compartir. Tú compartes cuando quieras.': 'Here you will see the workouts and posts your friends and groups choose to share. You share whenever you want.'
+});
+Object.assign(EX, {
+  'Buscar y seguir': 'Search and follow', 'Elige tu nombre de usuario': 'Choose your username', 'Guardar': 'Save',
+  '3 a 20 caracteres: letras, números, punto o guion bajo. Así te encuentran los demás.': '3 to 20 characters: letters, numbers, dot or underscore. This is how others find you.',
+  'Buscar por @usuario': 'Search by @username', 'Solicitudes para seguirte': 'Requests to follow you', 'Solicitudes enviadas': 'Sent requests',
+  'Seguidores': 'Followers', 'Siguiendo': 'Following', 'Seguir': 'Follow', 'Solicitar': 'Request', 'Pendiente': 'Pending', 'Amigos ✓': 'Friends ✓', 'Quitar': 'Remove',
+  'Aceptar': 'Accept', 'Rechazar': 'Decline', 'Cancelar': 'Cancel', 'Buscar': 'Search', 'Buscar personas': 'Search people',
+  'Tu perfil': 'Your profile', 'Perfil privado': 'Private profile', 'Sin nombre de usuario': 'No username yet', 'Elegir nombre de usuario': 'Choose a username', 'Cambiar nombre de usuario': 'Change username',
+  'Quien quiera seguirte necesita tu aprobación': 'Anyone who wants to follow you needs your approval',
+  'Cualquiera puede seguirte y ver lo que publiques para seguidores': 'Anyone can follow you and see what you post for followers',
+  'Mis seguidores': 'My followers', 'Tu usuario es': 'Your username is', 'Solicitud enviada': 'Request sent', 'Ahora sigues a esta persona': 'You now follow this person',
+  'Nadie con ese usuario. Prueba con otro.': 'Nobody with that username. Try another.', 'Sin conexión con el servidor.': 'No connection to the server.',
+  'Ese nombre de usuario ya está cogido.': 'That username is already taken.', 'Usa de 3 a 20 caracteres: letras, números, punto o guion bajo.': 'Use 3 to 20 characters: letters, numbers, dot or underscore.',
+  'Todavía no sigues a nadie': 'You do not follow anyone yet', 'Todavía no te sigue nadie': 'Nobody follows you yet',
+  'empezó a seguirte': 'started following you', 'quiere seguirte': 'wants to follow you', 'aceptó tu solicitud': 'accepted your request'
+});
+Object.assign(EX, {
+  'Todavía no tienes amigos. Busca a alguien por su @usuario en el bloque de arriba: cuando os sigáis los dos, seréis amigos y podréis chatear.': 'You have no friends yet. Look someone up by @username in the block above: when you both follow each other you become friends and can chat.',
+  '+ Crear chat de grupo': '+ Create group chat', 'Usuario': 'Username', 'Nombre de usuario': 'Username',
+  'Buscar personas por nombre de usuario': 'Search people by username',
+  'Cuando alguien te siga, aparecerá aquí. Puedes quitar seguidores cuando quieras.': 'When someone follows you they will show up here. You can remove followers any time.',
+  'Busca a alguien por su @usuario en el bloque de arriba.': 'Look someone up by @username in the block above.'
+});
+Object.assign(EX, {
+  'Público (cualquiera en GymCrew)': 'Public (anyone on GymCrew)', 'Público': 'Public',
+  'Para publicar en público primero elige tu @usuario (Social → Amigos).': 'To post publicly, first choose your @username (Social → Friends).',
+  'Demasiadas acciones seguidas. Espera un poco.': 'Too many actions in a row. Wait a moment.'
 });
 // Glosario para trozos sueltos dentro de otras frases
   const GLOSS = [

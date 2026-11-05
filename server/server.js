@@ -48,7 +48,7 @@ async function loadRemote() {
   if (!r.ok) throw new Error('Supabase respondió ' + r.status + ' al leer la base (¿clave incorrecta o falta la tabla gc_kv?)');
   const rows = await r.json();
   if (rows.length && rows[0].val && typeof rows[0].val === 'object') Object.assign(db, rows[0].val);
-  if (!db.media || typeof db.media !== 'object') db.media = {};
+  normDb();
   return rows.length ? 'datos cargados' : 'base nueva';
 }
 async function saveRemote() {
@@ -73,9 +73,17 @@ const MEDIA_DIR = process.env.MEDIA_DIR || path.join(path.dirname(DATA_FILE), 'm
 const MEDIA = { maxImg: 600 * 1024, maxVid: 4 * 1024 * 1024, perUserBytes: 40 * 1024 * 1024, perUserCount: 60, postMs: 30 * 24 * 3600e3, storyMs: 25 * 3600e3 };
 
 /* ---------- Base de datos (un JSON, guardado de forma atómica) ---------- */
-let db = { users: {}, friends: {}, reqs: [], groups: {}, inbox: {}, seq: {}, blocks: {}, reports: [], media: {} };
+let db = { users: {}, friends: {}, reqs: [], groups: {}, inbox: {}, seq: {}, blocks: {}, reports: [], media: {}, follows: {}, freqs: [], notes: {}, nseen: {}, handles: {}, pubs: [] };
 try { db = Object.assign(db, JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'))); } catch { /* base nueva */ }
-if (!db.media || typeof db.media !== 'object') db.media = {};
+function normDb() {
+  if (!db.media || typeof db.media !== 'object') db.media = {};
+  for (const k of ['follows', 'notes', 'nseen', 'handles']) if (!db[k] || typeof db[k] !== 'object' || Array.isArray(db[k])) db[k] = {};
+  if (!Array.isArray(db.freqs)) db.freqs = [];
+  if (!Array.isArray(db.pubs)) db.pubs = [];
+  // Las amistades antiguas cuentan como seguirse los dos
+  for (const [a, list] of Object.entries(db.friends)) for (const b of list) { const f = db.follows[a] || (db.follows[a] = []); if (!f.includes(b)) f.push(b); }
+}
+normDb();
 let dirty = false, timer = null, saving = null;
 function persist() { dirty = true; if (!timer) timer = setTimeout(flush, REMOTE ? 3000 : 400); }
 function flush() {
@@ -114,6 +122,14 @@ const nameOf = c => (db.users[c] || {}).name || 'Alguien';
 const namesOf = list => Object.fromEntries(list.map(c => [c, nameOf(c)]));
 const friendsOf = c => db.friends[c] || (db.friends[c] = []);
 const areFriends = (a, b) => friendsOf(a).includes(b);
+const followsOf = c => db.follows[c] || (db.follows[c] = []);
+const isFollowing = (a, b) => followsOf(a).includes(b);
+const followersOf = c => Object.keys(db.follows).filter(u => db.follows[u].includes(c));
+const blockedEither = (a, b) => (db.blocks[a] || []).includes(b) || (db.blocks[b] || []).includes(a);
+const HANDLE_RE = /^[a-z0-9_.]{3,20}$/;
+const isPriv = c => (db.users[c] || {}).priv !== false;     // sin ajuste = privado
+const card = c => { const u = db.users[c] || {}; return { code: c, name: u.name || 'Alguien', handle: u.handle || '', priv: u.priv !== false }; };
+const NOTE_MS = 30 * 24 * 3600e3;
 
 function emit(code, o) { const s = online.get(code); if (s) for (const w of s) send(w, o); }
 // Mensaje que debe llegar sí o sí: se guarda hasta que el cliente lo confirme
@@ -126,6 +142,102 @@ function queue(code, o) {
   while (box.length > LIM.inbox) box.shift();
   persist();
   emit(code, it);
+}
+
+/* ---------- Notificaciones guardadas en el servidor (se ven igual en todos tus dispositivos) ---------- */
+function note(to, n) {
+  if (!to || to === n.from || blockedEither(to, n.from)) return;
+  const box = db.notes[to] || (db.notes[to] = []);
+  if (n.type === 'like') for (let i = box.length - 1; i >= 0; i--) if (box[i].type === 'like' && box[i].from === n.from && box[i].pid === n.pid) box.splice(i, 1);
+  const it = Object.assign({ id: crypto.randomBytes(6).toString('hex'), ts: Date.now(), name: nameOf(n.from) }, n);
+  box.push(it);
+  while (box.length > 100) box.shift();
+  persist();
+  emit(to, { t: 'note', note: it });
+}
+function dropNote(to, fn) {
+  const box = db.notes[to]; if (!box) return;
+  const gone = box.filter(fn); if (!gone.length) return;
+  db.notes[to] = box.filter(x => !fn(x));
+  persist();
+  for (const g of gone) emit(to, { t: 'notegone', id: g.id });
+}
+function pruneNotes() { const lim = Date.now() - NOTE_MS; for (const c of Object.keys(db.notes)) db.notes[c] = db.notes[c].filter(n => n.ts > lim); }
+setInterval(pruneNotes, 3600e3).unref();
+
+// Avisos de me gusta/reacción y comentarios para quien publicó
+function noteGx(me, k, p, owner) {
+  if (!owner || owner === me) return;
+  if (k === 'react') {
+    if (p.e) note(owner, { type: 'like', from: me, pid: p.pid, e: p.e });
+    else dropNote(owner, x => x.type === 'like' && x.from === me && x.pid === p.pid);
+  } else if (k === 'cmt') note(owner, { type: 'cmt', from: me, pid: p.pid, cid: p.id, text: p.text });
+}
+
+/* ---------- Publicaciones públicas (visibles para cualquiera con cuenta) ---------- */
+const PUB = { max: 300, ttl: 7 * 24 * 3600e3, perHour: 10, show: 60, cmts: 30 };
+function prunePubs() {
+  const now = Date.now(), keep = [];
+  for (const x of db.pubs) { if (now - x.ts > PUB.ttl) { if (x.m) dropMedia(x.m.id); } else keep.push(x); }
+  while (keep.length > PUB.max) { const o = keep.shift(); if (o.m) dropMedia(o.m.id); }
+  db.pubs = keep;
+}
+setInterval(() => { prunePubs(); persist(); }, 3600e3).unref();
+const pubOf = (by, id) => db.pubs.find(x => x.by === by && x.id === id);
+function pubView(me) {
+  const names = {}, nm = c => { names[c] = { name: nameOf(c), handle: (db.users[c] || {}).handle || '' }; return c; };
+  const posts = db.pubs.filter(x => !blockedEither(me, x.by)).slice(-PUB.show).reverse().map(x => ({
+    id: x.id, from: nm(x.by), ts: x.ts, text: x.text, m: x.m || undefined,
+    r: Object.fromEntries(Object.entries(x.r).filter(([c]) => !blockedEither(me, c))),
+    c: x.c.filter(k => !blockedEither(me, k.from)).map(k => ({ id: k.id, from: nm(k.from), text: k.text, ts: k.ts }))
+  }));
+  for (const x of posts) for (const c of Object.keys(x.r)) nm(c);
+  return { t: 'pubfeed', posts, names };
+}
+
+/* ---------- Seguidores (seguir es de una vía; seguirse los dos = amigos) ---------- */
+function graph(code) {
+  return {
+    t: 'graph',
+    following: followsOf(code).slice(0, 500).map(card),
+    followers: followersOf(code).slice(0, 500).map(card),
+    freqIn: db.freqs.filter(r => r.to === code).map(r => Object.assign(card(r.from), { ts: r.ts })),
+    freqOut: db.freqs.filter(r => r.from === code).map(r => Object.assign(card(r.to), { ts: r.ts })),
+    friends: friendsOf(code).map(card)
+  };
+}
+const pushGraph = (...cs) => { for (const c of new Set(cs)) emit(c, graph(c)); };
+function linkFriends(a, b) {
+  for (const [x, y] of [[a, b], [b, a]]) { const f = followsOf(x); if (!f.includes(y)) f.push(y); }
+  if (areFriends(a, b) || friendsOf(a).length >= LIM.friends || friendsOf(b).length >= LIM.friends) return false;
+  friendsOf(a).push(b); friendsOf(b).push(a);
+  return true;
+}
+function becameFriends(a, b) {
+  note(a, { type: 'friend', from: b });
+  note(b, { type: 'friend', from: a });
+  queue(a, { t: 'accepted', code: b, name: nameOf(b), online: online.has(b) });
+  queue(b, { t: 'accepted', code: a, name: nameOf(a), online: online.has(a) });
+}
+// a empieza a seguir a b (ya aprobado). Si b ya seguía a a, pasan a ser amigos.
+function addFollow(a, b, quiet) {
+  if (!isFollowing(a, b)) followsOf(a).push(b);
+  let fr = false;
+  if (isFollowing(b, a) && !areFriends(a, b)) fr = linkFriends(a, b);
+  persist();
+  if (fr) becameFriends(a, b);
+  else if (!quiet) note(b, { type: 'follow', from: a });
+  pushGraph(a, b);
+}
+function cutFollow(a, b) { // a deja de seguir a b
+  db.follows[a] = followsOf(a).filter(x => x !== b);
+  if (areFriends(a, b)) {
+    db.friends[a] = friendsOf(a).filter(x => x !== b);
+    db.friends[b] = friendsOf(b).filter(x => x !== a);
+    queue(b, { t: 'unfriended', code: a });
+    queue(a, { t: 'unfriended', code: b });
+  }
+  persist();
 }
 
 const hits = new Map();
@@ -208,7 +320,10 @@ function cleanMsg(m) {
 function ready(code) {
   return {
     t: 'ready',
-    me: { code, name: nameOf(code) },
+    me: { code, name: nameOf(code), handle: (db.users[code] || {}).handle || '', priv: isPriv(code) },
+    graph: graph(code),
+    notes: (db.notes[code] || []).filter(n => n.ts > Date.now() - NOTE_MS),
+    nseen: db.nseen[code] || 0,
     friends: friendsOf(code).map(c => ({ code: c, name: nameOf(c) })),
     inReq: db.reqs.filter(r => r.to === code).map(r => ({ code: r.from, name: nameOf(r.from), ts: r.ts })),
     outReq: db.reqs.filter(r => r.from === code).map(r => ({ code: r.to, ts: r.ts })),
@@ -246,16 +361,20 @@ const H = {
     persist();
     send(ws, { t: 'ok', re: 'req', to, name: nameOf(to) });
     queue(to, { t: 'req', from: me, name: nameOf(me), ts: Date.now() });
+    note(to, { type: 'req', from: me });
   },
   accept(ws, m) {
     const me = ws.code, from = String(m.from || '');
     const i = db.reqs.findIndex(r => r.from === from && r.to === me);
     if (i < 0) return fail(ws, 'accept', 'none');
     db.reqs.splice(i, 1);
-    if (!areFriends(me, from)) { friendsOf(me).push(from); friendsOf(from).push(me); }
+    linkFriends(me, from);
     persist();
     emit(me, { t: 'accepted', code: from, name: nameOf(from), online: online.has(from) });
     queue(from, { t: 'accepted', code: me, name: nameOf(me), online: online.has(me) });
+    note(from, { type: 'friend', from: me });
+    dropNote(me, x => x.type === 'req' && x.from === from);
+    pushGraph(me, from);
   },
   reject(ws, m) {
     const me = ws.code, from = String(m.from || '');
@@ -278,8 +397,11 @@ const H = {
     if (!areFriends(me, c)) return;
     db.friends[me] = friendsOf(me).filter(x => x !== c);
     db.friends[c] = friendsOf(c).filter(x => x !== me);
+    db.follows[me] = followsOf(me).filter(x => x !== c);
+    db.follows[c] = followsOf(c).filter(x => x !== me);
     persist();
     queue(c, { t: 'unfriended', code: me });
+    pushGraph(me, c);
   },
   dm(ws, m) {
     const me = ws.code, to = String(m.to || '');
@@ -348,6 +470,7 @@ const H = {
     persist();
     send(ws, { t: 'gcode', gid, name: g.name, code: g.code, members: g.members, names: namesOf(g.members), by: g.by, joined: true });
     for (const c of g.members) if (c !== me) queue(c, { t: 'gjoined', gid, code: me, name: nameOf(me) });
+    note(g.by, { type: 'join', from: me, gid, gname: g.name });
   },
   // Relé del lado social. El servidor valida y reenvía; no guarda nada más que la cola de entrega.
   gx(ws, m) {
@@ -364,18 +487,24 @@ const H = {
     delete p.by;
     if (k === 'del') dropMediaWhere(x => x.by === me && (p.all ? m.to === 'friends' : x.ref === p.pid)); // «borrar todo» solo vacía los archivos si viene del borrado general, no al salir de un grupo
     const out = { t: 'gx', from: me, k, p, ts: Date.now() };
+    if (m.to === 'public' && m.gid === undefined) return gxPublic(ws, me, k, p);
     if (m.gid !== undefined) {
       const g = db.groups[String(m.gid)];
       if (!g || !g.members.includes(me)) return fail(ws, 'gx', 'invalid');
       if (k === 'gset' && g.by !== me) return fail(ws, 'gx', 'invalid');
       for (const c of g.members) if (c !== me) queue(c, Object.assign({ gid: m.gid }, out));
+      noteGx(me, k, p, g.members.includes(p.o) ? p.o : '');
     } else if (m.to === 'friends') {
       if (!['post', 'del', 'cmt', 'pub', 'story'].includes(k)) return fail(ws, 'gx', 'invalid');
       for (const c of friendsOf(me)) queue(c, out);
+    } else if (m.to === 'followers') {
+      if (!['del', 'cmt', 'pub', 'story'].includes(k)) return fail(ws, 'gx', 'invalid');
+      for (const c of followersOf(me)) queue(c, out);
     } else {
       const to = String(m.to || '');
-      if (!areFriends(me, to)) return fail(ws, 'gx', 'invalid');
+      if (!areFriends(me, to) && !isFollowing(me, to)) return fail(ws, 'gx', 'invalid');
       queue(to, out);
+      noteGx(me, k, p, to === p.o ? to : '');
     }
   },
   block(ws, m) {
@@ -390,7 +519,12 @@ const H = {
       queue(c, { t: 'unfriended', code: me });
     }
     db.reqs = db.reqs.filter(r => !((r.from === me && r.to === c) || (r.from === c && r.to === me)));
+    db.freqs = db.freqs.filter(r => !((r.from === me && r.to === c) || (r.from === c && r.to === me)));
+    db.follows[me] = followsOf(me).filter(x => x !== c);
+    db.follows[c] = followsOf(c).filter(x => x !== me);
+    dropNote(me, x => x.from === c);
     persist();
+    pushGraph(me, c);
   },
   unblock(ws, m) {
     const me = ws.code, c = String(m.code || '');
@@ -404,6 +538,105 @@ const H = {
     db.reports.push({ by: me, who: c, why: String(m.why || '').slice(0, 20), text: String(m.text || '').slice(0, 300), ts: Date.now() });
     while (db.reports.length > LIM.reports) db.reports.shift();
     persist();
+  },
+  /* ---- Nombre de usuario, perfil privado/público y seguidores ---- */
+  handle(ws, m) {
+    const me = ws.code, h = String(m.h || '').trim().toLowerCase().replace(/^@/, '');
+    if (!HANDLE_RE.test(h) || /^\.|\.$|\.\./.test(h)) return fail(ws, 'handle', 'invalid');
+    const u = db.users[me];
+    if (u.handle === h) return send(ws, { t: 'ok', re: 'handle', h });
+    if (db.handles[h] && db.handles[h] !== me) return fail(ws, 'handle', 'taken');
+    if (!rate('handle:' + me, 6, 24 * 3600e3)) return fail(ws, 'handle', 'busy');
+    if (u.handle) delete db.handles[u.handle];
+    u.handle = h; db.handles[h] = me;
+    persist();
+    send(ws, { t: 'ok', re: 'handle', h });
+    pushGraph(me, ...friendsOf(me), ...followersOf(me));
+  },
+  profile(ws, m) {
+    const me = ws.code, u = db.users[me], priv = m.priv !== false;
+    if (u.priv === priv) return send(ws, { t: 'ok', re: 'profile', priv });
+    u.priv = priv;
+    // Al hacerse público, las solicitudes pendientes se aprueban solas
+    if (!priv) for (const r of db.freqs.filter(x => x.to === me)) { db.freqs = db.freqs.filter(x => x !== r); addFollow(r.from, me, true); note(r.from, { type: 'fok', from: me }); }
+    persist();
+    send(ws, { t: 'ok', re: 'profile', priv });
+    pushGraph(me, ...followersOf(me));
+  },
+  search(ws, m) {
+    const me = ws.code, q = String(m.q || '').trim().toLowerCase().replace(/^@/, '').replace(/[^a-z0-9_.]/g, '').slice(0, 20);
+    if (!rate('search:' + me, 40, 60e3)) return fail(ws, 'search', 'busy');
+    const out = [];
+    if (q.length >= 2) {
+      for (const [h, c] of Object.entries(db.handles)) {
+        if (c === me || !h.startsWith(q) || blockedEither(me, c)) continue;
+        out.push(Object.assign(card(c), { rel: areFriends(me, c) ? 'friend' : isFollowing(me, c) ? 'following' : db.freqs.some(r => r.from === me && r.to === c) ? 'requested' : 'none', follower: isFollowing(c, me) }));
+        if (out.length >= 10) break;
+      }
+      out.sort((a, b) => (a.handle === q ? -1 : 0) - (b.handle === q ? -1 : 0) || a.handle.localeCompare(b.handle));
+    }
+    send(ws, { t: 'found', q: String(m.q || '').slice(0, 24), list: out });
+  },
+  follow(ws, m) {
+    const me = ws.code, to = String(m.code || '');
+    if (!CODE_RE.test(to) || to === me || !db.users[to] || blockedEither(me, to)) return fail(ws, 'follow', 'no-user');
+    if (!rate('follow:' + me, 60, 3600e3)) return fail(ws, 'follow', 'busy');
+    if (isFollowing(me, to)) return pushGraph(me);
+    if (followsOf(me).length >= 500) return fail(ws, 'follow', 'full');
+    if (!isPriv(to)) { addFollow(me, to); return send(ws, { t: 'ok', re: 'follow', code: to, state: 'following' }); }
+    if (db.freqs.some(r => r.from === me && r.to === to)) return send(ws, { t: 'ok', re: 'follow', code: to, state: 'requested' });
+    if (db.freqs.filter(r => r.from === me).length >= 50) return fail(ws, 'follow', 'many');
+    db.freqs.push({ from: me, to, ts: Date.now() });
+    persist();
+    note(to, { type: 'freq', from: me });
+    send(ws, { t: 'ok', re: 'follow', code: to, state: 'requested' });
+    pushGraph(me, to);
+  },
+  unfollow(ws, m) {
+    const me = ws.code, to = String(m.code || '');
+    cutFollow(me, to);
+    dropNote(to, x => x.from === me && (x.type === 'follow' || x.type === 'freq'));
+    pushGraph(me, to);
+  },
+  rmfollower(ws, m) {
+    const me = ws.code, c = String(m.code || '');
+    if (!isFollowing(c, me)) return;
+    cutFollow(c, me);
+    pushGraph(me, c);
+  },
+  fcancel(ws, m) {
+    const me = ws.code, to = String(m.code || '');
+    db.freqs = db.freqs.filter(r => !(r.from === me && r.to === to));
+    persist();
+    dropNote(to, x => x.type === 'freq' && x.from === me);
+    pushGraph(me, to);
+  },
+  fapprove(ws, m) {
+    const me = ws.code, from = String(m.code || '');
+    const r = db.freqs.find(x => x.from === from && x.to === me);
+    if (!r) return fail(ws, 'fapprove', 'none');
+    db.freqs = db.freqs.filter(x => x !== r);
+    dropNote(me, x => x.type === 'freq' && x.from === from);
+    addFollow(from, me, true);
+    note(from, { type: 'fok', from: me });
+    pushGraph(me, from);
+  },
+  freject(ws, m) {
+    const me = ws.code, from = String(m.code || '');
+    db.freqs = db.freqs.filter(r => !(r.from === from && r.to === me));
+    dropNote(me, x => x.type === 'freq' && x.from === from);
+    persist();
+    pushGraph(me, from);
+  },
+  pubfeed(ws) {
+    if (!rate('pf:' + ws.code, 30, 60e3)) return;
+    send(ws, pubView(ws.code));
+  },
+  nseen(ws) {
+    const ts = Date.now();
+    db.nseen[ws.code] = ts;
+    persist();
+    emit(ws.code, { t: 'nseen', ts });
   },
   ack(ws, m) {
     const n = Number(m.n) || 0;
@@ -497,6 +730,29 @@ function corsH(req) {
   const o = req.headers.origin;
   if (ORIGINS.length && o && !ORIGINS.includes(o)) return null;
   return { 'Access-Control-Allow-Origin': ORIGINS.length && o ? o : '*', 'Access-Control-Allow-Headers': 'X-Code, X-Token, Content-Type', 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS', 'Vary': 'Origin' };
+}
+function gxPublic(ws, me, k, p) {
+  if (k === 'pub') {
+    if (!(db.users[me] || {}).handle) return fail(ws, 'gx', 'nohandle');
+    if (!rate('pub:' + me, PUB.perHour, 3600e3)) return fail(ws, 'gx', 'busy');
+    if (pubOf(me, p.id)) return;
+    db.pubs.push({ id: p.id, by: me, ts: Date.now(), text: p.text, m: p.m || null, r: {}, c: [] });
+    prunePubs(); persist();
+  } else if (k === 'del') {
+    const mine = db.pubs.filter(x => x.by === me && (p.all || x.id === p.pid));
+    for (const x of mine) if (x.m) dropMedia(x.m.id);
+    db.pubs = db.pubs.filter(x => !mine.includes(x)); persist();
+  } else if (k === 'react' || k === 'cmt') {
+    const x = pubOf(p.o, k === 'react' ? p.pid : p.pid);
+    if (!x || blockedEither(me, x.by)) return fail(ws, 'gx', 'invalid');
+    if (k === 'react') { if (p.e) x.r[me] = p.e; else delete x.r[me]; }
+    else {
+      if (x.c.some(c => c.id === p.id)) return;
+      if (!rate('pcmt:' + me, 30, 3600e3)) return fail(ws, 'gx', 'busy');
+      x.c.push({ id: p.id, from: me, text: p.text, ts: Date.now() }); x.c = x.c.slice(-PUB.cmts);
+    }
+    persist(); noteGx(me, k, p, x.by);
+  } else return fail(ws, 'gx', 'invalid');
 }
 function onMedia(req, res, url, headers) {
   const cors = corsH(req);

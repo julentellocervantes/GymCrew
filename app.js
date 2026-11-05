@@ -111,10 +111,12 @@ const normCustom = a => (Array.isArray(a) ? a : []).filter(x => x && typeof x.id
   .map(x => ({ id: x.id.slice(0, 40), n: x.n.slice(0, 40), m: MUSCLE_IDS.includes(x.m) ? x.m : 'cuerpo' }));
 const HEX32 = /^[0-9a-f]{32}$/;
 const normMedia = m => (m && typeof m === 'object' && HEX32.test(String(m.id)) && (m.k === 'img' || m.k === 'vid') ? { id: m.id, k: m.k, w: Math.round(num(m.w, 0, 4000)), h: Math.round(num(m.h, 0, 4000)), d: Math.round(num(m.d, 0, 60)) } : null);
-const normAud = a => ({ f: !!(a && a.f), g: (a && Array.isArray(a.g) ? a.g : []).filter(x => typeof x === 'string').slice(0, 40) });
-const NOTE_TYPES = ['like', 'cmt', 'req', 'friend', 'join'];
-const normNotes = a => (Array.isArray(a) ? a : []).filter(n => n && NOTE_TYPES.includes(n.type) && typeof n.id === 'string').slice(-100).map(n => ({ id: n.id.slice(0, 40), ts: Number(n.ts) || 0, type: n.type, from: str(n.from, 12), pid: str(n.pid, 40), e: str(n.e, 4), text: str(n.text, 140), gname: str(n.gname, 24), seen: !!n.seen }));
-const normFeed = a => (Array.isArray(a) ? a : []).filter(p => p && typeof p.id === 'string' && ((p.w && typeof p.w === 'object') || (p.pub && typeof p.pub === 'object'))).slice(-150).map(p => {
+const normAud = a => ({ f: !!(a && a.f), o: !!(a && a.o), p: !!(a && a.p), g: (a && Array.isArray(a.g) ? a.g : []).filter(x => typeof x === 'string').slice(0, 40) });
+const NOTE_TYPES = ['like', 'cmt', 'req', 'friend', 'join', 'follow', 'freq', 'fok'];
+const normNotes = a => (Array.isArray(a) ? a : []).filter(n => n && NOTE_TYPES.includes(n.type) && typeof n.id === 'string').slice(-100).map(n => ({ id: n.id.slice(0, 40), ts: Number(n.ts) || 0, type: n.type, from: str(n.from, 12), pid: str(n.pid, 40), e: str(n.e, 4), text: str(n.text, 140), gname: str(n.gname, 24), name: str(n.name, 24), seen: !!n.seen }));
+const normCard = c => ({ code: str(c && c.code, 12), name: str(c && c.name, 24) || 'Alguien', handle: str(c && c.handle, 20), priv: !(c && c.priv === false) });
+const normNet = n => { n = n && typeof n === 'object' ? n : {}; const L = a => (Array.isArray(a) ? a : []).filter(c => c && CODE_RE.test(String(c.code))).slice(0, 500).map(normCard); return { following: L(n.following), followers: L(n.followers), freqIn: L(n.freqIn), freqOut: L(n.freqOut) }; };
+const normFeed = a => (Array.isArray(a) ? a : []).filter(p => p && typeof p.id === 'string' && !p.pubx && ((p.w && typeof p.w === 'object') || (p.pub && typeof p.pub === 'object'))).slice(-150).map(p => {
   const o = {
     id: p.id.slice(0, 40), from: str(p.from, 12), gid: p.gid ? str(p.gid, 40) : '', ts: Number(p.ts) || 0, w: p.w && typeof p.w === 'object' ? p.w : null,
     react: p.react && typeof p.react === 'object' ? p.react : {}, cmt: (Array.isArray(p.cmt) ? p.cmt : []).filter(c => c && typeof c.text === 'string').slice(-30)
@@ -128,11 +130,12 @@ const normLock = l => { const o = l && typeof l === 'object' ? l : {}; const ok 
 function defaults() {
   return {
     workouts: [], routines: [], custom: [], feed: [], stories: [], notes: [], blocked: [], account: null, loginSkipped: false, tutorialDone: false,
-    me: { name: 'Yo', code: '', photo: '', frame: '' },
+    me: { name: 'Yo', code: '', photo: '', frame: '', handle: '', priv: true },
+    net: { following: [], followers: [], freqIn: [], freqOut: [] },
     friends: [], groups: [], names: {},
     requests: { incoming: [], outgoing: [] },
     achievements: {},
-    ui: { fold: {}, tab: '', home: 'feed', ff: '', seg: 'groups', hseg: 'hist', filter: '', draft: null, lastRoutine: '', quickType: 'fuerza' },
+    ui: { fold: {}, tab: '', home: 'feed', ff: '', fl: 'friends', seg: 'groups', hseg: 'hist', filter: '', draft: null, lastRoutine: '', quickType: 'fuerza' },
     settings: { noteToast: true, browserNotif: false, theme: 'auto', lang: 'es', haptics: true, goal: 3, rest: 90, lock: { on: false, h: '', s: '', after: 0 } }
   };
 }
@@ -149,14 +152,14 @@ function load(src) {
     account: d.account && typeof d.account === 'object' && d.account.sub ? d.account : null,
     loginSkipped: !!d.loginSkipped,
     tutorialDone: d.tutorialDone !== undefined ? !!d.tutorialDone : !!((Array.isArray(d.workouts) && d.workouts.length) || (Array.isArray(d.friends) && d.friends.length)),
-    me: Object.assign(base.me, d.me),
+    me: Object.assign(base.me, d.me), net: normNet(d.net),
     friends: Array.isArray(d.friends) ? d.friends : [],
     groups: Array.isArray(d.groups) ? d.groups : [],
     names: d.names && typeof d.names === 'object' ? d.names : {},
     requests: { incoming: Array.isArray(rq.incoming) ? rq.incoming : [], outgoing: Array.isArray(rq.outgoing) ? rq.outgoing : [] },
     achievements: d.achievements && typeof d.achievements === 'object' ? d.achievements : {},
     ui: {
-      home: ui.home === 'day' ? 'day' : 'feed', ff: ['f', 'g'].includes(ui.ff) ? ui.ff : '',
+      home: ui.home === 'day' ? 'day' : 'feed', fl: ['friends', 'following', 'followers'].includes(ui.fl) ? ui.fl : 'friends', ff: ['f', 'g', 'p'].includes(ui.ff) ? ui.ff : '',
       fold: Object.assign({}, ui.fold), tab: str(ui.tab, 12), seg: ['groups', 'chats', 'friends'].includes(ui.seg) ? ui.seg : 'groups',
       hseg: ['hist', 'routines', 'progress'].includes(ui.hseg) ? ui.hseg : 'hist', filter: TYPE_IDS.includes(ui.filter) ? ui.filter : '',
       draft: ui.draft && typeof ui.draft === 'object' && normWorkout(ui.draft) ? Object.assign(normWorkout(ui.draft), { at: Number(ui.draft.at) || 0 }) : null,
@@ -176,12 +179,13 @@ function load(src) {
     g.goal = Math.round(num(g.goal, 0, 14));
   });
   if (!CODE_RE.test(s.me.code)) s.me.code = genCode();
+  s.me.handle = /^[a-z0-9_.]{3,20}$/.test(String(s.me.handle)) ? s.me.handle : ''; s.me.priv = s.me.priv !== false;
   return s;
 }
 let state = load();
 
 function save() {
-  try { localStorage.setItem(KEY, JSON.stringify(state)); }
+  try { localStorage.setItem(KEY, JSON.stringify(state, (k, v) => (k === 'feed' && Array.isArray(v) ? v.filter(x => !x.pubx) : v))); }
   catch { toast('No se pudo guardar. Revisa que el navegador permita almacenamiento local.'); }
 }
 save();
@@ -896,8 +900,7 @@ function restoreBackup(src) {
 function renderProfile(animate) {
   const input = $('#nameInput');
   if (document.activeElement !== input) input.value = state.me.name === 'Yo' ? '' : state.me.name;
-  fmtCodeNode($('#myCode'), state.me.code);
-  fmtCodeNode($('#myCode2'), state.me.code);
+  paintProfileNet();
   $('#photoDel').disabled = !state.me.photo;
   renderFrames();
   const st = streakInfo();
@@ -1001,7 +1004,7 @@ function showTab(name) {
   const [outCls, inCls] = dir > 0 ? ['to-left', 'from-right'] : ['to-right', 'from-left'];
   window.scrollTo(0, 0);
   if (name === 'perfil') renderProfile(true);
-  if (name === 'inicio') renderHome();
+  if (name === 'inicio') { renderHome(); pullPub(); }
   setStagger(to);
   from.classList.add('leaving', outCls);
   to.classList.add('active', 'entering', inCls);
@@ -1614,7 +1617,6 @@ function confirmRoutine() {
 }
 
 /* ---------- Social: datos ---------- */
-let reqOpen = false;
 let openGroupId = null;
 let openGym = null;   // id del grupo de gimnasio abierto en su pantalla
 let cmtOpen = new Set();
@@ -1626,6 +1628,9 @@ let modTarget = null;
 const groupById = id => state.groups.find(g => g.id === id);
 const friendById = id => state.friends.find(f => f.id === id);
 const friendByCode = c => state.friends.find(f => f.code === c);
+const isFollowed = c => state.net.following.some(x => x.code === c);
+const knownPerson = c => !!friendByCode(c) || isFollowed(c) || state.net.followers.some(x => x.code === c);
+const handleOf = c => { for (const k of ['following', 'followers', 'freqIn', 'freqOut']) { const x = state.net[k].find(y => y.code === c); if (x && x.handle) return x.handle; } return ''; };
 const personName = c => (c === state.me.code ? 'Tú' : (friendByCode(c) || {}).name || state.names[c] || 'Alguien');
 const senderName = from => (from === 'me' ? 'Tú' : (friendById(from) || {}).name || state.names[from] || 'Alguien');
 const isBlocked = c => state.blocked.includes(c);
@@ -1674,10 +1679,14 @@ function renderSocial() {
   $('#reqCard').classList.toggle('hidden', seg !== 'friends');
   $('#groupsBox').classList.toggle('hidden', seg !== 'groups');
   $('#chatList').classList.toggle('hidden', seg !== 'chats');
-  $('#friendList').classList.toggle('hidden', seg !== 'friends');
-  $('#segAdd').classList.toggle('hidden', seg === 'groups');
-  $('#segAdd').textContent = seg === 'chats' ? '+ Crear chat de grupo' : '+ Añadir con código';
+  const fl = state.ui.fl;
+  $('#flChips').classList.toggle('hidden', seg !== 'friends');
+  $('#friendList').classList.toggle('hidden', seg !== 'friends' || fl !== 'friends');
+  $('#netList').classList.toggle('hidden', seg !== 'friends' || fl === 'friends');
+  $('#segAdd').classList.toggle('hidden', seg !== 'chats');
+  paintFl();
   renderRequests();
+  renderNet();
   renderFeed();   // el feed vive en Inicio; se repinta también aquí por si cambian bloqueos o grupos
   renderGroupsList();
   renderChatList();
@@ -1686,7 +1695,7 @@ function renderSocial() {
 }
 
 function swapList() {
-  const nodes = { groups: ['#groupsBox'], chats: ['#chatList'], friends: ['#reqCard', '#friendList'] }[state.ui.seg].map(s => $(s));
+  const nodes = { groups: ['#groupsBox'], chats: ['#chatList'], friends: ['#reqCard', '#flChips', state.ui.fl === 'friends' ? '#friendList' : '#netList'] }[state.ui.seg].map(s => $(s));
   nodes.forEach(n => {
     n.classList.remove('swap-in', 'swap');
     const cls = n.tagName === 'UL' ? 'swap' : 'swap-in';
@@ -1699,7 +1708,8 @@ function swapList() {
 /* ---------- Feed ---------- */
 const postSort = (a, b) => b.ts - a.ts;
 function visibleFeed(gid) { return state.feed.filter(p => !isBlocked(p.from) && (gid === undefined || p.gid === gid)).sort(postSort); }
-const homeFeed = () => visibleFeed().filter(p => !state.ui.ff || (state.ui.ff === 'g' ? !!p.gid : !p.gid));
+const isOpenPost = p => !!p.pubx || !!(p.aud && p.aud.p);
+const homeFeed = () => visibleFeed().filter(p => !state.ui.ff || (state.ui.ff === 'g' ? !!p.gid : state.ui.ff === 'p' ? isOpenPost(p) : !p.gid && (!p.pubx || isFollowed(p.from))));
 
 function feedSummary(w) {
   const t = typeOf(w.ty), bits = [];
@@ -1750,6 +1760,8 @@ function feedCard(p, opt = {}) {
   const who = el('span', 'tw-who');
   who.append(ut(el('strong', '', mine ? T('Tú') : personName(p.from))), el('small', '', `${dayLabel(p.ts)} · ${fmtClock(p.ts)}`));
   if (grp) who.appendChild(ut(el('span', 'tw-grp', '👥 ' + grp)));
+  if (p.pubx && pubHandles[p.from]) who.appendChild(el('span', 'tw-hdl', '@' + pubHandles[p.from]));
+  if (isOpenPost(p)) who.appendChild(ut(el('span', 'tw-grp', '🌍 ' + T('Público'))));
   const menu = el('button', 'icon-btn plain');
   menu.type = 'button';
   menu.setAttribute('aria-label', mine ? T(p.pub ? 'Borrar publicación' : 'Dejar de compartir') : T('Más opciones'));
@@ -1861,11 +1873,18 @@ function noteText(n) {
     case 'cmt': return `${who} ${T('respondió')}: “${n.text}”`;
     case 'req': return `${who} ${T('quiere ser tu amigo')}`;
     case 'friend': return `${who} ${T('y tú ya sois amigos')}`;
+    case 'follow': return `${who} ${T('empezó a seguirte')}`;
+    case 'freq': return `${who} ${T('quiere seguirte')}`;
+    case 'fok': return `${who} ${T('aceptó tu solicitud')}`;
     default: return `${who} ${T('se unió a')} ${n.gname || T('tu grupo')}`;
   }
 }
-function addNote(n, silent) {
+let srvNotes = false;   // con servidor, las notificaciones las guarda y envía él (se ven igual en todos tus dispositivos)
+function addNote(n, silent, fromSrv) {
+  if (srvNotes && !fromSrv) return;
   if (!n.from || n.from === state.me.code || isBlocked(n.from)) return;
+  if (n.id && state.notes.some(x => x.id === n.id)) return;
+  if (n.name) state.names[n.from] = n.name;
   if (n.type === 'cmt' && n.cid && state.notes.some(x => x.cid === n.cid)) return;
   if (n.type === 'like') state.notes = state.notes.filter(x => !(x.type === 'like' && x.from === n.from && x.pid === n.pid));
   state.notes.push(Object.assign({ id: uid(), ts: Date.now(), seen: false, e: '', text: '', pid: '', gname: '' }, n));
@@ -1875,14 +1894,14 @@ function addNote(n, silent) {
   if ($('#notes').classList.contains('open')) renderNotes();
   else if (!silent && state.settings.noteToast !== false) { const t = noteText(state.notes[state.notes.length - 1]); toast(t); systemNotify('GymCrew', t); }
 }
-function dropLikeNote(from, pid) { const n = state.notes.length; state.notes = state.notes.filter(x => !(x.type === 'like' && x.from === from && x.pid === pid)); if (n !== state.notes.length) { save(); paintBell(); if ($('#notes').classList.contains('open')) renderNotes(); } }
-function markNotesSeen() { let ch = false; state.notes.forEach(n => { if (!n.seen) { n.seen = true; ch = true; } }); if (ch) save(); paintBell(); }
+function dropLikeNote(from, pid) { if (srvNotes) return; const n = state.notes.length; state.notes = state.notes.filter(x => !(x.type === 'like' && x.from === from && x.pid === pid)); if (n !== state.notes.length) { save(); paintBell(); if ($('#notes').classList.contains('open')) renderNotes(); } }
+function markNotesSeen() { let ch = false; state.notes.forEach(n => { if (!n.seen) { n.seen = true; ch = true; } }); if (ch) { save(); if (srvNotes) srvSend({ t: 'nseen' }); } paintBell(); }
 
 function renderNotes() {
   const ul = $('#ntList');
   ul.innerHTML = '';
   const list = state.notes.filter(n => !isBlocked(n.from)).sort((a, b) => b.ts - a.ts);
-  if (!list.length) { ul.appendChild(emptyState('🔔', 'Todo tranquilo', 'Aquí verás cuando alguien reaccione, responda a tus publicaciones o te añada como amigo.')); return; }
+  if (!list.length) { ul.appendChild(emptyState('🔔', 'Todo tranquilo', 'Aquí verás cuando alguien reaccione, responda a tus publicaciones o te siga.')); return; }
   const rows = [], seen = {};
   list.forEach(n => {
     if (n.type === 'like') {
@@ -1905,7 +1924,7 @@ function renderNotes() {
     } else line = noteText(n);
     main.appendChild(ut(el('strong', 'nt-line', line)));
     main.appendChild(el('small', '', `${dayLabel(n.ts)} · ${fmtClock(n.ts)}`));
-    const ico = el('span', 'side nt-ico', { like: '❤️', cmt: '💬', req: '👋', friend: '🤝', join: '👥' }[n.type]);
+    const ico = el('span', 'side nt-ico', { like: '❤️', cmt: '💬', req: '👋', friend: '🤝', join: '👥', follow: '➕', freq: '🔔', fok: '✅' }[n.type]);
     li.append(av, main, ico);
     const go = () => openNote(n);
     li.addEventListener('click', go);
@@ -1922,7 +1941,7 @@ function openNote(n) {
   }
   closeNotes(false);
   showTab('amigos');
-  if (n.type === 'join') setSeg('groups'); else setSeg('friends');
+  if (n.type === 'join') setSeg('groups'); else { setSeg('friends'); if (n.type === 'follow') setFl('followers'); else if (n.type === 'fok') setFl('following'); else if (n.type === 'friend') setFl('friends'); }
   if (n.type === 'friend') { const f = friendByCode(n.from); if (f) openDirect(f.id); }
 }
 function openNotes() {
@@ -2079,6 +2098,8 @@ function paintPostAud() {
     box.appendChild(l);
   };
   row('aud-f', T('Mis amigos'), false);
+  row('aud-o', T('Mis seguidores'), false);
+  row('aud-p', T('Público (cualquiera en GymCrew)'), false);
   state.groups.filter(g => g.srv && g.gym).forEach(g => row('aud-g-' + g.id, g.name, false));
 }
 function openPost(mode) {
@@ -2097,6 +2118,7 @@ function paintPostMode() {
   $('#pText').maxLength = postMode === 'story' ? 140 : 400;
   $('#pText').value = $('#pText').value.slice(0, $('#pText').maxLength);
   $('#pSend').textContent = T(postMode === 'story' ? 'Subir historia' : 'Publicar');
+  const ap = $('#aud-p'); if (ap) { ap.closest('.aud-row').classList.toggle('hidden', postMode === 'story'); if (postMode === 'story') ap.checked = false; }
 }
 async function pickMedia(file) {
   if (!file) return;
@@ -2115,9 +2137,10 @@ async function pickMedia(file) {
 async function sendPost() {
   if (postBusy) return;
   const msg = $('#pMsg'), text = $('#pText').value.trim();
-  const aud = { f: $('#aud-f') && $('#aud-f').checked, g: state.groups.filter(g => g.srv && g.gym && $('#aud-g-' + g.id) && $('#aud-g-' + g.id).checked).map(g => g.id) };
+  const aud = { f: $('#aud-f') && $('#aud-f').checked, o: $('#aud-o') && $('#aud-o').checked, p: postMode === 'pub' && !!($('#aud-p') && $('#aud-p').checked), g: state.groups.filter(g => g.srv && g.gym && $('#aud-g-' + g.id) && $('#aud-g-' + g.id).checked).map(g => g.id) };
   if (!text && !postMedia) { msg.textContent = T('Escribe algo o añade una foto o un vídeo.'); return; }
-  if (!aud.f && !aud.g.length) { msg.textContent = T('Elige quién lo ve.'); return; }
+  if (!aud.f && !aud.o && !aud.p && !aud.g.length) { msg.textContent = T('Elige quién lo ve.'); return; }
+  if (aud.p && !state.me.handle) { msg.textContent = T('Para publicar en público primero elige tu @usuario (Social → Amigos).'); return; }
   postBusy = true; $('#pSend').disabled = true; msg.textContent = T('Subiendo…');
   const id = uid(), kind = postMode;
   try {
@@ -2126,6 +2149,8 @@ async function sendPost() {
     const p = { id, text }; if (m) p.m = m;
     let ok = true;
     if (aud.f) ok = srvSend({ t: 'gx', to: 'friends', k: kind, p }) && ok;
+    if (aud.o) ok = srvSend({ t: 'gx', to: 'followers', k: kind, p }) && ok;
+    if (aud.p) ok = srvSend({ t: 'gx', to: 'public', k: kind, p }) && ok;
     aud.g.forEach(gid => { ok = srvSend({ t: 'gx', gid, k: kind, p }) && ok; });
     if (!ok) throw new Error('offline');
     const now = Date.now();
@@ -2235,6 +2260,8 @@ function deleteStory() {
   if (!confirm(T('¿Borrar esta historia?'))) return;
   const a = s.aud || { f: false, g: [] };
   if (a.f) srvSend({ t: 'gx', to: 'friends', k: 'del', p: { pid: s.id } });
+  if (a.o) srvSend({ t: 'gx', to: 'followers', k: 'del', p: { pid: s.id } });
+  if (a.p) srvSend({ t: 'gx', to: 'public', k: 'del', p: { pid: s.id } });
   (a.g || []).forEach(gid => { if (groupById(gid)) srvSend({ t: 'gx', gid, k: 'del', p: { pid: s.id } }); });
   state.stories = state.stories.filter(x => x.id !== s.id);
   sv.list.splice(sv.i, 1);
@@ -2280,7 +2307,7 @@ function crewStrip() {
     const st = activeStories(f.code), unseen = st.some(x => !x.seen);
     add(f.name, av, st.length ? (unseen ? 'ring' : 'ring seen') : recent(f.code) ? 'ring seen' : '', () => (st.length ? openStories(f.code) : openDirect(f.id)), st.length ? `${T('Ver historia de')} ${f.name}` : f.name);
   });
-  add(T('Añadir'), el('span', 'avatar lg add-ava', '＋'), '', () => { showTab('amigos'); setSeg('friends'); const h = $('#reqHead'); if (h && h.getAttribute('aria-expanded') !== 'true') h.click(); }, T('Añadir con código'));
+  add(T('Buscar'), el('span', 'avatar lg add-ava', '＋'), '', () => { showTab('amigos'); setSeg('friends'); setTimeout(() => $('#srchInput').focus({ preventScroll: true }), 450); }, T('Buscar personas'));
   wrap.appendChild(row);
   return wrap;
 }
@@ -2329,7 +2356,7 @@ function upsertPost(item) {
 }
 
 // Ruta de un mensaje social: grupo del post, o directo al autor
-function gxRoute(p) { return p.gid && groupById(p.gid) ? { gid: p.gid } : { to: p.from }; }
+function gxRoute(p) { return p.pubx ? { to: 'public' } : p.gid && groupById(p.gid) ? { gid: p.gid } : { to: p.from }; }
 function reactTo(p, e) {
   if (p.react[state.me.code] === e) return;
   p.react[state.me.code] = e;
@@ -2349,7 +2376,7 @@ function commentOn(p, text) {
   if (!mine) ok = srvSend(Object.assign(msg, gxRoute(p)));
   else {
     const w = p.pub ? { sh: p.aud } : state.workouts.find(x => x.id === p.id);
-    if (w && w.sh) { if (w.sh.f) ok = srvSend(Object.assign({}, msg, { to: 'friends' })) || ok; w.sh.g.forEach(gid => { if (groupById(gid)) ok = srvSend(Object.assign({}, msg, { gid })) || ok; }); }
+    if (w && w.sh) { if (w.sh.f) ok = srvSend(Object.assign({}, msg, { to: 'friends' })) || ok; if (w.sh.o) ok = srvSend(Object.assign({}, msg, { to: 'followers' })) || ok; if (w.sh.p) ok = srvSend(Object.assign({}, msg, { to: 'public' })) || ok; w.sh.g.forEach(gid => { if (groupById(gid)) ok = srvSend(Object.assign({}, msg, { gid })) || ok; }); }
   }
   if (!ok) toast('Sin conexión: tu comentario solo lo ves tú');
   renderSocial(); renderHome();
@@ -2378,6 +2405,8 @@ function unsharePost(p) {
   const w = p.pub ? { sh: p.aud } : state.workouts.find(x => x.id === p.id);
   if (srvOn() && w && w.sh) {
     if (w.sh.f) srvSend({ t: 'gx', to: 'friends', k: 'del', p: { pid: p.id } });
+    if (w.sh.o) srvSend({ t: 'gx', to: 'followers', k: 'del', p: { pid: p.id } });
+    if (w.sh.p) srvSend({ t: 'gx', to: 'public', k: 'del', p: { pid: p.id } });
     w.sh.g.forEach(gid => { if (groupById(gid)) srvSend({ t: 'gx', gid, k: 'del', p: { pid: p.id } }); });
   }
   if (w && !p.pub) delete w.sh;
@@ -2390,6 +2419,8 @@ function unsharePost(p) {
 function deleteSharedData() {
   if (srvOn()) {
     srvSend({ t: 'gx', to: 'friends', k: 'del', p: { all: true } });
+    srvSend({ t: 'gx', to: 'followers', k: 'del', p: { all: true } });
+    srvSend({ t: 'gx', to: 'public', k: 'del', p: { all: true } });
     state.groups.filter(g => g.srv && !g.direct).forEach(g => { srvSend({ t: 'gx', gid: g.id, k: 'del', p: { all: true } }); if (g.rank) srvSend({ t: 'gx', gid: g.id, k: 'stat', p: { hide: true } }); });
   }
   state.workouts.forEach(w => { delete w.sh; });
@@ -2659,7 +2690,7 @@ function leaveGym() {
 function onGx(m) {
   if (isBlocked(m.from)) return;
   const g = m.gid ? groupById(m.gid) : null, f = friendByCode(m.from);
-  if (m.gid ? !g : !f) return;
+  if (m.gid ? !g : !knownPerson(m.from)) return;
   const p = m.p || {}, ts = Math.min(Date.now(), (m.ts || Date.now()) - (window.Srv ? Srv.skew : 0));
   const find = () => state.feed.find(x => x.id === p.pid && x.from === p.o);
   switch (m.k) {
@@ -2682,7 +2713,7 @@ function onGx(m) {
     case 'story': {
       const md = normMedia(p.m), text = str(p.text, 140);
       if ((!text && !md) || state.stories.some(x => x.id === p.id && x.from === m.from)) return;
-      state.stories.push({ id: String(p.id).slice(0, 40), from: m.from, gid: m.gid || '', ts, text, m: md, seen: false, aud: { f: false, g: [] } });
+      state.stories.push({ id: String(p.id).slice(0, 40), from: m.from, gid: m.gid || '', ts, text, m: md, seen: false, aud: { f: false, o: false, g: [] } });
       state.stories = state.stories.slice(-60);
       break;
     }
@@ -2739,7 +2770,7 @@ function renderFriends() {
   const ul = $('#friendList');
   ul.innerHTML = '';
   if (!state.friends.length) {
-    ul.appendChild(emptyState('🤝', 'Tu círculo está vacío', 'Todavía no tienes amigos. Pide su código y envíales una solicitud desde el bloque de arriba.'));
+    ul.appendChild(emptyState('🤝', 'Tu círculo está vacío', 'Todavía no tienes amigos. Busca a alguien por su @usuario en el bloque de arriba: cuando os sigáis los dos, seréis amigos y podréis chatear.'));
     return;
   }
   for (const f of state.friends) {
@@ -2748,7 +2779,7 @@ function renderFriends() {
     paintAvatar(av, f.name);
     const main = el('div', 'main');
     const live = !!(f.srv && window.Srv && Srv.online);
-    main.append(ut(el('strong', '', f.name)), el('small', '', (live ? (f.on ? '🟢 En línea · ' : '⚪ Desconectado · ') : '') + (f.code ? `Código ${f.code}` : 'Toca para chatear')));
+    main.append(ut(el('strong', '', f.name)), el('small', '', (live ? (f.on ? '🟢 En línea · ' : '⚪ Desconectado · ') : '') + (handleOf(f.code) ? '@' + handleOf(f.code) : 'Toca para chatear')));
     const more = el('button', 'icon-btn plain', '⋯');
     more.type = 'button';
     more.setAttribute('aria-label', 'Más opciones');
@@ -2769,142 +2800,164 @@ function renderFriends() {
   }
 }
 
-/* ---------- Solicitudes de amistad ---------- */
-function setCodeMsg(text, kind) {
-  const m = $('#codeMsg');
-  m.textContent = text || '';
-  m.classList.remove('ok', 'err');
-  if (kind) m.classList.add(kind);
+/* ---------- Personas: nombre de usuario, buscar y seguir ---------- */
+let hdlEdit = false, found = [], srchTimer = 0;
+const HDL_ERR = { taken: 'Ese nombre de usuario ya está cogido.', invalid: 'Usa de 3 a 20 caracteres: letras, números, punto o guion bajo.', busy: 'Has cambiado el nombre demasiadas veces hoy. Inténtalo mañana.' };
+const FOLLOW_ERR = { 'no-user': 'No se puede seguir a esa persona.', full: 'Ya sigues a demasiada gente.', many: 'Tienes demasiadas solicitudes pendientes.', busy: 'Demasiadas acciones seguidas. Espera un poco.' };
+function setHdlMsg(text, kind) { const m = $('#hdlMsg'); m.textContent = text || ''; m.classList.remove('ok', 'err'); if (kind) m.classList.add(kind); }
+const relOf = c => (friendByCode(c) ? 'friend' : isFollowed(c) ? 'following' : state.net.freqOut.some(x => x.code === c) ? 'requested' : 'none');
+
+function personRow(c, actions) {
+  const li = el('li', 'glass row static');
+  const av = el('span', 'avatar');
+  paintAvatar(av, c.name);
+  const main = el('div', 'main');
+  main.append(ut(el('strong', '', c.name)), el('small', '', (c.handle ? '@' + c.handle : '') + (c.priv ? ' 🔒' : '')));
+  li.append(av, main);
+  if (actions.length > 1) { const box = el('div', 'acts'); actions.forEach(a => box.appendChild(a)); li.appendChild(box); } else actions.forEach(a => li.appendChild(a));
+  return li;
+}
+const actBtn = (label, cls, fn) => { const b = el('button', 'btn sm ' + cls, label); b.type = 'button'; b.addEventListener('click', ev => { ev.stopPropagation(); fn(b); }); return b; };
+function followUser(c) { if (!srvSend({ t: 'follow', code: c.code })) toast('Sin conexión con el servidor'); }
+function unfollowUser(c, rel) {
+  const msg = rel === 'friend' ? `¿Dejar de seguir a ${c.name}? Dejaréis de ser amigos y se borrará vuestro chat directo.` : `¿Dejar de seguir a ${c.name}?`;
+  if (!confirm(T(msg))) return;
+  if (!srvSend({ t: 'unfollow', code: c.code })) toast('Sin conexión con el servidor');
+}
+const cancelReq = c => { if (!srvSend({ t: 'fcancel', code: c.code })) toast('Sin conexión con el servidor'); };
+function relButton(c) {
+  const rel = relOf(c.code);
+  if (rel === 'friend') return actBtn(T('Amigos ✓'), 'ok', () => unfollowUser(c, rel));
+  if (rel === 'following') return actBtn(T('Siguiendo'), '', () => unfollowUser(c, rel));
+  if (rel === 'requested') return actBtn(T('Pendiente'), '', () => cancelReq(c));
+  return actBtn(T(c.priv ? 'Solicitar' : 'Seguir'), 'primary', () => followUser(c));
 }
 
+function paintPeople() {
+  const need = !state.me.handle || hdlEdit;
+  $('#hdlBox').classList.toggle('hidden', !need);
+  if (need && document.activeElement !== $('#hdlInput') && !$('#hdlInput').value) $('#hdlInput').value = state.me.handle;
+  $('#srchInput').disabled = !srvOn();
+  const q = $('#srchInput').value.trim().replace(/^@/, '');
+  $('#srchMsg').textContent = !srvOn() ? T('Conecta con el servidor (Ajustes → Servidor) para buscar personas.') : q.length >= 2 && !found.length && !srchTimer ? T('Nadie con ese usuario. Prueba con otro.') : '';
+}
+function renderSearch() {
+  const ul = $('#srchList');
+  ul.innerHTML = '';
+  const q = $('#srchInput').value.trim().replace(/^@/, '');
+  if (q.length >= 2) found.filter(c => c.code !== state.me.code && !isBlocked(c.code)).forEach(c => ul.appendChild(personRow(c, [relButton(c)])));
+  paintPeople();
+}
 function renderRequests() {
-  const inc = state.requests.incoming;
-  const out = state.requests.outgoing;
-  $('#reqHead').setAttribute('aria-expanded', String(reqOpen));
-  $('#reqBody').classList.toggle('open', reqOpen);
+  const inc = state.net.freqIn, out = state.net.freqOut;
   $('#reqCount').textContent = inc.length;
   $('#reqCount').classList.toggle('hidden', inc.length === 0);
-  // Punto en la pestaña "Amigos" del selector mientras estás viendo los chats
   $('#segBadge').textContent = inc.length;
   $('#segBadge').classList.toggle('hidden', inc.length === 0 || state.ui.seg === 'friends');
-
+  $('#reqInBox').classList.toggle('hidden', !inc.length);
   const ulIn = $('#reqIn');
   ulIn.innerHTML = '';
-  if (!inc.length) ulIn.appendChild(el('li', 'empty small', 'Nadie te ha enviado solicitud todavía. Comparte tu código.'));
-  for (const r of inc) {
-    const li = el('li', 'glass row static req-row');
-    const av = el('span', 'avatar');
-    paintAvatar(av, r.name);
-    const main = el('div', 'main');
-    main.append(ut(el('strong', '', r.name)), el('small', '', `Código ${r.code}`));
-    const acts = el('div', 'acts');
-    const no = el('button', 'btn sm', 'Rechazar');
-    no.type = 'button';
-    no.addEventListener('click', () => rejectRequest(r.id, li));
-    const yes = el('button', 'btn sm ok', 'Aceptar');
-    yes.type = 'button';
-    yes.addEventListener('click', () => acceptRequest(r.id, li));
-    acts.append(no, yes);
-    li.append(av, main, acts);
+  inc.forEach(c => {
+    const li = personRow(c, [
+      actBtn(T('Rechazar'), '', () => { li.classList.add('removing'); if (!srvSend({ t: 'freject', code: c.code })) toast('Sin conexión con el servidor'); }),
+      actBtn(T('Aceptar'), 'ok', () => { li.classList.add('removing'); if (!srvSend({ t: 'fapprove', code: c.code })) toast('Sin conexión con el servidor'); })
+    ]);
+    li.classList.add('req-row');
     ulIn.appendChild(li);
-  }
-
+  });
   $('#reqOutBox').classList.toggle('hidden', !out.length);
   const ulOut = $('#reqOut');
   ulOut.innerHTML = '';
-  for (const r of out) {
-    const li = el('li', 'glass row static');
-    const main = el('div', 'main');
-    main.append(el('strong', '', r.code), el('small', '', 'Pendiente de que acepte'));
-    const x = el('button', 'icon-btn plain');
-    x.type = 'button';
-    x.setAttribute('aria-label', 'Cancelar solicitud');
-    x.innerHTML = ICON.x;
-    x.addEventListener('click', () => {
-      if (r.srv && !srvSend({ t: 'cancel', to: r.code })) { toast('Sin conexión con el servidor'); return; }
-      li.classList.add('removing');
-      setTimeout(() => {
-        state.requests.outgoing = state.requests.outgoing.filter(o => o.id !== r.id);
-        save();
-        renderSocial();
-      }, 280);
-    });
-    li.append(main, x);
-    ulOut.appendChild(li);
-  }
+  out.forEach(c => ulOut.appendChild(personRow(c, [actBtn(T('Cancelar'), '', () => cancelReq(c))])));
+  renderSearch();
 }
-
-function sendRequest() {
-  const code = normCode($('#codeInput').value);
-  if (!CODE_RE.test(code)) return setCodeMsg('El código tiene 4 números y 3 letras, por ejemplo 4827KQM.', 'err');
-  if (code === state.me.code) return setCodeMsg('Ese es tu propio código.', 'err');
-  if (state.friends.some(f => f.code === code)) return setCodeMsg('Ya sois amigos.', 'err');
-  if (state.requests.outgoing.some(r => r.code === code)) return setCodeMsg('Ya enviaste una solicitud a ese código.', 'err');
-  if (state.requests.incoming.some(r => r.code === code)) return setCodeMsg('Esa persona ya te envió una solicitud: acéptala aquí abajo.', 'err');
-  if (srvOn()) {
-    if (!srvSend({ t: 'req', to: code })) return setCodeMsg('Sin conexión con el servidor. Inténtalo en unos segundos.', 'err');
-    return setCodeMsg('Enviando solicitud…');
-  }
-  state.requests.outgoing.push({ id: uid(), code, ts: Date.now() });
+function paintFl() {
+  $$('#flChips .chip').forEach(c => c.setAttribute('aria-pressed', String(c.dataset.fl === state.ui.fl)));
+  $('#cntFriends').textContent = state.friends.length;
+  $('#cntFollowing').textContent = state.net.following.length;
+  $('#cntFollowers').textContent = state.net.followers.length;
+}
+function setFl(v) { if (!['friends', 'following', 'followers'].includes(v)) return; state.ui.fl = v; save(); renderSocial(); }
+function renderNet() {
+  const ul = $('#netList');
+  ul.innerHTML = '';
+  const fl = state.ui.fl;
+  if (fl === 'friends') return;
+  const list = (fl === 'following' ? state.net.following : state.net.followers).filter(c => !isBlocked(c.code));
+  if (!list.length) { ul.appendChild(emptyState(fl === 'following' ? '👀' : '👥', fl === 'following' ? 'Todavía no sigues a nadie' : 'Todavía no te sigue nadie', fl === 'following' ? 'Busca a alguien por su @usuario en el bloque de arriba.' : 'Cuando alguien te siga, aparecerá aquí. Puedes quitar seguidores cuando quieras.')); return; }
+  list.forEach(c => {
+    const acts = [];
+    if (fl === 'following') acts.push(relButton(c));
+    else {
+      if (relOf(c.code) === 'none') acts.push(relButton(c));
+      acts.push(actBtn(T('Quitar'), '', () => { if (confirm(T(`¿Quitar a ${c.name} de tus seguidores?`))) srvSend({ t: 'rmfollower', code: c.code }); }));
+    }
+    const li = personRow(c, acts);
+    li.classList.remove('static');
+    const more = el('button', 'icon-btn plain', '⋯');
+    more.type = 'button'; more.setAttribute('aria-label', T('Más opciones'));
+    more.addEventListener('click', () => openMod(c.code, ''));
+    li.appendChild(more);
+    ul.appendChild(li);
+  });
+}
+function applyGraph(g) {
+  state.net = normNet(g);
+  ['following', 'followers', 'freqIn', 'freqOut'].forEach(k => state.net[k].forEach(c => { state.names[c.code] = c.name; }));
+  state.net.freqIn = state.net.freqIn.filter(c => !isBlocked(c.code));
   save();
-  $('#codeInput').value = '';
-  setCodeMsg('Solicitud enviada. Cuando la acepte, aparecerá en tus amigos.', 'ok');
-  toast('Solicitud enviada');
-  renderSocial();
+  renderSocial(); paintProfileNet(); renderHome();
 }
-
-function acceptRequest(id, li) {
-  const r = state.requests.incoming.find(x => x.id === id);
-  if (!r) return;
-  // Con servidor, la amistad se crea al recibir su confirmación (evento 'accepted')
-  if (r.srv) { if (!srvSend({ t: 'accept', from: r.code })) toast('Sin conexión con el servidor'); return; }
-  if (li) li.classList.add('removing');
-  setTimeout(() => {
-    state.requests.incoming = state.requests.incoming.filter(x => x.id !== id);
-    if (!state.friends.some(f => f.code === r.code)) state.friends.push({ id: uid(), name: r.name, code: r.code });
-    save();
-    renderAll();
-    toast(`${r.name} y tú ya sois amigos 🎉`);
-  }, li ? 280 : 0);
+function paintProfileNet() {
+  if (!$('#myHandle')) return;
+  $('#myHandle').textContent = state.me.handle ? '@' + state.me.handle : T('Sin nombre de usuario');
+  $('#editHandle').textContent = T(state.me.handle ? 'Cambiar nombre de usuario' : 'Elegir nombre de usuario');
+  $('#rsPriv').checked = state.me.priv;
+  $('#privNote').textContent = T(state.me.priv ? 'Quien quiera seguirte necesita tu aprobación' : 'Cualquiera puede seguirte y ver lo que publiques para seguidores');
+  $('#pfFolN').textContent = state.net.followers.length;
+  $('#pfFingN').textContent = state.net.following.length;
 }
-
-function rejectRequest(id, li) {
-  const rq = state.requests.incoming.find(x => x.id === id);
-  if (rq && rq.srv && !srvSend({ t: 'reject', from: rq.code })) { toast('Sin conexión con el servidor'); return; }
-  if (li) li.classList.add('removing');
-  setTimeout(() => {
-    state.requests.incoming = state.requests.incoming.filter(x => x.id !== id);
-    save();
-    renderSocial();
-  }, li ? 280 : 0);
+function saveHandle() {
+  const h = $('#hdlInput').value.trim().toLowerCase().replace(/^@/, '');
+  if (!/^[a-z0-9_.]{3,20}$/.test(h) || /^\.|\.$|\.\./.test(h)) return setHdlMsg(T(HDL_ERR.invalid), 'err');
+  if (h === state.me.handle) { hdlEdit = false; renderRequests(); return; }
+  if (!srvSend({ t: 'handle', h })) return setHdlMsg(T('Sin conexión con el servidor. Inténtalo en unos segundos.'), 'err');
+  setHdlMsg(T('Guardando…'));
 }
-
-// Punto de entrada de solicitudes que llegan de otras personas.
-// Con un servidor real, aquí llegaría la solicitud de quien haya escrito tu código.
-function receiveRequest(req) {
-  if (state.friends.some(f => f.code === req.code) || state.requests.incoming.some(r => r.code === req.code)) return;
-  state.requests.incoming.push(req);
-  reqOpen = true;
-  save();
-  addNote({ type: 'req', from: req.code }, true);
-  renderSocial();
-  toast(`${req.name} quiere ser tu amigo`);
-  systemNotify('Solicitud de amistad', `${req.name} quiere ser tu amigo`);
+function goPeople(focus) {
+  showTab('amigos'); setSeg('friends');
+  if (focus) setTimeout(() => $((focus === 'hdl' && (!state.me.handle || hdlEdit)) ? '#hdlInput' : '#srchInput').focus({ preventScroll: true }), 450);
 }
-
-function goRequests() {
-  state.ui.seg = 'friends'; save();
-  reqOpen = true;
-  renderSocial();
-  swapList();
-  setTimeout(() => $('#codeInput').focus({ preventScroll: true }), 450);
+function bindPeople() {
+  $('#segAdd').addEventListener('click', openGroupSheet);
+  $('#hdlSave').addEventListener('click', saveHandle);
+  $('#hdlInput').addEventListener('input', e => { e.target.value = e.target.value.toLowerCase().replace(/[^a-z0-9_.@]/g, ''); setHdlMsg(''); });
+  $('#hdlInput').addEventListener('keydown', e => { if (e.key === 'Enter') saveHandle(); });
+  $('#srchInput').addEventListener('input', () => {
+    clearTimeout(srchTimer);
+    const q = $('#srchInput').value.trim().replace(/^@/, '');
+    found = [];
+    if (q.length < 2 || !srvOn()) { srchTimer = 0; renderSearch(); return; }
+    srchTimer = setTimeout(() => { srchTimer = 0; if (!srvSend({ t: 'search', q })) $('#srchMsg').textContent = T('Sin conexión con el servidor.'); }, 300);
+    renderSearch();
+  });
+  $$('#flChips .chip').forEach(c => c.addEventListener('click', () => setFl(c.dataset.fl)));
+  $('#editHandle').addEventListener('click', () => { hdlEdit = true; $('#hdlInput').value = state.me.handle; goPeople('hdl'); renderRequests(); });
+  $('#rsPriv').addEventListener('change', e => {
+    const priv = e.target.checked;
+    if (!priv && !confirm(T('¿Hacer tu perfil público? Cualquiera podrá seguirte sin pedirte permiso y se aprobarán las solicitudes pendientes.'))) { e.target.checked = true; return; }
+    if (!srvSend({ t: 'profile', priv })) { e.target.checked = !priv; toast('Necesitas conexión con el servidor'); return; }
+    state.me.priv = priv; save(); paintProfileNet();
+  });
+  $('#pfFollowers').addEventListener('click', () => { goPeople(); setFl('followers'); });
+  $('#pfFollowing').addEventListener('click', () => { goPeople(); setFl('following'); });
 }
 
 /* ---------- Social: grupos y chats directos ---------- */
 function openGroupSheet() {
   if (!state.friends.length) {
-    toast('Primero añade algún amigo con su código');
-    goRequests();
+    toast('Primero hazte amigo de alguien: sigue a una persona y que te siga de vuelta');
+    goPeople(true);
     return;
   }
   $('#groupName').value = '';
@@ -3087,6 +3140,38 @@ function srvFlush() {
   for (const g of state.groups) for (const m of g.messages) if (m.pending && m.from === 'me') srvRelay(g, m);
 }
 
+/* Publicaciones públicas: el servidor las guarda y cada dispositivo las pide al abrir Inicio */
+const pubHandles = {};
+let pubPulled = 0;
+function pullPub(force) {
+  if (!srvOn() || !window.Srv || !Srv.online) return;
+  if (!force && Date.now() - pubPulled < 10e3) return;
+  pubPulled = Date.now();
+  srvSend({ t: 'pubfeed' });
+}
+function applyPubFeed(m) {
+  const names = m.names && typeof m.names === 'object' ? m.names : {};
+  Object.keys(names).forEach(c => { if (!CODE_RE.test(c)) return; state.names[c] = str(names[c].name, 24) || 'Alguien'; if (names[c].handle) pubHandles[c] = str(names[c].handle, 20); });
+  const keep = state.feed.filter(x => !x.pubx);
+  const next = [];
+  (Array.isArray(m.posts) ? m.posts : []).forEach(x => {
+    if (!x || typeof x.id !== 'string' || !CODE_RE.test(String(x.from)) || isBlocked(x.from)) return;
+    const md = normMedia(x.m), text = str(x.text, 400);
+    if (!text && !md) return;
+    const react = {}; Object.keys(x.r || {}).forEach(c => { if (CODE_RE.test(c) && REACTS.includes(x.r[c])) react[c] = x.r[c]; });
+    const cmt = (Array.isArray(x.c) ? x.c : []).filter(c => c && typeof c.text === 'string' && CODE_RE.test(String(c.from))).slice(-30).map(c => ({ id: str(c.id, 40), from: c.from, text: str(c.text, 140), ts: Math.min(Date.now(), Number(c.ts) || 0) }));
+    const own = keep.find(k => k.id === x.id && k.from === x.from);
+    if (own) { Object.assign(own.react, react); cmt.forEach(c => { if (!own.cmt.some(o => o.id === c.id)) own.cmt.push(c); }); return; }   // ya la tengo por amigos, grupos o es mía
+    next.push({ id: x.id.slice(0, 40), from: x.from, gid: '', ts: Math.min(Date.now(), Number(x.ts) || 0), w: null, pub: { text, m: md }, react, cmt, pubx: true });
+  });
+  const before = state.feed.filter(x => x.pubx).length;
+  state.feed = keep.concat(next);
+  if (next.length || before) { save(); renderHome(); if (thOpen) renderThread(); }
+}
+
+setInterval(() => { if (currentTab === 'inicio' && !document.hidden) pullPub(); }, 60e3);
+document.addEventListener('visibilitychange', () => { if (!document.hidden && currentTab === 'inicio') pullPub(); });
+
 function srvReady(m) {
   state.names[m.me.code] = m.me.name;
   m.friends.forEach(s => {
@@ -3102,33 +3187,52 @@ function srvReady(m) {
   state.requests.incoming = inOld.filter(r => !r.srv).concat(m.inReq.map(r => inOld.find(o => o.srv && o.code === r.code) || { id: uid(), name: r.name, code: r.code, ts: r.ts, srv: true }));
   state.requests.outgoing = outOld.filter(r => !r.srv).concat(m.outReq.map(r => outOld.find(o => o.srv && o.code === r.code) || { id: uid(), code: r.code, ts: r.ts, srv: true }));
   (m.blocked || []).forEach(c => { if (!state.blocked.includes(c) && state.blocked.length < 200) state.blocked.push(c); });
+  state.me.handle = /^[a-z0-9_.]{3,20}$/.test(String(m.me.handle)) ? m.me.handle : ''; state.me.priv = m.me.priv !== false;
+  if (m.graph) { state.net = normNet(m.graph); ['following', 'followers', 'freqIn', 'freqOut'].forEach(k => state.net[k].forEach(c => { state.names[c.code] = c.name; })); }
+  if (Array.isArray(m.notes)) {
+    srvNotes = true;
+    const seen = Number(m.nseen) || 0;
+    state.notes = normNotes(m.notes.map(n => Object.assign({}, n, { seen: (Number(n.ts) || 0) <= seen })));
+    m.notes.forEach(n => { if (n.name && n.from) state.names[n.from] = n.name; });
+  }
   m.groups.forEach(addServerGroup);
   state.groups.filter(g => g.srv && g.gym && !m.groups.some(x => x.gid === g.id)).forEach(g => { g.srv = false; });
   srvFlush();
   save();
   renderAll();
+  pullPub(true);
 }
 
 function onSrvMsg(m) {
   switch (m.t) {
     case 'ready': srvReady(m); return;
-    case 'req':
-      state.names[m.from] = m.name;
-      if (!friendByCode(m.from)) receiveRequest({ id: uid(), name: m.name, code: m.from, ts: m.ts, srv: true });
+    case 'req': state.names[m.from] = m.name; return;   // solicitudes de amistad por código (clientes antiguos): el aviso llega como notificación
+    case 'graph': applyGraph(m); return;
+    case 'pubfeed': applyPubFeed(m); return;
+    case 'note': addNote(Object.assign({}, m.note, { seen: false }), false, true); return;
+    case 'notegone': {
+      const n0 = state.notes.length;
+      state.notes = state.notes.filter(x => x.id !== m.id);
+      if (n0 !== state.notes.length) { save(); paintBell(); if ($('#notes').classList.contains('open')) renderNotes(); }
       return;
+    }
+    case 'nseen': {
+      let ch = false;
+      state.notes.forEach(n => { if (!n.seen && n.ts <= m.ts) { n.seen = true; ch = true; } });
+      if (ch) { save(); paintBell(); }
+      return;
+    }
+    case 'found': found = (m.list || []).map(normCard); renderSearch(); return;
     case 'ok':
-      if (m.re === 'req') {
-        state.names[m.to] = m.name;
-        state.requests.outgoing.push({ id: uid(), code: m.to, ts: Date.now(), srv: true });
-        save();
-        $('#codeInput').value = '';
-        setCodeMsg(state.me.name === 'Yo' ? 'Solicitud enviada. Ponte un nombre en Perfil para que te reconozcan.' : 'Solicitud enviada. Cuando la acepte, aparecerá en tus amigos.', 'ok');
-        toast('Solicitud enviada');
-        renderSocial();
-      }
+      if (m.re === 'handle') { state.me.handle = m.h; hdlEdit = false; $('#hdlInput').value = ''; setHdlMsg(''); save(); renderRequests(); paintProfileNet(); toast(`${T('Tu usuario es')} @${m.h}`); }
+      else if (m.re === 'follow') toast(m.state === 'requested' ? T('Solicitud enviada') : T('Ahora sigues a esta persona'));
       return;
     case 'err':
-      if (m.re === 'req') setCodeMsg(ERR_REQ[m.why] || 'No se pudo enviar la solicitud.', 'err');
+      if (m.re === 'handle') setHdlMsg(T(HDL_ERR[m.why] || HDL_ERR.invalid), 'err');
+      else if (m.re === 'follow') toast(FOLLOW_ERR[m.why] || FOLLOW_ERR['no-user']);
+      else if (m.re === 'gx' && m.why === 'nohandle') toast(T('Para publicar en público primero elige tu @usuario (Social → Amigos).'));
+      else if (m.re === 'gx' && m.why === 'busy') toast(T('Demasiadas acciones seguidas. Espera un poco.'));
+      else if (m.re === 'search') $('#srchMsg').textContent = T(FOLLOW_ERR.busy);
       else if (m.re === 'gnew') toast('No se pudo crear el grupo en el servidor');
       else if (m.re === 'gcreate' || m.re === 'gjoin') { const t = T(ERR_GYM[m.why] || ERR_GYM.invalid); if ($('#sheetGym').classList.contains('open')) $('#gjMsg').textContent = t; else toast(t); }
       return;
@@ -3141,7 +3245,6 @@ function onSrvMsg(m) {
       if (!f) { f = { id: uid(), name: m.name, code: m.code }; state.friends.push(f); }
       if (isNew) addNote({ type: 'friend', from: m.code }, true);
       f.srv = true; f.name = m.name; f.on = !!m.online;
-      setCodeMsg('');
       save();
       renderAll();
       if (isNew) toast(`${m.name} y tú ya sois amigos 🎉`);
@@ -3301,22 +3404,9 @@ function simulate() {
   else receive(g, { id: uid(), from, ts: Date.now(), type: 'text', text: pick(SIM_TEXTS) });
 }
 
-function simulateRequest() {
-  let code;
-  do { code = genCode(); } while (code === state.me.code || state.friends.some(f => f.code === code));
-  receiveRequest({ id: uid(), name: pick(SIM_NAMES), code, ts: Date.now() });
-}
-
-function simulateAccept() {
-  const r = state.requests.outgoing[0];
-  if (!r) { toast('Envía antes una solicitud con un código'); return; }
-  state.requests.outgoing.shift();
-  const name = pick(SIM_NAMES);
-  state.friends.push({ id: uid(), name, code: r.code });
-  save();
-  renderAll();
-  toast(`${name} aceptó tu solicitud 🎉`);
-}
+// Las solicitudes simuladas con código ya no existen: ahora se sigue por @usuario con el servidor.
+function simulateRequest() { toast('Las solicitudes de prueba ya no existen: usa dos móviles con el servidor'); }
+function simulateAccept() { simulateRequest(); }
 
 
 
@@ -3611,18 +3701,11 @@ function bind() {
 
   // Social
   $$('[data-seg]').forEach(b => b.addEventListener('click', () => setSeg(b.dataset.seg)));
-  $('#segAdd').addEventListener('click', () => { if (state.ui.seg === 'chats') openGroupSheet(); else goRequests(); });
+  bindPeople();
   $('#gymOpen').addEventListener('click', openGymSheet);
   $('#gjCreate').addEventListener('click', createGymGroup);
   $('#gjJoin').addEventListener('click', joinGymGroup);
   $('#gjCode').addEventListener('input', e => { e.target.value = normCode(e.target.value).slice(0, 8); $('#gjMsg').textContent = ''; });
-  $('#reqHead').addEventListener('click', () => { reqOpen = !reqOpen; renderRequests(); });
-  $('#codeInput').addEventListener('input', e => { e.target.value = normCode(e.target.value).slice(0, 7); setCodeMsg(''); });
-  $('#codeInput').addEventListener('keydown', e => { if (e.key === 'Enter') sendRequest(); });
-  $('#sendReq').addEventListener('click', sendRequest);
-  const copyMine = async () => toast((await copyText(state.me.code)) ? 'Código copiado' : `Tu código: ${state.me.code}`);
-  $('#copyCode').addEventListener('click', copyMine);
-  $('#copyCode2').addEventListener('click', copyMine);
   $('#saveGroup').addEventListener('click', createGroup);
   $('#chatBack').addEventListener('click', closeChat);
   $('#chatInfo').addEventListener('click', openGroupInfo);
