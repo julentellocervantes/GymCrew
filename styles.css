@@ -2239,3 +2239,10 @@ html.rm .rev.pre { opacity: 1; transform: none; }
 @keyframes setIn { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: none; } }
 .danger-zone h3 { color: #d93a4a; }
 @media (prefers-reduced-motion: reduce) { .set-page { animation: none; } }
+
+/* Filas de chips en una sola línea con scroll */
+.chips.row-scroll{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding-bottom:2px}
+.chips.row-scroll::-webkit-scrollbar{display:none}
+.chips.row-scroll .chip{flex:0 0 auto;white-space:nowrap}
+.today-main{margin:12px 0 4px}
+.today-quick{margin-top:12px;padding-top:6px;border-top:1px solid color-mix(in srgb,currentColor 12%,transparent)}

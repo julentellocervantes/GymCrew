@@ -162,17 +162,19 @@
             <span id="todayBurst" class="pl-burst" aria-hidden="true"></span>
             <h2 id="todayTitle">Hoy</h2>
             <p id="todaySub" class="muted small"></p>
-            <p class="label">Registro de un toque · tipo</p>
-            <div id="quickType" class="chips" role="group" aria-label="Tipo de entreno"></div>
+            <div class="row2 today-main">
+              <button id="todayGo" class="btn primary" type="button">Entreno completo</button>
+              <button id="repeatLast" class="btn" type="button">Repetir el último</button>
+            </div>
+            <div class="today-quick">
+            <p class="label">O regístralo en un toque · tipo</p>
+            <div id="quickType" class="chips row-scroll" role="group" aria-label="Tipo de entreno"></div>
             <p class="label">¿Cómo te fue? Toca para guardar</p>
             <div id="quickFeel" class="quick-mood" role="group" aria-label="Sensación">
               <button type="button" data-qf="1" aria-label="Mal">😞</button><button type="button" data-qf="2" aria-label="Regular">😕</button>
               <button type="button" data-qf="3" aria-label="Normal">😐</button><button type="button" data-qf="4" aria-label="Bien">🙂</button>
               <button type="button" data-qf="5" aria-label="Genial">😄</button>
             </div>
-            <div class="row2">
-              <button id="todayGo" class="btn primary" type="button">Entreno completo</button>
-              <button id="repeatLast" class="btn" type="button">Repetir el último</button>
             </div>
           </div>
 
@@ -201,7 +203,7 @@
             </div>
             <p class="muted small center">Toca un día para añadir o ver un entreno.</p>
             <input type="search" id="entrySearch" class="entry-search" placeholder="Buscar por ejercicio o nota" aria-label="Buscar entrenos" maxlength="40" autocomplete="off">
-            <div id="typeFilters" class="chips" role="group" aria-label="Filtrar por tipo"></div>
+            <div id="typeFilters" class="chips row-scroll" role="group" aria-label="Filtrar por tipo"></div>
             <ul id="monthList" class="rows"></ul>
           </div>
 
@@ -235,8 +237,7 @@
             <button data-seg="chats">Chats</button>
             <button data-seg="groups">Grupos</button>
           </div>
-          <p id="srvNotice" class="glass notice small muted">Sin servidor: tus amigos y chats se guardan solo en este móvil. Conecta tu servidor en Ajustes → Avanzado para hablar con otros móviles.</p>
-          <p class="muted small">Todo lo social es opcional. Compartes entreno a entreno y puedes bloquear, reportar o salir cuando quieras.</p>
+          <p id="srvNotice" class="glass notice small muted">Sin conexión al servidor: tus chats se guardan solo en este móvil.</p>
 
           <div id="reqCard" class="glass card req-card">
             <div class="req-head static">
@@ -317,11 +318,15 @@
             <div id="pfGrid" class="pf-grid hidden"></div>
           </section>
 
-          <div class="glass card">
-            <h3>Marco de perfil</h3>
+          <button id="frameTitle" class="fold glass" data-fold="frame" data-target="frameBody" aria-expanded="false">
+            <span class="fold-ico">🖼️</span>
+            <span class="fold-t"><strong>Marco de perfil</strong></span>
+            <svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div id="frameBody" class="collapse"><div>
             <div id="frameGrid" class="frame-grid"></div>
             <p id="frameHint" class="muted small hidden">Desbloquea marcos con tus logros.</p>
-          </div>
+          </div></div>
 
           <button id="achDoneTitle" class="fold glass" data-fold="achDone" data-target="achDoneBody" aria-expanded="true">
             <span class="fold-ico">🏅</span>

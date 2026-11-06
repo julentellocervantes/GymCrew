@@ -3488,7 +3488,7 @@ function bindSrv() {
   Srv.start({ code: state.me.code, name: state.me.name }).then(() => { srvStatusUI(); paintLoginSkip(); });
 }
 
-const FOLD_DEFAULT = { inv: false, achDone: true, achTodo: true, missions: true, trophies: true };
+const FOLD_DEFAULT = { inv: false, frame: false, achDone: false, achTodo: false, missions: true, trophies: true };
 function paintFold(btn) {
   const key = btn.dataset.fold;
   const open = key in state.ui.fold ? !!state.ui.fold[key] : FOLD_DEFAULT[key];
