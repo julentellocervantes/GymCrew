@@ -109,7 +109,7 @@ function normWorkout(w) {
     ex: (Array.isArray(w.ex) ? w.ex : []).filter(e => e && typeof e.k === 'string').slice(0, 40).map(e => ({ k: str(e.k, 40), sets: (Array.isArray(e.sets) ? e.sets : []).slice(0, 30).map(normSet) })),
     pr: (Array.isArray(w.pr) ? w.pr : []).slice(0, 12).map(p => ({ k: str(p && p.k, 40), t: ['1rm', 'peso', 'vol', 'reps'].includes(p && p.t) ? p.t : 'peso', v: num(p && p.v, 0, 100000) })).filter(p => p.k)
   };
-  if (w.sh && typeof w.sh === 'object') o.sh = { f: !!w.sh.f, p: !!w.sh.p, tp: TOPIC_IDS.includes(w.sh.tp) ? w.sh.tp : '', g: (Array.isArray(w.sh.g) ? w.sh.g : []).filter(x => typeof x === 'string').slice(0, 40), vol: !!w.sh.vol, note: !!w.sh.note };
+  if (w.sh && typeof w.sh === 'object') o.sh = { f: !!w.sh.f, p: !!w.sh.p, tp: TOPIC_IDS.includes(w.sh.tp) ? w.sh.tp : '', g: (Array.isArray(w.sh.g) ? w.sh.g : []).filter(x => typeof x === 'string').slice(0, 40), vol: !!w.sh.vol, note: !!w.sh.note, det: !!w.sh.det };
   return o;
 }
 const normWorkouts = a => (Array.isArray(a) ? a : []).map(normWorkout).filter(Boolean);
@@ -1512,7 +1512,7 @@ function openWorkout(w, o = {}) {
     else if (o.routine) { ed.type = o.routine.type; ed.ex = o.routine.ex.map(k => ({ k, sets: lastSetsFor(k).slice(0, 3).map(s => ({ r: s.r, w: s.w })) })); state.ui.lastRoutine = o.routine.id; save(); }
     else if (state.ui.draft && Date.now() - state.ui.draft.at < 12 * 3600e3 && !o.date) { ed = JSON.parse(JSON.stringify(state.ui.draft)); ed.id = ''; toast('Borrador recuperado'); }
   }
-  edShare = w && w.sh ? { f: w.sh.f, p: !!w.sh.p, tp: w.sh.tp || '', g: [...w.sh.g], vol: w.sh.vol, note: w.sh.note } : { f: false, p: false, tp: '', g: [], vol: false, note: false };
+  edShare = w && w.sh ? { f: w.sh.f, p: !!w.sh.p, tp: w.sh.tp || '', g: [...w.sh.g], vol: w.sh.vol, note: w.sh.note, det: !!w.sh.det } : { f: false, p: false, tp: '', g: [], vol: false, note: false, det: true };
   paintWorkout();
   $('#workout').classList.add('open');
   syncOverlayClass();
@@ -1705,6 +1705,7 @@ function paintShare() {
   $('#shPublic').disabled = !on;
   paintTopicRow($('#shTopics'), edShare.tp, id => { edShare.tp = id; paintShare(); });
   $('#shVol').checked = edShare.vol;
+  $('#shDet').checked = edShare.det;
   $('#shNote').checked = edShare.note;
   $('#shOpts').classList.toggle('hidden', !(edShare.f || edShare.p || edShare.g.length));
   const box = $('#shGroups');
@@ -1736,7 +1737,7 @@ function saveWorkout() {
   const isNew = !ed.id;
   const w = normWorkout(Object.assign({}, ed, { id: ed.id || uid() }));
   w.pr = prsFor(w);
-  const share = edShare.f || edShare.p || edShare.g.length ? { f: edShare.f, p: edShare.p, tp: edShare.tp, g: edShare.g, vol: edShare.vol, note: edShare.note } : null;
+  const share = edShare.f || edShare.p || edShare.g.length ? { f: edShare.f, p: edShare.p, tp: edShare.tp, g: edShare.g, vol: edShare.vol, note: edShare.note, det: edShare.det } : null;
   if (share) w.sh = share; else delete w.sh;
   const i = state.workouts.findIndex(x => x.id === w.id);
   if (i >= 0) state.workouts[i] = w; else state.workouts.push(w);
@@ -1893,7 +1894,23 @@ function feedSummary(w) {
 
 const PR_KIND_EN = { '1rm': 'est. 1RM', peso: 'top weight', vol: 'volume', reps: 'reps' };
 const reactTotal = p => Object.keys(p.react || {}).length;
-function workoutEmbed(p) {
+// Detalle de ejercicios que recibo: solo texto y números acotados
+function normDet(d) {
+  return (Array.isArray(d) ? d : []).slice(0, 20).map(e => ({ n: str(e && e.n, 40), s: (Array.isArray(e && e.s) ? e.s : []).slice(0, 15).map(x => [Math.max(1, Math.min(999, Math.round(Number(x && x[0])) || 0)), Math.max(0, Math.min(1000, Math.round((Number(x && x[1]) || 0) * 10) / 10))]) })).filter(e => e.n && e.s.length);
+}
+const fmtSet = ([r, w]) => (w > 0 ? `${r}×${fmtKg(w)} kg` : `${r} ${T('reps')}`);
+function detBox(det, open) {
+  const d = document.createElement('details'); d.className = 'tw-det'; d.open = !!open;
+  const sm = document.createElement('summary'); sm.textContent = `${T('Ver ejercicios')} (${det.length})`;
+  d.appendChild(sm);
+  det.forEach(e => {
+    const row = el('div', 'det-ex');
+    row.append(ut(el('strong', '', e.n)), el('span', 'det-sets', e.s.map(fmtSet).join('  ·  ')));
+    d.appendChild(row);
+  });
+  return d;
+}
+function workoutEmbed(p, open) {
   const t = typeOf(p.w.ty);
   const box = el('div', 'tw-embed');
   const top = el('p', 'feed-sum');
@@ -1909,6 +1926,8 @@ function workoutEmbed(p) {
   if (stats.children.length) box.appendChild(stats);
   (p.w.pr || []).forEach(r => box.appendChild(ut(el('span', 'pr-chip', `🏅 ${r.n} · ${state.settings.lang === 'en' ? PR_KIND_EN[r.k] : PR_LABEL[r.k] || ''} ${fmtKg(r.v)}${r.k === 'reps' ? '' : ' kg'}`))));
   if (p.w.note) box.appendChild(ut(el('p', 'feed-note', p.w.note)));
+  const det = normDet(p.w.det);
+  if (det.length) box.appendChild(detBox(det, open));
   return box;
 }
 
@@ -1942,7 +1961,7 @@ function feedCard(p, opt = {}) {
   menu.addEventListener('click', e => { e.stopPropagation(); if (mine) { unsharePost(p); closeThread(); } else openMod(p.from, 'entreno de ' + personName(p.from)); });
   head.append(who, menu);
   col.appendChild(head);
-  col.appendChild(p.pub ? pubBody(p) : workoutEmbed(p));
+  col.appendChild(p.pub ? pubBody(p) : workoutEmbed(p, opt.thread));
 
   const mineR = p.react[state.me.code], liked = mineR === '❤️';
   const ncm = p.cmt.filter(c => !isBlocked(c.from)).length, nr = reactTotal(p);
@@ -1977,7 +1996,7 @@ function feedCard(p, opt = {}) {
   li.append(av, col);
   if (!opt.thread) {
     li.classList.add('tappable');
-    li.addEventListener('click', e => { if (e.target.closest('button, video, a, input')) return; openThread(p); });
+    li.addEventListener('click', e => { if (e.target.closest('button, video, a, input, details')) return; openThread(p); });
   }
   return li;
 }
@@ -2494,23 +2513,6 @@ function crewStrip(fy) {
   return wrap;
 }
 
-function composerCard() {
-  const li = el('li', 'glass composer');
-  const av = el('span', 'avatar');
-  paintAvatar(av, state.me.name);
-  const b = el('button', 'composer-in');
-  b.type = 'button';
-  b.textContent = T('Comparte…');
-  b.addEventListener('click', () => openPost('pub'));
-  const ph = el('button', 'icon-btn plain composer-go');
-  ph.type = 'button'; ph.setAttribute('aria-label', T('Publicar foto o vídeo')); ph.textContent = '📷';
-  ph.addEventListener('click', () => openPost('pub'));
-  const g = el('button', 'icon-btn plain composer-go');
-  g.type = 'button'; g.setAttribute('aria-label', T('Entreno completo')); g.textContent = '🏋️';
-  g.addEventListener('click', () => openWorkout(null, {}));
-  li.append(av, b, ph, g);
-  return li;
-}
 
 function renderFeed() {
   expireStories();
@@ -2529,7 +2531,6 @@ function renderFeed() {
   sel.value = state.ui.tp || '';
   const ul = $('#feedList');
   ul.innerHTML = '';
-  ul.appendChild(composerCard());
   const list = homeFeed().slice(0, 40);
   if (!list.length) ul.appendChild(fy ? emptyState('🌍', state.ui.tp ? 'Nada con este tema todavía' : 'Aún no hay publicaciones públicas', state.ui.tp ? 'Prueba con otro tema o publica tú el primero.' : 'Cuando alguien publique en público, saldrá aquí. Tú también puedes ser el primero.') : emptyState('👥', 'Aquí verás a tu gente', 'Publicaciones e historias de tus amigos, tus grupos y la gente que sigues. Búscalos en Social.'));
   list.forEach(p => ul.appendChild(feedCard(p)));
@@ -2580,6 +2581,7 @@ function shareWorkout(w) {
   if (w.feel) wk.feel = w.feel;
   if (sh.vol) wk.vol = Math.round(workoutVol(w));
   if (sh.note && w.note) wk.note = w.note.slice(0, 140);
+  if (sh.det) wk.det = w.ex.slice(0, 20).map(e => ({ n: exName(e.k), s: doneSets(e).slice(0, 15).map(s => [s.r, s.w]) })).filter(e => e.s.length);
   const p = { id: w.id, w: wk }; if (sh.tp) p.tp = sh.tp;
   let sent = 0;
   if (sh.f && srvSend({ t: 'gx', to: 'friends', k: 'post', p })) sent++;
@@ -3352,6 +3354,7 @@ function normPubW(w) {
   if (n(w.feel, 5)) o.feel = n(w.feel, 5);
   if (w.vol !== undefined) o.vol = n(w.vol, 1e6);
   if (w.note) o.note = str(w.note, 140);
+  const dt = normDet(w.det); if (dt.length) o.det = dt;
   return o;
 }
 function applyPubFeed(m) {
@@ -3944,6 +3947,7 @@ function bind() {
   $('#shFriends').addEventListener('change', e => { edShare.f = e.target.checked; paintShare(); });
   $('#shPublic').addEventListener('change', e => { edShare.p = e.target.checked; paintShare(); });
   $('#shVol').addEventListener('change', e => { edShare.vol = e.target.checked; });
+  $('#shDet').addEventListener('change', e => { edShare.det = e.target.checked; });
   $('#shNote').addEventListener('change', e => { edShare.note = e.target.checked; });
 
   // Social

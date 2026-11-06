@@ -281,6 +281,9 @@ function cleanGx(k, p) {
     if (w.feel !== undefined && int(w.feel, 1, 5)) o.w.feel = int(w.feel, 1, 5);
     if (w.vol !== undefined && int(w.vol, 0, 1e6) !== null) o.w.vol = int(w.vol, 0, 1e6); // solo si la persona decidió compartir el volumen
     if (w.note) o.w.note = txt(w.note, 140);                                              // solo si la persona decidió compartir la nota
+    if (Array.isArray(w.det)) {   // detalle de ejercicios: solo si la persona decidió compartirlo; texto y números acotados
+      o.w.det = w.det.slice(0, 20).map(e => ({ n: txt(e && e.n, 40), s: (Array.isArray(e && e.s) ? e.s : []).slice(0, 15).map(x => [int(x && x[0], 1, 999) || 0, Math.max(0, Math.min(1000, Math.round((Number(x && x[1]) || 0) * 10) / 10))]).filter(x => x[0]) })).filter(e => e.n && e.s.length);
+    }
     if (TOPICS.includes(p.tp)) o.tp = p.tp;
     return o;
   }

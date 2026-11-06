@@ -2333,3 +2333,13 @@ h1, h2, h3, .today-card h2 { font-weight: 800; letter-spacing: -.01em; }
 .pf-top .name-input { background: transparent; border-color: transparent; box-shadow: none; }
 .pf-top .name-input:focus { background: var(--fill); }
 .pf-bar .ava-big { --s: 92px; }
+
+/* Detalle de ejercicios en una publicación de entreno */
+.tw-det { margin-top: 10px; border-radius: 16px; background: var(--fill); padding: 2px 12px; }
+.tw-det summary { cursor: pointer; padding: 10px 0; font-weight: 700; color: var(--accent-text); list-style: none; min-height: 24px; }
+.tw-det summary::-webkit-details-marker { display: none; }
+.tw-det summary::after { content: " ▾"; }
+.tw-det[open] summary::after { content: " ▴"; }
+.det-ex { display: flex; flex-direction: column; gap: 2px; padding: 8px 0; border-top: 1px solid color-mix(in srgb, currentColor 10%, transparent); }
+.det-sets { color: var(--muted); font-size: .86rem; font-variant-numeric: tabular-nums; line-height: 1.5; }
+.crew-box { margin-bottom: 8px; }

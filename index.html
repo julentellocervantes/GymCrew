@@ -136,7 +136,6 @@
         <section id="view-inicio" class="view active">
           <button id="newPill" class="new-pill hidden" type="button">↑ Publicaciones nuevas</button>
           <div id="homeFeed">
-            <ul id="crewBox" class="rows crew-box"></ul>
             <div class="feed-bar">
               <div id="feedTabs" class="seg seg2 glass" data-idx="0" role="tablist" aria-label="Feed">
                 <button type="button" data-ft="foryou" role="tab" aria-selected="true">Para ti</button>
@@ -144,6 +143,7 @@
               </div>
               <select id="tpSel" class="tp-sel glass" aria-label="Filtrar por tema"></select>
             </div>
+            <ul id="crewBox" class="rows crew-box"></ul>
             <ul id="feedList" class="rows"></ul>
           </div>
           <p class="muted small center">GymCrew no sustituye a un profesional de la salud ni da consejos médicos o de dieta.</p>
@@ -534,6 +534,7 @@
           <p class="label">Tema (opcional)</p>
           <div id="shTopics" class="chips row-scroll" role="group" aria-label="Tema"></div>
           <label class="switchrow"><span><strong>Incluir el volumen total</strong><small class="muted">Si no, solo tipo, duración y récords</small></span><input type="checkbox" id="shVol" class="switch"></label>
+          <label class="switchrow"><span><strong>Mostrar cada ejercicio</strong><small class="muted">Quien lo vea puede abrir los ejercicios y las series</small></span><input type="checkbox" id="shDet" class="switch"></label>
           <label class="switchrow"><span><strong>Incluir mi nota</strong><small class="muted">Por defecto no se envía</small></span><input type="checkbox" id="shNote" class="switch"></label>
         </div>
       </div>
