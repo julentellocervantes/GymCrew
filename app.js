@@ -136,7 +136,7 @@ function defaults() {
     friends: [], groups: [], names: {},
     requests: { incoming: [], outgoing: [] },
     achievements: {},
-    ui: { fold: {}, tab: '', home: 'feed', ff: '', fl: 'friends', seg: 'groups', pf: 'posts', hseg: 'today', filter: '', draft: null, lastRoutine: '', quickType: 'fuerza' },
+    ui: { fold: {}, tab: '', home: 'feed', ff: '', fl: 'friends', seg: 'friends', pf: 'posts', hseg: 'today', filter: '', draft: null, lastRoutine: '', quickType: 'fuerza' },
     settings: { noteToast: true, browserNotif: false, theme: 'auto', lang: 'es', haptics: true, goal: 3, rest: 90, lock: { on: false, h: '', s: '', after: 0 } }
   };
 }
@@ -163,7 +163,7 @@ function load(src) {
     ui: {
       pf: ['posts', 'replies', 'photos'].includes(ui.pf) ? ui.pf : 'posts',
       home: ui.home === 'day' ? 'day' : 'feed', fl: ['friends', 'following', 'followers'].includes(ui.fl) ? ui.fl : 'friends', ff: ['f', 'g', 'p'].includes(ui.ff) ? ui.ff : '',
-      fold: Object.assign({}, ui.fold), tab: str(ui.tab, 12), seg: ['groups', 'chats', 'friends'].includes(ui.seg) ? ui.seg : 'groups',
+      fold: Object.assign({}, ui.fold), tab: str(ui.tab, 12), seg: ['friends', 'chats', 'groups'].includes(ui.seg) ? ui.seg : 'friends',
       hseg: ['today', 'hist', 'routines', 'progress'].includes(ui.hseg) ? ui.hseg : 'today', filter: TYPE_IDS.includes(ui.filter) ? ui.filter : '',
       draft: ui.draft && typeof ui.draft === 'object' && normWorkout(ui.draft) ? Object.assign(normWorkout(ui.draft), { at: Number(ui.draft.at) || 0 }) : null,
       lastRoutine: str(ui.lastRoutine, 40), quickType: TYPE_IDS.includes(ui.quickType) ? ui.quickType : 'fuerza'
@@ -1780,7 +1780,7 @@ function updateBadge() {
 }
 
 /* ---------- Social: pestañas ---------- */
-const SEGS = ['groups', 'chats', 'friends'];
+const SEGS = ['friends', 'chats', 'groups'];
 function setSeg(s) {
   if (state.ui.seg === s) return;
   state.ui.seg = s;
@@ -2949,7 +2949,7 @@ function paintPeople() {
   if (need && document.activeElement !== $('#hdlInput') && !$('#hdlInput').value) $('#hdlInput').value = state.me.handle;
   $('#srchInput').disabled = !srvOn();
   const q = $('#srchInput').value.trim().replace(/^@/, '');
-  $('#srchMsg').textContent = !srvOn() ? T('Conecta con el servidor (Ajustes → Servidor) para buscar personas.') : q.length >= 2 && !found.length && !srchTimer ? T('Nadie con ese usuario. Prueba con otro.') : '';
+  $('#srchMsg').textContent = !srvOn() ? T('Conecta con el servidor (Ajustes → Avanzado) para buscar personas.') : q.length >= 2 && !found.length && !srchTimer ? T('Nadie con ese usuario. Prueba con otro.') : '';
 }
 function renderSearch() {
   const ul = $('#srchList');
@@ -3536,8 +3536,33 @@ function updateNotifBtn() {
   else b.textContent = 'Activar avisos del navegador';
 }
 
-function openSettings() {
+/* Ajustes: un índice con apartados claros; cada apartado se abre en su propia página */
+let setPageNow = '';
+function paintSettingsHub() {
+  const a = state.account;
+  $('#setAva').textContent = (state.me.name || '?').trim().charAt(0).toUpperCase() || '?';
+  $('#setAccName').textContent = state.me.name || T('Tu cuenta');
+  $('#setAccSub').textContent = a ? [state.me.handle ? '@' + state.me.handle : '', a.email].filter(Boolean).join(' · ') : T('Crear cuenta o entrar');
+  const th = { auto: 'Automático', day: 'Día', night: 'Noche' }[state.settings.theme] || 'Automático';
+  $('#setSubLook').textContent = `${T('Tema')} ${T(th).toLowerCase()} · ${state.settings.lang === 'en' ? 'English' : 'Español'}`;
+  const rest = state.settings.rest >= 120 ? `${state.settings.rest / 60} min` : `${state.settings.rest} s`;
+  $('#setSubTrain').textContent = `${T('Objetivo')} ${state.settings.goal}/${T('sem')} · ${T('descanso')} ${rest}`;
+  $('#setSubNotes').textContent = `${T('Actividad')}: ${T(state.settings.noteToast !== false ? 'sí' : 'no')} · ${T('vibración')}: ${T(state.settings.haptics !== false ? 'sí' : 'no')}`;
+  $('#setSubPriv').textContent = `${T('PIN')}: ${T(state.settings.lock.on ? 'activado' : 'desactivado')} · ${state.blocked.length} ${T(state.blocked.length === 1 ? 'bloqueado' : 'bloqueados')}`;
+}
+function setPage(name) {
+  setPageNow = name || '';
+  $('#setHub').classList.toggle('hidden', !!name);
+  let title = 'Ajustes';
+  $$('#settings .set-page').forEach(pg => { const on = pg.dataset.page === name; pg.classList.toggle('hidden', !on); if (on) title = pg.dataset.title; });
+  $('#setTitle').textContent = T(title);
+  $('#settings .ov-body').scrollTop = 0;
+  if (!name) paintSettingsHub();
+}
+function settingsBack() { if (setPageNow) setPage(''); else closeSettings(); }
+function openSettings(page) {
   rememberOpener();
+  setPage(typeof page === 'string' ? page : '');
   $('#rsHaptics').checked = state.settings.haptics !== false;
   paintAppearance();
   updateNotifBtn();
@@ -3546,6 +3571,7 @@ function openSettings() {
 }
 function closeSettings() {
   $('#settings').classList.remove('open');
+  setPageNow = '';
   syncOverlayClass();
 }
 
@@ -3762,7 +3788,7 @@ function bindQol() {
     if ($('.sheet.open')) { closeSheets(); return; }
     if ($('#workout.open')) { tryCloseWorkout(); return; }
     if ($('#gym.open')) { closeGymScreen(); return; }
-    if ($('#settings.open')) { closeSettings(); restoreFocus(); }
+    if ($('#settings.open')) { if (setPageNow) setPage(''); else { closeSettings(); restoreFocus(); } }
   });
   $('#rsHaptics').addEventListener('change', e => { state.settings.haptics = e.target.checked; save(); if (e.target.checked) buzz(14); });
 }
@@ -3778,8 +3804,9 @@ function bind() {
   $$('.tab').forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
   $$('[data-goto]').forEach(b => b.addEventListener('click', () => showTab(b.dataset.goto)));
   $('#hdrAva').addEventListener('click', () => showTab('perfil'));
-  $('#openSettings').addEventListener('click', openSettings);
-  $('#settingsBack').addEventListener('click', closeSettings);
+  $('#openSettings').addEventListener('click', () => openSettings());
+  $('#settingsBack').addEventListener('click', settingsBack);
+  $$('#settings [data-sp]').forEach(b => b.addEventListener('click', () => setPage(b.dataset.sp)));
   $('#backdrop').addEventListener('click', closeSheets);
   window.addEventListener('resize', () => moveIndicator(false));
   if ('ResizeObserver' in window) new ResizeObserver(() => moveIndicator(false)).observe($('#tabbar'));

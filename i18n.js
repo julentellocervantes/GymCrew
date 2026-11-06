@@ -11,7 +11,7 @@
     "✅ Hoy ya registraste": "✅ You already logged today",
     "Burbuja exclusiva": "Exclusive bubble",
     "Para la tienda": "For the shop",
-    "Sin servidor: tus amigos y chats se guardan solo en este móvil. Conecta tu servidor en Ajustes → Servidor para hablar con otros móviles.": "No server: your friends and chats are stored only on this phone. Connect your server in Settings → Server to talk to other phones.",
+    "Sin servidor: tus amigos y chats se guardan solo en este móvil. Conecta tu servidor en Ajustes → Avanzado para hablar con otros móviles.": "No server: your friends and chats are stored only on this phone. Connect your server in Settings → Server to talk to other phones.",
     "Sin conexión: el evento solo lo verás tú": "No connection: only you will see the event",
     "Cada uno juega desde su móvil. Uno crea la partida y le da al otro un código de 5 letras y 3 números.": "Each of you plays from your own phone. One creates the game and gives the other a code of 5 letters and 3 digits.",
     "Tu código: díselo a tu rival": "Your code: tell it to your rival",
@@ -1148,6 +1148,14 @@ Object.assign(EX, {
   'Justo después elegirás tu @usuario. Es obligatorio: es lo que usan los demás para encontrarte y seguirte. Luego te enseñaremos cómo se usa la app.': 'Right after that you will choose your @username. It is required: it is what others use to find and follow you. Then we will show you how to use the app.',
   'Así te encontrarán los demás para seguirte. Es obligatorio y puedes cambiarlo más adelante. Usa de 3 a 20 letras minúsculas, números, punto o guion bajo.': 'This is how others will find you to follow you. It is required and you can change it later. Use 3 to 20 lowercase letters, numbers, dot or underscore.',
   'por ejemplo ana_fit': 'for example ana_fit', 'Sin conexión con el servidor. Inténtalo en unos segundos.': 'No connection to the server. Try again in a few seconds.'
+});
+Object.assign(EX, {
+  'Ajustes': 'Settings', 'Tu cuenta': 'Your account', 'Apariencia e idioma': 'Appearance and language', 'Avisos y vibración': 'Alerts and vibration', 'Privacidad y seguridad': 'Privacy and security',
+  'Copias y exportación': 'Backups and export', 'Zona de peligro': 'Danger zone', 'Ayuda y tutorial': 'Help and tutorial', 'Avanzado': 'Advanced', 'Tu app': 'Your app', 'Privacidad y datos': 'Privacy and data', 'Más': 'More',
+  'Tema e idioma': 'Theme and language', 'Guardar o recuperar tus datos': 'Save or restore your data', 'Repaso guiado de la app': 'Guided tour of the app', 'Servidor y modo prueba': 'Server and test mode',
+  'Borrar datos, amigos o chats': 'Delete data, friends or chats', 'Estas acciones no se pueden deshacer. Antes de borrar, haz una copia completa.': 'These actions cannot be undone. Make a full backup before deleting.',
+  'Tema': 'Theme', 'Día': 'Day', 'Noche': 'Night', 'Objetivo': 'Goal', 'sem': 'wk', 'descanso': 'rest', 'Actividad': 'Activity', 'sí': 'on', 'no': 'off', 'vibración': 'vibration', 'PIN': 'PIN', 'activado': 'on', 'desactivado': 'off', 'bloqueado': 'blocked', 'bloqueados': 'blocked',
+  'Tus entrenos se guardan en este dispositivo. La cuenta solo identifica tu perfil social.': 'Your workouts are stored on this device. The account only identifies your social profile.'
 });
 // Glosario para trozos sueltos dentro de otras frases
   const GLOSS = [

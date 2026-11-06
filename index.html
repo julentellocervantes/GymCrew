@@ -231,11 +231,11 @@
         <!-- SOCIAL -->
         <section id="view-amigos" class="view">
           <div id="seg" class="seg seg3 glass" data-idx="0">
-            <button data-seg="groups">Grupos</button>
-            <button data-seg="chats">Chats</button>
             <button data-seg="friends">Amigos<span id="segBadge" class="badge xs hidden">0</span></button>
+            <button data-seg="chats">Chats</button>
+            <button data-seg="groups">Grupos</button>
           </div>
-          <p id="srvNotice" class="glass notice small muted">Sin servidor: tus amigos y chats se guardan solo en este móvil. Conecta tu servidor en Ajustes → Servidor para hablar con otros móviles.</p>
+          <p id="srvNotice" class="glass notice small muted">Sin servidor: tus amigos y chats se guardan solo en este móvil. Conecta tu servidor en Ajustes → Avanzado para hablar con otros móviles.</p>
           <p class="muted small">Todo lo social es opcional. Compartes entreno a entreno y puedes bloquear, reportar o salir cuando quieras.</p>
 
           <div id="reqCard" class="glass card req-card">
@@ -298,8 +298,7 @@
           <div id="profStats" class="grid3"></div>
 
           <div class="glass card profile-card">
-            <p class="muted small">Tu perfil</p>
-            <p id="myHandle" class="handle-big"></p>
+            <p id="myHandle" class="handle-big hidden"></p>
             <button id="editHandle" class="btn wide" type="button">Cambiar nombre de usuario</button>
             <label class="switchrow"><span><strong>Perfil privado</strong><small id="privNote" class="muted">Quien quiera seguirte necesita tu aprobación</small></span><input type="checkbox" id="rsPriv" class="switch" role="switch"></label>
             <div class="row2">
@@ -532,11 +531,53 @@
   <div id="settings" class="overlay" aria-hidden="true">
     <header class="ov-head glass">
       <button id="settingsBack" class="icon-btn" aria-label="Volver"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
-      <h2 style="margin:0">Ajustes</h2>
+      <h2 id="setTitle" style="margin:0">Ajustes</h2>
     </header>
     <div class="ov-body">
+      <div id="setHub" class="set-hub">
+        <button type="button" id="setAcc" class="glass set-acc" data-sp="account">
+          <span class="set-ava" id="setAva" aria-hidden="true">?</span>
+          <span class="set-txt"><b id="setAccName">Tu cuenta</b><small id="setAccSub" translate="no"></small></span><span class="set-chev" aria-hidden="true">›</span>
+        </button>
+        <p class="set-grp">Tu app</p>
+        <div class="glass set-list">
+        <button type="button" class="set-row" data-sp="look"><span class="set-ico" data-tone="a" aria-hidden="true">🎨</span><span class="set-txt"><b>Apariencia e idioma</b><small id="setSubLook"></small></span><span class="set-chev" aria-hidden="true">›</span></button>
+        <button type="button" class="set-row" data-sp="train"><span class="set-ico" data-tone="b" aria-hidden="true">🏋️</span><span class="set-txt"><b>Entrenamiento</b><small id="setSubTrain"></small></span><span class="set-chev" aria-hidden="true">›</span></button>
+        <button type="button" class="set-row" data-sp="notes"><span class="set-ico" data-tone="c" aria-hidden="true">🔔</span><span class="set-txt"><b>Avisos y vibración</b><small id="setSubNotes"></small></span><span class="set-chev" aria-hidden="true">›</span></button>
+        </div>
+        <p class="set-grp">Privacidad y datos</p>
+        <div class="glass set-list">
+        <button type="button" class="set-row" data-sp="privacy"><span class="set-ico" data-tone="d" aria-hidden="true">🔒</span><span class="set-txt"><b>Privacidad y seguridad</b><small id="setSubPriv"></small></span><span class="set-chev" aria-hidden="true">›</span></button>
+        <button type="button" class="set-row" data-sp="data"><span class="set-ico" data-tone="e" aria-hidden="true">💾</span><span class="set-txt"><b>Copias y exportación</b><small id="setSubData">Guardar o recuperar tus datos</small></span><span class="set-chev" aria-hidden="true">›</span></button>
+        </div>
+        <p class="set-grp">Más</p>
+        <div class="glass set-list">
+        <button type="button" class="set-row" data-sp="help"><span class="set-ico" data-tone="f" aria-hidden="true">🧭</span><span class="set-txt"><b>Ayuda y tutorial</b><small id="setSubHelp">Repaso guiado de la app</small></span><span class="set-chev" aria-hidden="true">›</span></button>
+        <button type="button" class="set-row" data-sp="adv"><span class="set-ico" data-tone="g" aria-hidden="true">🛠</span><span class="set-txt"><b>Avanzado</b><small id="setSubAdv">Servidor y modo prueba</small></span><span class="set-chev" aria-hidden="true">›</span></button>
+        </div>
+        <div class="glass set-list danger-list">
+        <button type="button" class="set-row" data-sp="danger"><span class="set-ico" data-tone="x" aria-hidden="true">⚠️</span><span class="set-txt"><b>Zona de peligro</b><small id="setSubDanger">Borrar datos, amigos o chats</small></span><span class="set-chev" aria-hidden="true">›</span></button>
+        </div>
+      </div>
+
+      <div class="set-page hidden" data-page="account" data-title="Tu cuenta">
       <div class="glass card">
-        <h3>Apariencia</h3>
+        <h3>Tu cuenta</h3>
+        <div id="accIn" class="hidden">
+          <p><strong id="accName"></strong></p>
+          <p id="accMail" class="muted small" translate="no"></p>
+          <button id="btnLogout" class="btn wide" type="button">Cerrar sesión</button>
+        </div>
+        <div id="accOut">
+          <p class="muted small">No has iniciado sesión. Con una cuenta (correo y contraseña) puedes volver a entrar desde otro dispositivo.</p>
+          <button id="btnLogin" class="btn primary wide" type="button">Crear cuenta o entrar</button>
+        </div>
+        <p class="muted small">Tus entrenos se guardan en este dispositivo. La cuenta solo identifica tu perfil social.</p>
+      </div>
+      </div>
+      <div class="set-page hidden" data-page="look" data-title="Apariencia e idioma">
+      <div class="glass card">
+        <h3>Tema e idioma</h3>
         <p class="muted small">Tema de la app</p>
         <div id="themeSeg" class="seg seg3 glass" data-idx="0">
           <button data-theme-opt="auto">Automático</button>
@@ -550,19 +591,8 @@
           <button data-lang="en">English</button>
         </div>
       </div>
-      <div class="glass card">
-        <h3>Cuenta</h3>
-        <div id="accIn" class="hidden">
-          <p><strong id="accName"></strong></p>
-          <p id="accMail" class="muted small" translate="no"></p>
-          <button id="btnLogout" class="btn wide" type="button">Cerrar sesión</button>
-        </div>
-        <div id="accOut">
-          <p class="muted small">No has iniciado sesión. Con una cuenta (correo y contraseña) puedes volver a entrar desde otro dispositivo.</p>
-          <button id="btnLogin" class="btn primary wide" type="button">Crear cuenta o entrar</button>
-        </div>
-        <p class="muted small">Tus datos se guardan solo en este navegador.</p>
       </div>
+      <div class="set-page hidden" data-page="train" data-title="Entrenamiento">
       <div class="glass card">
         <h3>Entrenamiento</h3>
         <label>Objetivo semanal
@@ -573,12 +603,8 @@
           <select id="restSel"><option value="30">30 s</option><option value="60">60 s</option><option value="90">90 s</option><option value="120">2 min</option><option value="180">3 min</option><option value="240">4 min</option></select>
         </label>
       </div>
-      <div class="glass card">
-        <h3>Ayuda</h3>
-        <p class="muted small">Un repaso guiado por todas las secciones de la app.</p>
-        <button id="btnTour" class="btn wide">Ver el tutorial</button>
-        <p class="muted small">GymCrew no sustituye a un profesional de la salud ni da consejos médicos o de dieta. Pensada para mayores de 16 años.</p>
       </div>
+      <div class="set-page hidden" data-page="notes" data-title="Avisos y vibración">
       <div class="glass card">
         <h3>Avisos</h3>
         <p class="muted small">Recibe una notificación del navegador cuando un amigo escriba. Nunca habrá recordatorios insistentes.</p>
@@ -586,6 +612,8 @@
         <label class="switchrow"><span><strong>Avisos de actividad</strong><small class="muted">Mensaje breve cuando alguien reacciona, comenta o te añade. La lista siempre se guarda</small></span><input type="checkbox" id="rsNoteToast" class="switch" checked></label>
         <label class="switchrow"><span><strong>Vibración suave</strong><small class="muted">Un toque corto al guardar o al acabar el descanso</small></span><input type="checkbox" id="rsHaptics" class="switch" checked></label>
       </div>
+      </div>
+      <div class="set-page hidden" data-page="privacy" data-title="Privacidad y seguridad">
       <div class="glass card" id="privCard">
         <h3>Privacidad</h3>
         <label class="switchrow"><span><strong>Bloqueo con PIN</strong><small class="muted">Pide un PIN de 4 dígitos al abrir la app</small></span><input type="checkbox" id="rsLock" class="switch"></label>
@@ -601,7 +629,14 @@
         <p class="muted small">El PIN solo tapa la pantalla de este móvil y oculta la app en el selector de apps. No cifra los datos guardados.</p>
       </div>
       <div class="glass card">
-        <h3>Tus datos</h3>
+        <h3>Usuarios bloqueados</h3>
+        <ul id="blockedList" class="rows tight"></ul>
+        <p id="blockedEmpty" class="muted small">No has bloqueado a nadie.</p>
+      </div>
+      </div>
+      <div class="set-page hidden" data-page="data" data-title="Copias y exportación">
+      <div class="glass card">
+        <h3>Copias y exportación</h3>
         <div class="row2">
           <button id="exportBtn" class="btn">Exportar</button>
           <label class="btn filebtn">Importar<input id="importFile" type="file" accept="application/json" hidden></label>
@@ -612,15 +647,26 @@
           <button id="backupBtn" class="btn">Copia completa</button>
           <label class="btn filebtn">Restaurar copia<input id="restoreFile" type="file" accept="application/json" hidden></label>
         </div>
+      </div>
+      </div>
+      <div class="set-page hidden" data-page="danger" data-title="Zona de peligro">
+      <div class="glass card danger-zone">
+        <h3>Zona de peligro</h3>
+        <p class="muted small">Estas acciones no se pueden deshacer. Antes de borrar, haz una copia completa.</p>
         <button id="wipeShared" class="btn danger wide">Borrar mis datos compartidos</button>
         <button id="wipeEntries" class="btn danger wide">Borrar mis entrenos</button>
         <button id="wipeSocial" class="btn danger wide">Borrar amigos y chats</button>
       </div>
-      <div class="glass card">
-        <h3>Usuarios bloqueados</h3>
-        <ul id="blockedList" class="rows tight"></ul>
-        <p id="blockedEmpty" class="muted small">No has bloqueado a nadie.</p>
       </div>
+      <div class="set-page hidden" data-page="help" data-title="Ayuda y tutorial">
+      <div class="glass card">
+        <h3>Ayuda</h3>
+        <p class="muted small">Un repaso guiado por todas las secciones de la app.</p>
+        <button id="btnTour" class="btn wide">Ver el tutorial</button>
+        <p class="muted small">GymCrew no sustituye a un profesional de la salud ni da consejos médicos o de dieta. Pensada para mayores de 16 años.</p>
+      </div>
+      </div>
+      <div class="set-page hidden" data-page="adv" data-title="Avanzado">
       <div class="glass card" id="srvCard">
         <h3>Servidor <span id="srvDot" class="srv-dot none" aria-hidden="true"></span></h3>
         <p id="srvState" class="muted small"></p>
@@ -638,6 +684,7 @@
         <button id="btnSimReq" class="btn wide">Simular solicitud de amistad recibida</button>
         <button id="btnSimAccept" class="btn wide">Simular que aceptan mi solicitud</button>
       </details>
+      </div>
     </div>
   </div>
 
