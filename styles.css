@@ -2246,3 +2246,56 @@ html.rm .rev.pre { opacity: 1; transform: none; }
 .chips.row-scroll .chip{flex:0 0 auto;white-space:nowrap}
 .today-main{margin:12px 0 4px}
 .today-quick{margin-top:12px;padding-top:6px;border-top:1px solid color-mix(in srgb,currentColor 12%,transparent)}
+
+/* ===== Identidad GymCrew: «discos de gimnasio» =====
+   Fondo de tiza y goma con los cuatro colores de los discos olímpicos (rojo, azul, amarillo, verde)
+   flotando tras el cristal. Acento verde disco. Números y títulos en letra condensada y pesada. */
+:root, :root[data-theme="day"] {
+  --bg: #eceff0; --bg2: #dde6e3;
+  --o1: #ff7a6b; --o2: #5b95ff; --o3: #ffd447; --o4: #3fd6a0; --o5: #ff9f5c;
+  --accent: #0a8259; --accent-text: #066544; --accent2: #17b983; --lime: #17b983;
+  --brand: linear-gradient(135deg, #17b983, #0a8259);
+  --ring: conic-gradient(from 200deg, #ff5a4d, #ffc933, #2fc58f, #3f7dff, #ff5a4d);
+  --shadow: rgba(30, 70, 60, .22);
+}
+:root[data-theme="night"] {
+  --bg: #070b0a; --bg2: #0e1714;
+  --o1: #a8281e; --o2: #1f4fb8; --o3: #a37d0a; --o4: #0f8f68; --o5: #a85a16;
+  --accent: #3ee0a8; --accent-text: #86f0cb; --accent2: #19b887; --lime: #ffd447;
+  --brand: linear-gradient(135deg, #5af0bb, #19b887);
+  --ring: conic-gradient(from 200deg, #ff6b5e, #ffd447, #3ee0a8, #5b95ff, #ff6b5e);
+  --shadow: rgba(0, 0, 0, .6);
+}
+:root[data-theme="night"] .btn.primary, :root[data-theme="night"] .btn.main,
+:root[data-theme="night"] .fab { color: #03241a; }
+:root[data-theme="night"] .fab svg { stroke: #03241a; }
+
+h1, h2, h3, .big, .num, .num-sm, .today-title, .tn-pts, .streak-pill, .week-top b, .grid3 b, .stat-tile b,
+.tab-l, .seg button, .badge {
+  font-family: "Avenir Next Condensed", "Roboto Condensed", "Arial Narrow", "Helvetica Neue", system-ui, sans-serif;
+}
+h1, h2, h3, .today-card h2 { font-weight: 800; letter-spacing: -.01em; }
+.today-card h2 { font-size: 1.9rem; line-height: 1.05; }
+.week-top b, .grid3 b, .stat-tile b { font-weight: 800; font-variant-numeric: tabular-nums; }
+
+/* El botón + es un disco: llanta, canto y agujero central */
+.fab {
+  box-shadow: 0 10px 24px -6px color-mix(in srgb, var(--accent) 70%, transparent),
+    inset 0 0 0 4px rgba(255,255,255,.28), inset 0 0 0 5.5px color-mix(in srgb, #000 22%, transparent),
+    inset 0 2px 0 6px rgba(255,255,255,.12) !important;
+}
+.fab svg { stroke-width: 3; }
+
+/* Hoy: acción principal destacada, registro rápido más tranquilo */
+.today-main .btn.primary { min-height: 52px; font-weight: 800; font-size: 1.02rem; }
+.today-quick .label { font-weight: 600; }
+.quick-mood button { transition: transform .25s var(--spring), background .2s; }
+.quick-mood button:active { transform: scale(.88); }
+
+/* Tarjetas: esquina superior con un «filo» de color de disco según el tipo de bloque */
+#weekCard { border-left: 4px solid #ffc933; }
+#todayCard { border-left: 4px solid var(--accent2); }
+#prCard .rows > li { border-left: 4px solid #ff6b5e; }
+.pr-chip { background: linear-gradient(135deg, rgba(255,201,51,.3), rgba(255,107,94,.22)); }
+:root, :root[data-theme="day"] { --orb-op: .62; }
+:root[data-theme="night"] { --orb-op: .5; }
