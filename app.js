@@ -146,7 +146,7 @@ function defaults() {
     friends: [], groups: [], names: {},
     requests: { incoming: [], outgoing: [] },
     achievements: {},
-    ui: { fold: {}, tab: '', home: 'feed', ff: '', tp: '', fl: 'friends', seg: 'friends', pf: 'posts', hseg: 'today', filter: '', draft: null, lastRoutine: '', quickType: 'fuerza' },
+    ui: { fold: {}, tab: '', home: 'feed', ff: '', feedTab: 'foryou', tp: '', fl: 'friends', seg: 'friends', pf: 'posts', hseg: 'today', filter: '', draft: null, lastRoutine: '', quickType: 'fuerza' },
     settings: { noteToast: true, browserNotif: false, theme: 'auto', lang: 'es', haptics: true, goal: 3, rest: 90, lock: { on: false, h: '', s: '', after: 0 } }
   };
 }
@@ -174,7 +174,7 @@ function load(src) {
       pf: ['posts', 'replies', 'photos'].includes(ui.pf) ? ui.pf : 'posts',
       home: ui.home === 'day' ? 'day' : 'feed', fl: ['friends', 'following', 'followers'].includes(ui.fl) ? ui.fl : 'friends', ff: ['f', 'g', 'p'].includes(ui.ff) ? ui.ff : '',
       fold: Object.assign({}, ui.fold), tab: str(ui.tab, 12), seg: ['friends', 'chats', 'groups'].includes(ui.seg) ? ui.seg : 'friends',
-      hseg: ['today', 'hist', 'routines', 'progress'].includes(ui.hseg) ? ui.hseg : 'today', tp: TOPIC_IDS.includes(ui.tp) ? ui.tp : '', filter: TYPE_IDS.includes(ui.filter) ? ui.filter : '',
+      hseg: ['today', 'hist', 'routines', 'progress'].includes(ui.hseg) ? ui.hseg : 'today', feedTab: ui.feedTab === 'following' ? 'following' : 'foryou', tp: TOPIC_IDS.includes(ui.tp) ? ui.tp : '', filter: TYPE_IDS.includes(ui.filter) ? ui.filter : '',
       draft: ui.draft && typeof ui.draft === 'object' && normWorkout(ui.draft) ? Object.assign(normWorkout(ui.draft), { at: Number(ui.draft.at) || 0 }) : null,
       lastRoutine: str(ui.lastRoutine, 40), quickType: TYPE_IDS.includes(ui.quickType) ? ui.quickType : 'fuerza'
     },
@@ -198,7 +198,7 @@ function load(src) {
 let state = load();
 
 function save() {
-  try { localStorage.setItem(KEY, JSON.stringify(state, (k, v) => (k === 'feed' && Array.isArray(v) ? v.filter(x => !x.pubx || x.cmt.some(c => c.from === state.me.code)) : v))); }
+  try { localStorage.setItem(KEY, JSON.stringify(state, (k, v) => (k === 'feed' && Array.isArray(v) ? v.filter(x => !x.pubx || x.cmt.some(c => c.from === state.me.code)) : k === 'stories' && Array.isArray(v) ? v.filter(x => !x.pubx) : v))); }
   catch { toast('No se pudo guardar. Revisa que el navegador permita almacenamiento local.'); }
 }
 save();
@@ -975,7 +975,30 @@ function restoreBackup(src) {
 }
 
 /* ---------- Perfil ---------- */
+const BANNERS = [
+  'linear-gradient(135deg, #17b983, #0a8259 55%, #064e3b)', 'linear-gradient(135deg, #5b95ff, #2a56d4 60%, #172a6e)',
+  'linear-gradient(135deg, #ffd447, #ff9f5c 55%, #e0523f)', 'linear-gradient(135deg, #ff7a6b, #c92f55 60%, #4a1236)',
+  'linear-gradient(135deg, #8f7bff, #5b95ff 55%, #17b983)', 'linear-gradient(135deg, #2b3a38, #111a19 60%, #000)'
+];
+const bannerIdx = () => Math.max(0, Math.min(BANNERS.length - 1, Math.floor(Number(state.me.banner)) || 0));
+function paintBanner() {
+  $('#pfBanner').style.background = BANNERS[bannerIdx()];
+  const box = $('#bannerPick');
+  box.innerHTML = '';
+  BANNERS.forEach((g, i) => {
+    const b = el('button', 'bn-sw' + (i === bannerIdx() ? ' on' : '')); b.type = 'button'; b.style.background = g;
+    b.setAttribute('aria-label', `Banner ${i + 1}`); b.setAttribute('aria-pressed', String(i === bannerIdx()));
+    b.addEventListener('click', () => { state.me.banner = i; save(); paintBanner(); });
+    box.appendChild(b);
+  });
+}
+function setPfEdit(open) {
+  $('#pfEdit').setAttribute('aria-expanded', String(open));
+  $('#pfEdit').textContent = T(open ? 'Cerrar' : 'Editar perfil');
+  $('#pfEditBody').classList.toggle('open', open); $('#pfEditBody').inert = !open;
+}
 function renderProfile(animate) {
+  paintBanner();
   const input = $('#nameInput');
   if (document.activeElement !== input) input.value = state.me.name === 'Yo' ? '' : state.me.name;
   paintProfileNet();
@@ -1851,8 +1874,14 @@ function paintTopicRow(box, cur, onPick, withAll) {
   if (withAll) mk('', T('Todos los temas'));
   TOPICS.forEach(t => mk(t.id, `${t.e} ${T(t.n)}`));
 }
-const isOpenPost = p => !!p.pubx || !!(p.aud && p.aud.p);
-const homeFeed = () => visibleFeed().filter(p => (!p.stale && !state.ui.ff || (state.ui.ff === 'g' ? !!p.gid : state.ui.ff === 'p' ? isOpenPost(p) : !p.gid && (!p.pubx || isFollowed(p.from)))) && (!state.ui.tp || p.tp === state.ui.tp));
+const isOpenPost = p => !!p.pubx || !!p.open || !!(p.aud && p.aud.p);
+// «Para ti»: todo lo público, con lo que más conversación genera un poco por delante. «Siguiendo»: tú, tus amigos, tus grupos y la gente que sigues.
+const feedScore = p => p.ts + Math.min(30, reactTotal(p) + 2 * p.cmt.length) * 20 * 60e3 + (isFollowed(p.from) ? 3600e3 : 0);
+const homeFeed = () => {
+  const tp = state.ui.tp, fy = state.ui.feedTab !== 'following';
+  const list = visibleFeed().filter(p => (!tp || p.tp === tp) && (fy ? isOpenPost(p) && !p.stale : p.from === state.me.code || !p.pubx || isFollowed(p.from)));
+  return fy ? list.sort((x, y) => feedScore(y) - feedScore(x)) : list;
+};
 
 function feedSummary(w) {
   const t = typeOf(w.ty), bits = [];
@@ -2106,9 +2135,13 @@ function closeNotes(restore = true) {
 
 /* ---------- Inicio estilo timeline ---------- */
 function bindTimeline() {
-  $$('#ffChips .chip').forEach(c => c.addEventListener('click', () => { state.ui.ff = c.dataset.ff; save(); renderFeed(); }));
+  $$('#feedTabs button').forEach(b => b.addEventListener('click', () => { state.ui.feedTab = b.dataset.ft; save(); renderFeed(); }));
+  $('#tpSel').addEventListener('change', e => { state.ui.tp = TOPIC_IDS.includes(e.target.value) ? e.target.value : ''; save(); renderFeed(); });
   $('#newPill').addEventListener('click', () => { window.scrollTo({ top: 0, behavior: reduceMotion() ? 'auto' : 'smooth' }); $('#newPill').classList.add('hidden'); });
   window.addEventListener('scroll', () => { if (window.scrollY < 120) $('#newPill').classList.add('hidden'); }, { passive: true });
+  $('#pfEdit').addEventListener('click', () => setPfEdit($('#pfEdit').getAttribute('aria-expanded') !== 'true'));
+  $('#pfBanner').addEventListener('click', () => setPfEdit(true));
+  setPfEdit(false);
   $$('#pfSeg button').forEach(b => b.addEventListener('click', () => { state.ui.pf = b.dataset.pf; save(); renderProfileActivity(); }));
   $('#bellBtn').addEventListener('click', openNotes);
   $('#ntBack').addEventListener('click', () => closeNotes());
@@ -2274,7 +2307,7 @@ async function pickMedia(file) {
 async function sendPost() {
   if (postBusy) return;
   const msg = $('#pMsg'), text = $('#pText').value.trim();
-  const aud = { f: $('#aud-f') && $('#aud-f').checked, o: $('#aud-o') && $('#aud-o').checked, p: postMode === 'pub' && !!($('#aud-p') && $('#aud-p').checked), g: state.groups.filter(g => g.srv && g.gym && $('#aud-g-' + g.id) && $('#aud-g-' + g.id).checked).map(g => g.id) };
+  const aud = { f: $('#aud-f') && $('#aud-f').checked, o: $('#aud-o') && $('#aud-o').checked, p: !!($('#aud-p') && $('#aud-p').checked), g: state.groups.filter(g => g.srv && g.gym && $('#aud-g-' + g.id) && $('#aud-g-' + g.id).checked).map(g => g.id) };
   if (!text && !postMedia) { msg.textContent = T('Escribe algo o añade una foto o un vídeo.'); return; }
   if (!aud.f && !aud.o && !aud.p && !aud.g.length) { msg.textContent = T('Elige quién lo ve.'); return; }
   if (aud.p && !state.me.handle) { msg.textContent = T('Para publicar en público primero elige tu @usuario (Social → Amigos).'); return; }
@@ -2419,7 +2452,7 @@ function bindStories() {
   });
 }
 
-function crewStrip() {
+function crewStrip(fy) {
   const wrap = el('li', 'crew-strip-wrap');
   const row = el('div', 'crew-strip');
   row.setAttribute('role', 'list');
@@ -2437,14 +2470,26 @@ function crewStrip() {
   const mine = activeStories(state.me.code);
   if (!mine.length) me.appendChild(el('span', 'plus-badge', '＋'));
   add(T('Tu historia'), me, mine.length ? 'ring seen' : '', () => (mine.length ? openStories(state.me.code) : openPost('story')), mine.length ? T('Ver mi historia') : T('Subir una historia'));
-  state.friends.forEach(f => {
-    const av = el('span', 'avatar lg');
-    paintAvatar(av, f.name);
-    if (f.on) av.classList.add('online');
-    const st = activeStories(f.code), unseen = st.some(x => !x.seen);
-    add(f.name, av, st.length ? (unseen ? 'ring' : 'ring seen') : recent(f.code) ? 'ring seen' : '', () => (st.length ? openStories(f.code) : openDirect(f.id)), st.length ? `${T('Ver historia de')} ${f.name}` : f.name);
-  });
-  add(T('Buscar'), el('span', 'avatar lg add-ava', '＋'), '', () => { showTab('amigos'); setSeg('friends'); setTimeout(() => $('#srchInput').focus({ preventScroll: true }), 450); }, T('Buscar personas'));
+  if (fy) {
+    // Historias públicas de cualquiera; primero las que no has visto
+    const by = [...new Set(state.stories.filter(s => s.pubx && s.from !== state.me.code && !isBlocked(s.from)).map(s => s.from))];
+    by.map(c => ({ c, st: activeStories(c) })).filter(x => x.st.length).sort((x, y) => Number(y.st.some(s => !s.seen)) - Number(x.st.some(s => !s.seen))).forEach(({ c, st }) => {
+      const av = el('span', 'avatar lg'); paintAvatar(av, personName(c));
+      add(personName(c), av, st.some(x => !x.seen) ? 'ring' : 'ring seen', () => openStories(c), `${T('Ver historia de')} ${personName(c)}`);
+    });
+  } else {
+    const seen = new Set(), who = state.friends.map(f => ({ code: f.code, name: f.name, f })).concat((state.net.following || []).map(f => ({ code: f.code, name: f.name })));
+    who.forEach(w => {
+      if (seen.has(w.code)) return; seen.add(w.code);
+      const st = activeStories(w.code).filter(x => !x.pubx || isFollowed(w.code));
+      if (!w.f && !st.length) return;
+      const av = el('span', 'avatar lg'); paintAvatar(av, w.name);
+      if (w.f && w.f.on) av.classList.add('online');
+      const unseen = st.some(x => !x.seen);
+      add(w.name, av, st.length ? (unseen ? 'ring' : 'ring seen') : recent(w.code) ? 'ring seen' : '', () => (st.length ? openStories(w.code) : w.f ? openDirect(w.f.id) : null), st.length ? `${T('Ver historia de')} ${w.name}` : w.name);
+    });
+    add(T('Buscar'), el('span', 'avatar lg add-ava', '＋'), '', () => { showTab('amigos'); setSeg('friends'); setTimeout(() => $('#srchInput').focus({ preventScroll: true }), 450); }, T('Buscar personas'));
+  }
   wrap.appendChild(row);
   return wrap;
 }
@@ -2469,17 +2514,24 @@ function composerCard() {
 
 function renderFeed() {
   expireStories();
+  const fy = state.ui.feedTab !== 'following';
+  $('#feedTabs').dataset.idx = fy ? 0 : 1;
+  $$('#feedTabs button').forEach(b => b.setAttribute('aria-selected', String((b.dataset.ft === 'following') === !fy)));
   const box = $('#crewBox'), old = box.querySelector('.crew-strip'), sx = old ? old.scrollLeft : 0;
   box.innerHTML = '';
-  box.appendChild(crewStrip());
+  box.appendChild(crewStrip(fy));
   const nw = box.querySelector('.crew-strip'); if (nw) nw.scrollLeft = sx;   // no saltar al principio al repintar
+  const sel = $('#tpSel');
+  if (!sel.options.length) {
+    sel.add(new Option(T('Temas'), ''));
+    TOPICS.forEach(t => sel.add(new Option(`${t.e} ${T(t.n)}`, t.id)));
+  }
+  sel.value = state.ui.tp || '';
   const ul = $('#feedList');
   ul.innerHTML = '';
   ul.appendChild(composerCard());
   const list = homeFeed().slice(0, 40);
-  $$('#ffChips .chip').forEach(c => c.setAttribute('aria-pressed', String(c.dataset.ff === state.ui.ff)));
-  paintTopicRow($('#tpChips'), state.ui.tp, id => { state.ui.tp = id; save(); renderFeed(); }, true);
-  if (!list.length) ul.appendChild(emptyState('📣', 'Tu feed está tranquilo', 'Aquí verás los entrenos y publicaciones que tus amigos y tus grupos decidan compartir. Tú compartes cuando quieras.'));
+  if (!list.length) ul.appendChild(fy ? emptyState('🌍', state.ui.tp ? 'Nada con este tema todavía' : 'Aún no hay publicaciones públicas', state.ui.tp ? 'Prueba con otro tema o publica tú el primero.' : 'Cuando alguien publique en público, saldrá aquí. Tú también puedes ser el primero.') : emptyState('👥', 'Aquí verás a tu gente', 'Publicaciones e historias de tus amigos, tus grupos y la gente que sigues. Búscalos en Social.'));
   list.forEach(p => ul.appendChild(feedCard(p)));
   setStagger(ul);
 }
@@ -3315,13 +3367,22 @@ function applyPubFeed(m) {
     const react = {}; Object.keys(x.r || {}).forEach(c => { if (CODE_RE.test(c) && REACTS.includes(x.r[c])) react[c] = x.r[c]; });
     const cmt = (Array.isArray(x.c) ? x.c : []).filter(c => c && typeof c.text === 'string' && CODE_RE.test(String(c.from))).slice(-30).map(c => ({ id: str(c.id, 40), from: c.from, text: str(c.text, 140), ts: Math.min(Date.now(), Number(c.ts) || 0) }));
     const own = keep.find(k => k.id === x.id && k.from === x.from);
-    if (own) { Object.assign(own.react, react); cmt.forEach(c => { if (!own.cmt.some(o => o.id === c.id)) own.cmt.push(c); }); return; }   // ya la tengo por amigos, grupos o es mía
+    if (own) { own.open = true; Object.assign(own.react, react); cmt.forEach(c => { if (!own.cmt.some(o => o.id === c.id)) own.cmt.push(c); }); return; }   // ya la tengo por amigos, grupos o es mía
     next.push({ id: x.id.slice(0, 40), from: x.from, gid: '', ts: Math.min(Date.now(), Number(x.ts) || 0), w: wk, pub: wk ? null : { text, m: md }, tp, react, cmt, pubx: true });
   });
+  const oldSeen = new Set(state.stories.filter(s => s.pubx && s.seen).map(s => s.id));
+  state.stories = state.stories.filter(s => !s.pubx);
+  (Array.isArray(m.stories) ? m.stories : []).forEach(x => {
+    if (!x || typeof x.id !== 'string' || !CODE_RE.test(String(x.from)) || isBlocked(x.from)) return;
+    const md = normMedia(x.m), text = str(x.text, 140);
+    if ((!text && !md) || state.stories.some(s => s.id === x.id && s.from === x.from)) return;
+    state.stories.push({ id: x.id.slice(0, 40), from: x.from, gid: '', ts: Math.min(Date.now(), Number(x.ts) || 0), text, m: md, seen: x.from === state.me.code || oldSeen.has(x.id), aud: { f: false, o: false, p: false, g: [] }, pubx: x.from !== state.me.code });
+  });
+  state.stories = state.stories.filter(s => !(s.pubx === false)).slice(-80);
   const before = state.feed.filter(x => x.pubx).length;
   oldMine.forEach(o => { if (!next.some(x => x.id === o.id && x.from === o.from) && !isBlocked(o.from)) next.push(Object.assign(o, { stale: true })); });
   state.feed = keep.concat(next);
-  if (next.length || before) { save(); renderHome(); if (thOpen) renderThread(); }
+  save(); renderHome(); if (thOpen) renderThread();
 }
 
 setInterval(() => { if (currentTab === 'inicio' && !document.hidden) pullPub(); }, 60e3);
@@ -3529,10 +3590,10 @@ function bindSrv() {
   Srv.start({ code: state.me.code, name: state.me.name }).then(() => { srvStatusUI(); paintLoginSkip(); });
 }
 
-const FOLD_DEFAULT = { inv: false, frame: false, achDone: false, achTodo: false, missions: true, trophies: true };
+const FOLD_DEFAULT = { inv: false, pfMore: false, frame: false, achDone: false, achTodo: false, missions: true, trophies: true };
 function paintFold(btn) {
   const key = btn.dataset.fold;
-  const open = key in state.ui.fold ? !!state.ui.fold[key] : FOLD_DEFAULT[key];
+  const open = key in state.ui.fold ? !!state.ui.fold[key] : !!FOLD_DEFAULT[key];
   btn.setAttribute('aria-expanded', String(open));
   const body = $('#' + btn.dataset.target);
   body.classList.toggle('open', open);
@@ -4033,7 +4094,7 @@ function bind() {
 applyTheme();
 setInterval(applyTheme, 30000);
 hdrAva = mountAva($('#hdrAva'), 44);
-bigAva = mountAva($('#avaBig'), 110);
+bigAva = mountAva($('#avaBig'), 96);
 $('#avaBig').appendChild(Object.assign(el('span', 'cam'), { innerHTML: ICON.cam }));
 bind();
 bindQol();

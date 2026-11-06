@@ -137,13 +137,13 @@
           <button id="newPill" class="new-pill hidden" type="button">↑ Publicaciones nuevas</button>
           <div id="homeFeed">
             <ul id="crewBox" class="rows crew-box"></ul>
-            <div id="ffChips" class="chips ff-chips" role="group" aria-label="Filtrar el feed">
-              <button class="chip" type="button" data-ff="" aria-pressed="true">Todo</button>
-              <button class="chip" type="button" data-ff="f" aria-pressed="false">Siguiendo</button>
-              <button class="chip" type="button" data-ff="g" aria-pressed="false">Grupos</button>
-              <button class="chip" type="button" data-ff="p" aria-pressed="false">Público</button>
+            <div class="feed-bar">
+              <div id="feedTabs" class="seg seg2 glass" data-idx="0" role="tablist" aria-label="Feed">
+                <button type="button" data-ft="foryou" role="tab" aria-selected="true">Para ti</button>
+                <button type="button" data-ft="following" role="tab" aria-selected="false">Siguiendo</button>
+              </div>
+              <select id="tpSel" class="tp-sel glass" aria-label="Filtrar por tema"></select>
             </div>
-            <div id="tpChips" class="chips row-scroll tp-chips" role="group" aria-label="Filtrar por tema"></div>
             <ul id="feedList" class="rows"></ul>
           </div>
           <p class="muted small center">GymCrew no sustituye a un profesional de la salud ni da consejos médicos o de dieta.</p>
@@ -286,40 +286,44 @@
 
         <!-- PERFIL -->
         <section id="view-perfil" class="view">
-          <div class="glass card prof-card">
-            <button id="avaBig" class="ava-big" aria-label="Cambiar foto de perfil"></button>
-            <input id="photoInput" type="file" accept="image/*" hidden>
+          <div class="pf-top">
+            <div id="pfBanner" class="pf-banner" aria-hidden="true"></div>
+            <div class="pf-bar">
+              <button id="avaBig" class="ava-big" aria-label="Cambiar foto de perfil"></button>
+              <input id="photoInput" type="file" accept="image/*" hidden>
+              <button id="pfEdit" class="btn sm" type="button" aria-expanded="false" aria-controls="pfEditBody">Editar perfil</button>
+            </div>
             <input id="nameInput" class="name-input" type="text" maxlength="20" placeholder="Tu nombre" autocomplete="off">
             <p id="profHandle" class="prof-handle" translate="no"></p>
-            <div class="prof-streak"><span id="profStreak" class="streak-pill"></span></div>
-            <div class="row2">
-              <button id="photoBtn" class="btn" type="button">Cambiar foto</button>
-              <button id="photoDel" class="btn" type="button">Quitar foto</button>
-            </div>
-          </div>
-          <div id="profStats" class="grid3"></div>
-
-          <div class="glass card profile-card">
-            <p id="myHandle" class="handle-big hidden"></p>
-            <button id="editHandle" class="btn wide" type="button">Cambiar nombre de usuario</button>
-            <label class="switchrow"><span><strong>Perfil privado</strong><small id="privNote" class="muted">Quien quiera seguirte necesita tu aprobación</small></span><input type="checkbox" id="rsPriv" class="switch" role="switch"></label>
-            <div class="row2">
-              <button id="pfFollowers" class="btn" type="button">Seguidores <b id="pfFolN">0</b></button>
-              <button id="pfFollowing" class="btn" type="button">Siguiendo <b id="pfFingN">0</b></button>
-            </div>
+            <p class="pf-counts">
+              <button id="pfFollowing" class="pf-count" type="button"><b id="pfFingN">0</b> Siguiendo</button>
+              <button id="pfFollowers" class="pf-count" type="button"><b id="pfFolN">0</b> Seguidores</button>
+              <span id="profStreak" class="streak-pill"></span>
+            </p>
           </div>
 
-          <section id="pfAct" aria-label="Tu actividad">
-            <div id="pfSeg" class="seg seg3 glass" data-idx="0" role="tablist">
-              <button type="button" data-pf="posts" role="tab" aria-selected="true">Publicaciones</button>
-              <button type="button" data-pf="replies" role="tab" aria-selected="false">Respuestas</button>
-              <button type="button" data-pf="photos" role="tab" aria-selected="false">Fotos</button>
+          <div id="pfEditBody" class="collapse"><div>
+            <div class="glass card profile-card">
+              <p class="label">Banner</p>
+              <div id="bannerPick" class="banner-pick" role="group" aria-label="Banner"></div>
+              <div class="row2">
+                <button id="photoBtn" class="btn" type="button">Cambiar foto</button>
+                <button id="photoDel" class="btn" type="button">Quitar foto</button>
+              </div>
+              <p id="myHandle" class="handle-big hidden"></p>
+              <button id="editHandle" class="btn wide" type="button">Cambiar nombre de usuario</button>
+              <label class="switchrow"><span><strong>Perfil privado</strong><small id="privNote" class="muted">Quien quiera seguirte necesita tu aprobación</small></span><input type="checkbox" id="rsPriv" class="switch" role="switch"></label>
             </div>
-            <ul id="pfList" class="rows"></ul>
-            <div id="pfGrid" class="pf-grid hidden"></div>
-          </section>
+          </div></div>
 
-          <button id="frameTitle" class="fold glass" data-fold="frame" data-target="frameBody" aria-expanded="false">
+          <button id="pfMoreBtn" class="fold glass" data-fold="pfMore" data-target="pfMore" aria-expanded="false">
+            <span class="fold-ico">🏅</span>
+            <span class="fold-t"><strong>Racha, logros y marco</strong></span>
+            <svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div id="pfMore" class="collapse"><div>
+            <div id="profStats" class="grid3"></div>
+                      <button id="frameTitle" class="fold glass" data-fold="frame" data-target="frameBody" aria-expanded="false">
             <span class="fold-ico">🖼️</span>
             <span class="fold-t"><strong>Marco de perfil</strong></span>
             <svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
@@ -342,6 +346,17 @@
             <svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
           </button>
           <div id="achTodoBody" class="collapse open"><div><ul id="achTodo" class="rows"></ul></div></div>
+          </div></div>
+
+          <section id="pfAct" aria-label="Tu actividad">
+            <div id="pfSeg" class="seg seg3 glass" data-idx="0" role="tablist">
+              <button type="button" data-pf="posts" role="tab" aria-selected="true">Publicaciones</button>
+              <button type="button" data-pf="replies" role="tab" aria-selected="false">Respuestas</button>
+              <button type="button" data-pf="photos" role="tab" aria-selected="false">Fotos</button>
+            </div>
+            <ul id="pfList" class="rows"></ul>
+            <div id="pfGrid" class="pf-grid hidden"></div>
+          </section>
         </section>
       </div>
     </div>

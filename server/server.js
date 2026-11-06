@@ -189,10 +189,10 @@ function noteGx(me, k, p, owner) {
 }
 
 /* ---------- Publicaciones públicas (visibles para cualquiera con cuenta) ---------- */
-const PUB = { max: 300, ttl: 7 * 24 * 3600e3, perHour: 10, show: 60, cmts: 30 };
+const PUB = { max: 300, story: 24 * 3600e3, ttl: 7 * 24 * 3600e3, perHour: 10, show: 60, cmts: 30 };
 function prunePubs() {
   const now = Date.now(), keep = [];
-  for (const x of db.pubs) { if (now - x.ts > PUB.ttl) { if (x.m) dropMedia(x.m.id); } else keep.push(x); }
+  for (const x of db.pubs) { if (now - x.ts > (x.story ? PUB.story : PUB.ttl)) { if (x.m) dropMedia(x.m.id); } else keep.push(x); }
   while (keep.length > PUB.max) { const o = keep.shift(); if (o.m) dropMedia(o.m.id); }
   db.pubs = keep;
 }
@@ -200,13 +200,14 @@ setInterval(() => { prunePubs(); persist(); }, 3600e3).unref();
 const pubOf = (by, id) => db.pubs.find(x => x.by === by && x.id === id);
 function pubView(me) {
   const names = {}, nm = c => { names[c] = { name: nameOf(c), handle: (db.users[c] || {}).handle || '' }; return c; };
-  const posts = db.pubs.filter(x => !blockedEither(me, x.by)).slice(-PUB.show).reverse().map(x => ({
+  const stories = db.pubs.filter(x => x.story && Date.now() - x.ts < PUB.story && !blockedEither(me, x.by)).slice(-40).map(x => ({ id: x.id, from: nm(x.by), ts: x.ts, text: x.text, m: x.m || undefined }));
+  const posts = db.pubs.filter(x => !x.story && !blockedEither(me, x.by)).slice(-PUB.show).reverse().map(x => ({
     id: x.id, from: nm(x.by), ts: x.ts, text: x.text, m: x.m || undefined, w: x.w || undefined, tp: x.tp || undefined,
     r: Object.fromEntries(Object.entries(x.r).filter(([c]) => !blockedEither(me, c))),
     c: x.c.filter(k => !blockedEither(me, k.from)).map(k => ({ id: k.id, from: nm(k.from), text: k.text, ts: k.ts }))
   }));
   for (const x of posts) for (const c of Object.keys(x.r)) nm(c);
-  return { t: 'pubfeed', posts, names };
+  return { t: 'pubfeed', posts, stories, names };
 }
 
 /* ---------- Seguidores (seguir es de una vía; seguirse los dos = amigos) ---------- */
@@ -749,11 +750,11 @@ function corsH(req) {
   return { 'Access-Control-Allow-Origin': ORIGINS.length && o ? o : '*', 'Access-Control-Allow-Headers': 'X-Code, X-Token, Content-Type', 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS', 'Vary': 'Origin' };
 }
 function gxPublic(ws, me, k, p) {
-  if (k === 'pub' || k === 'post') {
+  if (k === 'pub' || k === 'post' || k === 'story') {
     if (!(db.users[me] || {}).handle) return fail(ws, 'gx', 'nohandle');
     if (!rate('pub:' + me, PUB.perHour, 3600e3)) return fail(ws, 'gx', 'busy');
     if (pubOf(me, p.id)) return;
-    db.pubs.push({ id: p.id, by: me, ts: Date.now(), text: p.text || '', m: p.m || null, w: p.w || null, tp: p.tp || '', r: {}, c: [] });
+    db.pubs.push({ id: p.id, by: me, ts: Date.now(), text: p.text || '', m: p.m || null, w: p.w || null, tp: p.tp || '', story: k === 'story' || undefined, r: {}, c: [] });
     prunePubs(); persist();
   } else if (k === 'del') {
     const mine = db.pubs.filter(x => x.by === me && (p.all || x.id === p.pid));

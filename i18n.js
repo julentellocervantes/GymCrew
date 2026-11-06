@@ -13,7 +13,11 @@
     "Para la tienda": "For the shop",
     "Sin conexión al servidor: tus chats se guardan solo en este móvil.": "No connection to the server: your chats are stored only on this phone.",
     "Marco de perfil": "Profile frame",
-    "Todos los temas": "All topics", "Tema (opcional)": "Topic (optional)", "Tema": "Topic",
+    "Para ti": "For you", "Siguiendo": "Following", "Editar perfil": "Edit profile", "Cerrar": "Close", "Banner": "Banner", "Racha, logros y marco": "Streak, achievements and frame", "Seguidores": "Followers",
+    "Aún no hay publicaciones públicas": "No public posts yet", "Cuando alguien publique en público, saldrá aquí. Tú también puedes ser el primero.": "When someone posts publicly, it will show up here. You can be the first.",
+    "Nada con este tema todavía": "Nothing with this topic yet", "Prueba con otro tema o publica tú el primero.": "Try another topic or post the first one.",
+    "Aquí verás a tu gente": "This is where your people show up", "Publicaciones e historias de tus amigos, tus grupos y la gente que sigues. Búscalos en Social.": "Posts and stories from your friends, your groups and people you follow. Find them in Social.",
+    "Todos los temas": "All topics", "Temas": "Topics", "Tema (opcional)": "Topic (optional)", "Tema": "Topic",
     "Técnica": "Technique", "Motivación": "Motivation", "Preguntas": "Questions", "Principiantes": "Beginners", "Rutinas": "Routines", "Progreso": "Progress",
     "Público": "Public", "Cualquiera en GymCrew lo ve y puede opinar. No necesitas amigos.": "Anyone on GymCrew can see it and comment. You don't need friends.",
 

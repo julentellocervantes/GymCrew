@@ -2304,3 +2304,32 @@ h1, h2, h3, .today-card h2 { font-weight: 800; letter-spacing: -.01em; }
 .tp-chips { margin: 0 0 10px; }
 .tw-tp { background: color-mix(in srgb, var(--accent) 14%, transparent); }
 .shopts .chips, #shTopics, #pTopics { margin: 4px 0 8px; }
+
+/* ===== Inicio: dos pestañas y un filtro de tema ===== */
+.feed-bar { display: flex; gap: 8px; align-items: center; margin: 0 0 10px; }
+.feed-bar .seg { flex: 1; margin-bottom: 0; }
+.seg2::before { width: calc(50% - 6px); }
+.seg2 button { font-weight: 800; }
+.tp-sel { flex: none; max-width: 40%; min-height: 44px; padding: 0 12px; border-radius: 18px; font: inherit; font-weight: 600; color: var(--text); border: 0; appearance: none; -webkit-appearance: none; text-overflow: ellipsis; }
+.tp-sel option { color: #111; }
+
+/* ===== Perfil al estilo red social: banner, foto encima, nombre, @, contadores ===== */
+.pf-top { margin: -4px -4px 8px; }
+.pf-banner { height: 128px; border-radius: 26px; box-shadow: inset 0 0 0 1px var(--gb); cursor: pointer; position: relative; overflow: hidden; }
+.pf-banner::after { content: ""; position: absolute; inset: 0; background: radial-gradient(120% 90% at 85% 0%, rgba(255,255,255,.28), transparent 60%); }
+.pf-bar { display: flex; align-items: flex-end; justify-content: space-between; padding: 0 12px; margin-top: -44px; position: relative; z-index: 1; }
+.pf-bar .ava-big { margin: 0; border-radius: 50%; box-shadow: 0 0 0 4px var(--bg); }
+.pf-bar .btn.sm { margin-bottom: 4px; }
+.pf-top .name-input { text-align: left; margin: 8px 0 0; max-width: none; width: 100%; font-size: 1.55rem; font-weight: 800; padding: 2px 12px; }
+.pf-top .prof-handle { text-align: left; padding: 0 12px; margin: 0; }
+.pf-counts { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 16px; padding: 8px 12px 0; margin: 0; }
+.pf-count { background: none; border: 0; padding: 4px 0; color: var(--muted); font: inherit; cursor: pointer; min-height: 32px; }
+.pf-count b { color: var(--text); font-variant-numeric: tabular-nums; margin-right: 3px; }
+.pf-counts .streak-pill { margin-left: auto; }
+.banner-pick { display: flex; gap: 10px; margin: 6px 0 12px; }
+.bn-sw { flex: 1; height: 38px; border-radius: 14px; border: 0; cursor: pointer; box-shadow: inset 0 0 0 1px var(--gb); }
+.bn-sw.on { box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--accent); }
+#pfEditBody, #pfMore { margin-bottom: 8px; }
+.pf-top .name-input { background: transparent; border-color: transparent; box-shadow: none; }
+.pf-top .name-input:focus { background: var(--fill); }
+.pf-bar .ava-big { --s: 92px; }

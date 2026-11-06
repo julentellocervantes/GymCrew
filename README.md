@@ -113,3 +113,8 @@ Capturas revisadas a 390×844 y 360×640, día y noche: Inicio, Entrenos, regist
 ## Entrenos públicos y temas
 - Al guardar un entreno puedes marcar **Público**: no hace falta tener amigos; cualquiera en GymCrew lo ve en Inicio › Público y puede reaccionar y comentar (necesitas tu @usuario).
 - Las publicaciones y los entrenos pueden llevar un **tema** (fuerza, cardio, movilidad, rutinas, progreso, técnica, motivación, preguntas, principiantes). La lista es fija y el servidor descarta cualquier otro valor. En Inicio hay una fila de temas para filtrar.
+
+## Inicio y perfil (v. redes)
+- **Inicio** tiene solo dos pestañas: **Para ti** (todo lo público, con lo más comentado un poco por delante, e historias públicas) y **Siguiendo** (tú, tus amigos, tus grupos y la gente que sigues, con sus historias). Un único filtro de **tema**.
+- Las **historias** también pueden ser públicas (marca «Público» al subirlas; el servidor las borra a las 24 h).
+- **Perfil** al estilo red social: banner (6 colores, solo lo ves tú de momento), foto encima, nombre, @usuario, contadores y debajo **Publicaciones · Respuestas · Fotos**. «Editar perfil» abre foto, banner, @ y privacidad; «Racha, logros y marco» queda plegado.
