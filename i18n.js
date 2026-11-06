@@ -13,6 +13,10 @@
     "Para la tienda": "For the shop",
     "Sin conexión al servidor: tus chats se guardan solo en este móvil.": "No connection to the server: your chats are stored only on this phone.",
     "Marco de perfil": "Profile frame",
+    "Todos los temas": "All topics", "Tema (opcional)": "Topic (optional)", "Tema": "Topic",
+    "Técnica": "Technique", "Motivación": "Motivation", "Preguntas": "Questions", "Principiantes": "Beginners", "Rutinas": "Routines", "Progreso": "Progress",
+    "Público": "Public", "Cualquiera en GymCrew lo ve y puede opinar. No necesitas amigos.": "Anyone on GymCrew can see it and comment. You don't need friends.",
+
     "O regístralo en un toque · tipo": "Or log it in one tap · type",
     "Sin servidor: tus amigos y chats se guardan solo en este móvil. Conecta tu servidor en Ajustes → Avanzado para hablar con otros móviles.": "No server: your friends and chats are stored only on this phone. Connect your server in Settings → Server to talk to other phones.",
     "Sin conexión: el evento solo lo verás tú": "No connection: only you will see the event",

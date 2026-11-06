@@ -201,7 +201,7 @@ const pubOf = (by, id) => db.pubs.find(x => x.by === by && x.id === id);
 function pubView(me) {
   const names = {}, nm = c => { names[c] = { name: nameOf(c), handle: (db.users[c] || {}).handle || '' }; return c; };
   const posts = db.pubs.filter(x => !blockedEither(me, x.by)).slice(-PUB.show).reverse().map(x => ({
-    id: x.id, from: nm(x.by), ts: x.ts, text: x.text, m: x.m || undefined,
+    id: x.id, from: nm(x.by), ts: x.ts, text: x.text, m: x.m || undefined, w: x.w || undefined, tp: x.tp || undefined,
     r: Object.fromEntries(Object.entries(x.r).filter(([c]) => !blockedEither(me, c))),
     c: x.c.filter(k => !blockedEither(me, k.from)).map(k => ({ id: k.id, from: nm(k.from), text: k.text, ts: k.ts }))
   }));
@@ -265,6 +265,7 @@ setInterval(() => { const now = Date.now(); for (const [k, a] of hits) if (!a.le
 
 const REACTS = ['💪', '🔥', '👏', '🙌', '😮', '❤️'];
 const TYPES = ['fuerza', 'cardio', 'funcional', 'deporte', 'movilidad'];
+const TOPICS = ['fuerza', 'cardio', 'movilidad', 'rutinas', 'progreso', 'tecnica', 'motivacion', 'preguntas', 'principiantes'];   // temas fijos para clasificar publicaciones
 const int = (v, a, b) => { const n = Math.floor(Number(v)); return n >= a && n <= b ? n : null; };
 const txt = (v, n) => String(v === undefined || v === null ? '' : v).replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, n);
 const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -279,6 +280,7 @@ function cleanGx(k, p) {
     if (w.feel !== undefined && int(w.feel, 1, 5)) o.w.feel = int(w.feel, 1, 5);
     if (w.vol !== undefined && int(w.vol, 0, 1e6) !== null) o.w.vol = int(w.vol, 0, 1e6); // solo si la persona decidió compartir el volumen
     if (w.note) o.w.note = txt(w.note, 140);                                              // solo si la persona decidió compartir la nota
+    if (TOPICS.includes(p.tp)) o.tp = p.tp;
     return o;
   }
   if (k === 'pub' || k === 'story') {
@@ -290,6 +292,7 @@ function cleanGx(k, p) {
       o.m = { id: String(m.id), k: rec.k, w: int(m.w, 1, 4000) || 0, h: int(m.h, 1, 4000) || 0, d: rec.k === 'vid' ? (int(m.d, 0, 60) || 0) : 0 };
       o.by = rec.by; // se comprueba al enrutar que el archivo es de quien publica
     }
+    if (k === 'pub' && TOPICS.includes(p.tp)) o.tp = p.tp;
     return o.text || o.m ? o : null;
   }
   if (k === 'react') return MSGID_RE.test(String(p.pid)) && CODE_RE.test(String(p.o)) && (REACTS.includes(p.e) || p.e === '') ? { pid: String(p.pid), o: p.o, e: p.e } : null;
@@ -746,11 +749,11 @@ function corsH(req) {
   return { 'Access-Control-Allow-Origin': ORIGINS.length && o ? o : '*', 'Access-Control-Allow-Headers': 'X-Code, X-Token, Content-Type', 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS', 'Vary': 'Origin' };
 }
 function gxPublic(ws, me, k, p) {
-  if (k === 'pub') {
+  if (k === 'pub' || k === 'post') {
     if (!(db.users[me] || {}).handle) return fail(ws, 'gx', 'nohandle');
     if (!rate('pub:' + me, PUB.perHour, 3600e3)) return fail(ws, 'gx', 'busy');
     if (pubOf(me, p.id)) return;
-    db.pubs.push({ id: p.id, by: me, ts: Date.now(), text: p.text, m: p.m || null, r: {}, c: [] });
+    db.pubs.push({ id: p.id, by: me, ts: Date.now(), text: p.text || '', m: p.m || null, w: p.w || null, tp: p.tp || '', r: {}, c: [] });
     prunePubs(); persist();
   } else if (k === 'del') {
     const mine = db.pubs.filter(x => x.by === me && (p.all || x.id === p.pid));

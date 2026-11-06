@@ -143,6 +143,7 @@
               <button class="chip" type="button" data-ff="g" aria-pressed="false">Grupos</button>
               <button class="chip" type="button" data-ff="p" aria-pressed="false">Público</button>
             </div>
+            <div id="tpChips" class="chips row-scroll tp-chips" role="group" aria-label="Filtrar por tema"></div>
             <ul id="feedList" class="rows"></ul>
           </div>
           <p class="muted small center">GymCrew no sustituye a un profesional de la salud ni da consejos médicos o de dieta.</p>
@@ -512,8 +513,11 @@
         <h3>Compartir este entreno</h3>
         <p id="shareHint" class="muted small"></p>
         <label class="switchrow"><span><strong>Con mis amigos</strong><small class="muted">Aparece en su feed</small></span><input type="checkbox" id="shFriends" class="switch"></label>
+        <label class="switchrow"><span><strong>Público</strong><small class="muted">Cualquiera en GymCrew lo ve y puede opinar. No necesitas amigos.</small></span><input type="checkbox" id="shPublic" class="switch"></label>
         <div id="shGroupsWrap"><p class="label">Con mis grupos</p><div id="shGroups" class="chips"></div></div>
         <div id="shOpts" class="hidden">
+          <p class="label">Tema (opcional)</p>
+          <div id="shTopics" class="chips row-scroll" role="group" aria-label="Tema"></div>
           <label class="switchrow"><span><strong>Incluir el volumen total</strong><small class="muted">Si no, solo tipo, duración y récords</small></span><input type="checkbox" id="shVol" class="switch"></label>
           <label class="switchrow"><span><strong>Incluir mi nota</strong><small class="muted">Por defecto no se envía</small></span><input type="checkbox" id="shNote" class="switch"></label>
         </div>
@@ -751,6 +755,8 @@
       <button id="pDrop" class="btn sm hidden" type="button">Quitar</button>
     </div>
     <p id="pHint" class="muted small">Las fotos se comprimen y se les quitan los datos de ubicación. Los vídeos duran como máximo 15 s y van sin sonido.</p>
+    <p class="label">Tema (opcional)</p>
+    <div id="pTopics" class="chips row-scroll" role="group" aria-label="Tema"></div>
     <p class="label">¿Quién lo ve?</p>
     <div id="pAud" class="aud"></div>
     <p id="pMsg" class="small code-msg" role="status"></p>

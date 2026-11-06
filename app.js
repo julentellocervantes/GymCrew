@@ -30,6 +30,14 @@ function genCode() {
 }
 
 /* ---------- Dominio: tipos, músculos y catálogo de ejercicios ---------- */
+/* Temas fijos para clasificar publicaciones (los mismos ids que valida el servidor) */
+const TOPICS = [
+  { id: 'fuerza', e: '🏋️', n: 'Fuerza' }, { id: 'cardio', e: '🏃', n: 'Cardio' }, { id: 'movilidad', e: '🧘', n: 'Movilidad' },
+  { id: 'rutinas', e: '📋', n: 'Rutinas' }, { id: 'progreso', e: '📈', n: 'Progreso' }, { id: 'tecnica', e: '🎯', n: 'Técnica' },
+  { id: 'motivacion', e: '🔥', n: 'Motivación' }, { id: 'preguntas', e: '❓', n: 'Preguntas' }, { id: 'principiantes', e: '🌱', n: 'Principiantes' }
+];
+const TOPIC_IDS = TOPICS.map(t => t.id);
+const topicOf = id => TOPICS.find(t => t.id === id);
 const TYPES = [
   { id: 'fuerza', e: '🏋️', n: 'Fuerza' }, { id: 'cardio', e: '🏃', n: 'Cardio' }, { id: 'funcional', e: '🤸', n: 'Funcional' },
   { id: 'deporte', e: '⚽', n: 'Deporte' }, { id: 'movilidad', e: '🧘', n: 'Movilidad' }
@@ -101,7 +109,7 @@ function normWorkout(w) {
     ex: (Array.isArray(w.ex) ? w.ex : []).filter(e => e && typeof e.k === 'string').slice(0, 40).map(e => ({ k: str(e.k, 40), sets: (Array.isArray(e.sets) ? e.sets : []).slice(0, 30).map(normSet) })),
     pr: (Array.isArray(w.pr) ? w.pr : []).slice(0, 12).map(p => ({ k: str(p && p.k, 40), t: ['1rm', 'peso', 'vol', 'reps'].includes(p && p.t) ? p.t : 'peso', v: num(p && p.v, 0, 100000) })).filter(p => p.k)
   };
-  if (w.sh && typeof w.sh === 'object') o.sh = { f: !!w.sh.f, g: (Array.isArray(w.sh.g) ? w.sh.g : []).filter(x => typeof x === 'string').slice(0, 40), vol: !!w.sh.vol, note: !!w.sh.note };
+  if (w.sh && typeof w.sh === 'object') o.sh = { f: !!w.sh.f, p: !!w.sh.p, tp: TOPIC_IDS.includes(w.sh.tp) ? w.sh.tp : '', g: (Array.isArray(w.sh.g) ? w.sh.g : []).filter(x => typeof x === 'string').slice(0, 40), vol: !!w.sh.vol, note: !!w.sh.note };
   return o;
 }
 const normWorkouts = a => (Array.isArray(a) ? a : []).map(normWorkout).filter(Boolean);
@@ -122,6 +130,8 @@ const normFeed = a => (Array.isArray(a) ? a : []).filter(p => p && typeof p.id =
     react: p.react && typeof p.react === 'object' ? p.react : {}, cmt: (Array.isArray(p.cmt) ? p.cmt : []).filter(c => c && typeof c.text === 'string').slice(-30)
   };
   if (p.pub && typeof p.pub === 'object') { o.pub = { text: str(p.pub.text, 400), m: normMedia(p.pub.m) }; o.aud = normAud(p.aud); }
+  if (p.aud && !o.aud) o.aud = normAud(p.aud);
+  if (TOPIC_IDS.includes(p.tp)) o.tp = p.tp;
   if (p.pubx) { o.pubx = true; o.stale = true; }
   return o;
 });
@@ -136,7 +146,7 @@ function defaults() {
     friends: [], groups: [], names: {},
     requests: { incoming: [], outgoing: [] },
     achievements: {},
-    ui: { fold: {}, tab: '', home: 'feed', ff: '', fl: 'friends', seg: 'friends', pf: 'posts', hseg: 'today', filter: '', draft: null, lastRoutine: '', quickType: 'fuerza' },
+    ui: { fold: {}, tab: '', home: 'feed', ff: '', tp: '', fl: 'friends', seg: 'friends', pf: 'posts', hseg: 'today', filter: '', draft: null, lastRoutine: '', quickType: 'fuerza' },
     settings: { noteToast: true, browserNotif: false, theme: 'auto', lang: 'es', haptics: true, goal: 3, rest: 90, lock: { on: false, h: '', s: '', after: 0 } }
   };
 }
@@ -164,7 +174,7 @@ function load(src) {
       pf: ['posts', 'replies', 'photos'].includes(ui.pf) ? ui.pf : 'posts',
       home: ui.home === 'day' ? 'day' : 'feed', fl: ['friends', 'following', 'followers'].includes(ui.fl) ? ui.fl : 'friends', ff: ['f', 'g', 'p'].includes(ui.ff) ? ui.ff : '',
       fold: Object.assign({}, ui.fold), tab: str(ui.tab, 12), seg: ['friends', 'chats', 'groups'].includes(ui.seg) ? ui.seg : 'friends',
-      hseg: ['today', 'hist', 'routines', 'progress'].includes(ui.hseg) ? ui.hseg : 'today', filter: TYPE_IDS.includes(ui.filter) ? ui.filter : '',
+      hseg: ['today', 'hist', 'routines', 'progress'].includes(ui.hseg) ? ui.hseg : 'today', tp: TOPIC_IDS.includes(ui.tp) ? ui.tp : '', filter: TYPE_IDS.includes(ui.filter) ? ui.filter : '',
       draft: ui.draft && typeof ui.draft === 'object' && normWorkout(ui.draft) ? Object.assign(normWorkout(ui.draft), { at: Number(ui.draft.at) || 0 }) : null,
       lastRoutine: str(ui.lastRoutine, 40), quickType: TYPE_IDS.includes(ui.quickType) ? ui.quickType : 'fuerza'
     },
@@ -1479,7 +1489,7 @@ function openWorkout(w, o = {}) {
     else if (o.routine) { ed.type = o.routine.type; ed.ex = o.routine.ex.map(k => ({ k, sets: lastSetsFor(k).slice(0, 3).map(s => ({ r: s.r, w: s.w })) })); state.ui.lastRoutine = o.routine.id; save(); }
     else if (state.ui.draft && Date.now() - state.ui.draft.at < 12 * 3600e3 && !o.date) { ed = JSON.parse(JSON.stringify(state.ui.draft)); ed.id = ''; toast('Borrador recuperado'); }
   }
-  edShare = w && w.sh ? { f: w.sh.f, g: [...w.sh.g], vol: w.sh.vol, note: w.sh.note } : { f: false, g: [], vol: false, note: false };
+  edShare = w && w.sh ? { f: w.sh.f, p: !!w.sh.p, tp: w.sh.tp || '', g: [...w.sh.g], vol: w.sh.vol, note: w.sh.note } : { f: false, p: false, tp: '', g: [], vol: false, note: false };
   paintWorkout();
   $('#workout').classList.add('open');
   syncOverlayClass();
@@ -1668,9 +1678,12 @@ function paintShare() {
   $('#shareHint').textContent = on ? T('Nadie ve nada si no marcas una opción. La nota y los kilos no se envían salvo que lo actives aquí.') : T('Sin servidor: de momento no se puede compartir. Tus entrenos se quedan en este móvil.');
   $('#shFriends').checked = edShare.f;
   $('#shFriends').disabled = !on || !state.friends.some(f => f.srv);
+  $('#shPublic').checked = edShare.p;
+  $('#shPublic').disabled = !on;
+  paintTopicRow($('#shTopics'), edShare.tp, id => { edShare.tp = id; paintShare(); });
   $('#shVol').checked = edShare.vol;
   $('#shNote').checked = edShare.note;
-  $('#shOpts').classList.toggle('hidden', !(edShare.f || edShare.g.length));
+  $('#shOpts').classList.toggle('hidden', !(edShare.f || edShare.p || edShare.g.length));
   const box = $('#shGroups');
   box.innerHTML = '';
   state.groups.filter(g => g.srv && !g.direct).forEach(g => {
@@ -1700,7 +1713,7 @@ function saveWorkout() {
   const isNew = !ed.id;
   const w = normWorkout(Object.assign({}, ed, { id: ed.id || uid() }));
   w.pr = prsFor(w);
-  const share = edShare.f || edShare.g.length ? { f: edShare.f, g: edShare.g, vol: edShare.vol, note: edShare.note } : null;
+  const share = edShare.f || edShare.p || edShare.g.length ? { f: edShare.f, p: edShare.p, tp: edShare.tp, g: edShare.g, vol: edShare.vol, note: edShare.note } : null;
   if (share) w.sh = share; else delete w.sh;
   const i = state.workouts.findIndex(x => x.id === w.id);
   if (i >= 0) state.workouts[i] = w; else state.workouts.push(w);
@@ -1826,8 +1839,20 @@ function swapList() {
 /* ---------- Feed ---------- */
 const postSort = (a, b) => b.ts - a.ts;
 function visibleFeed(gid) { return state.feed.filter(p => !isBlocked(p.from) && (gid === undefined || p.gid === gid)).sort(postSort); }
+// Fila de temas: elegir uno (o ninguno). onPick(id | '')
+function paintTopicRow(box, cur, onPick, withAll) {
+  box.innerHTML = '';
+  const mk = (id, label) => {
+    const b = el('button', 'chip' + (cur === id ? ' on' : '')); b.type = 'button'; b.setAttribute('aria-pressed', String(cur === id));
+    b.appendChild(ut(el('span', '', label)));
+    b.addEventListener('click', () => onPick(cur === id && !withAll ? '' : id));
+    box.appendChild(b);
+  };
+  if (withAll) mk('', T('Todos los temas'));
+  TOPICS.forEach(t => mk(t.id, `${t.e} ${T(t.n)}`));
+}
 const isOpenPost = p => !!p.pubx || !!(p.aud && p.aud.p);
-const homeFeed = () => visibleFeed().filter(p => !p.stale && !state.ui.ff || (state.ui.ff === 'g' ? !!p.gid : state.ui.ff === 'p' ? isOpenPost(p) : !p.gid && (!p.pubx || isFollowed(p.from))));
+const homeFeed = () => visibleFeed().filter(p => (!p.stale && !state.ui.ff || (state.ui.ff === 'g' ? !!p.gid : state.ui.ff === 'p' ? isOpenPost(p) : !p.gid && (!p.pubx || isFollowed(p.from)))) && (!state.ui.tp || p.tp === state.ui.tp));
 
 function feedSummary(w) {
   const t = typeOf(w.ty), bits = [];
@@ -1880,6 +1905,7 @@ function feedCard(p, opt = {}) {
   if (grp) who.appendChild(ut(el('span', 'tw-grp', '👥 ' + grp)));
   if (p.pubx && pubHandles[p.from]) who.appendChild(el('span', 'tw-hdl', '@' + pubHandles[p.from]));
   if (isOpenPost(p)) who.appendChild(ut(el('span', 'tw-grp', '🌍 ' + T('Público'))));
+  if (topicOf(p.tp)) who.appendChild(ut(el('span', 'tw-grp tw-tp', `${topicOf(p.tp).e} ${T(topicOf(p.tp).n)}`)));
   const menu = el('button', 'icon-btn plain');
   menu.type = 'button';
   menu.setAttribute('aria-label', mine ? T(p.pub ? 'Borrar publicación' : 'Dejar de compartir') : T('Más opciones'));
@@ -2211,13 +2237,15 @@ function paintPostAud() {
   row('aud-p', T('Público (cualquiera en GymCrew)'), false);
   state.groups.filter(g => g.srv && g.gym).forEach(g => row('aud-g-' + g.id, g.name, false));
 }
+let postTopic = '';
+function paintPostTopics() { paintTopicRow($('#pTopics'), postTopic, id => { postTopic = id; paintPostTopics(); }); }
 function openPost(mode) {
   if (!srvOn()) { toast('Necesitas conexión con el servidor para publicar.'); return; }
   postMode = mode === 'story' ? 'story' : 'pub';
-  postMedia = null; postBusy = false;
+  postMedia = null; postBusy = false; postTopic = '';
   $('#pText').value = '';
   $('#pMsg').textContent = '';
-  paintPostMode(); paintPostPrev(); paintPostAud();
+  paintPostMode(); paintPostPrev(); paintPostAud(); paintPostTopics();
   openSheet('sheetPost');
 }
 function paintPostMode() {
@@ -2255,7 +2283,7 @@ async function sendPost() {
   try {
     let m = null;
     if (postMedia) { const up = await uploadMedia(postMedia.blob, kind === 'story' ? 'story' : 'post', id); m = { id: up.id, k: up.k, w: postMedia.w, h: postMedia.h, d: postMedia.d }; }
-    const p = { id, text }; if (m) p.m = m;
+    const p = { id, text }; if (m) p.m = m; if (kind === 'pub' && postTopic) p.tp = postTopic;
     let ok = true;
     if (aud.f) ok = srvSend({ t: 'gx', to: 'friends', k: kind, p }) && ok;
     if (aud.o) ok = srvSend({ t: 'gx', to: 'followers', k: kind, p }) && ok;
@@ -2264,7 +2292,7 @@ async function sendPost() {
     if (!ok) throw new Error('offline');
     const now = Date.now();
     if (kind === 'story') state.stories.push({ id, from: state.me.code, gid: '', ts: now, text, m, seen: true, aud });
-    else state.feed.push({ id, from: state.me.code, gid: '', ts: now, w: null, pub: { text, m }, aud, react: {}, cmt: [] });
+    else state.feed.push({ id, from: state.me.code, gid: '', ts: now, w: null, pub: { text, m }, tp: postTopic, aud, react: {}, cmt: [] });
     save();
     closeSheets();
     renderAll();
@@ -2450,6 +2478,7 @@ function renderFeed() {
   ul.appendChild(composerCard());
   const list = homeFeed().slice(0, 40);
   $$('#ffChips .chip').forEach(c => c.setAttribute('aria-pressed', String(c.dataset.ff === state.ui.ff)));
+  paintTopicRow($('#tpChips'), state.ui.tp, id => { state.ui.tp = id; save(); renderFeed(); }, true);
   if (!list.length) ul.appendChild(emptyState('📣', 'Tu feed está tranquilo', 'Aquí verás los entrenos y publicaciones que tus amigos y tus grupos decidan compartir. Tú compartes cuando quieras.'));
   list.forEach(p => ul.appendChild(feedCard(p)));
   setStagger(ul);
@@ -2457,7 +2486,7 @@ function renderFeed() {
 
 function upsertPost(item) {
   const cur = state.feed.find(p => p.id === item.id && p.from === item.from);
-  if (cur) { cur.w = item.w; if (item.gid && !cur.gid) cur.gid = item.gid; return cur; }
+  if (cur) { cur.w = item.w; if (item.tp !== undefined) cur.tp = item.tp; if (item.aud) cur.aud = item.aud; if (item.gid && !cur.gid) cur.gid = item.gid; return cur; }
   const p = Object.assign({ react: {}, cmt: [] }, item);
   state.feed.push(p);
   if (state.feed.length > 150) state.feed.sort(postSort).length = 150;
@@ -2499,11 +2528,12 @@ function shareWorkout(w) {
   if (w.feel) wk.feel = w.feel;
   if (sh.vol) wk.vol = Math.round(workoutVol(w));
   if (sh.note && w.note) wk.note = w.note.slice(0, 140);
-  const p = { id: w.id, w: wk };
+  const p = { id: w.id, w: wk }; if (sh.tp) p.tp = sh.tp;
   let sent = 0;
   if (sh.f && srvSend({ t: 'gx', to: 'friends', k: 'post', p })) sent++;
+  if (sh.p && srvSend({ t: 'gx', to: 'public', k: 'post', p })) sent++;
   sh.g.forEach(gid => { if (groupById(gid) && srvSend({ t: 'gx', gid, k: 'post', p })) sent++; });
-  upsertPost({ id: w.id, from: state.me.code, gid: '', ts: Date.now(), w: wk });
+  upsertPost({ id: w.id, from: state.me.code, gid: '', ts: Date.now(), w: wk, tp: sh.tp || '', aud: { f: !!sh.f, o: false, p: !!sh.p, g: sh.g } });
   save();
   state.groups.filter(g => g.rank).forEach(sendStats);
   if (!sent) toast('Sin conexión: no se pudo compartir');
@@ -2805,7 +2835,7 @@ function onGx(m) {
   switch (m.k) {
     case 'post': {
       const isNew = !state.feed.some(x => x.id === p.id && x.from === m.from);
-      upsertPost({ id: p.id, from: m.from, gid: m.gid || '', ts, w: p.w });
+      upsertPost({ id: p.id, from: m.from, gid: m.gid || '', ts, w: p.w, tp: TOPIC_IDS.includes(p.tp) ? p.tp : '' });
       if (isNew && currentTab !== 'inicio') toast(`💪 ${personName(m.from)} ${T('compartió un entreno')}`);
       if (isNew) maybeNewPill();
       break;
@@ -2813,7 +2843,7 @@ function onGx(m) {
     case 'pub': {
       const md = normMedia(p.m), text = str(p.text, 400);
       if ((!text && !md) || state.feed.some(x => x.id === p.id && x.from === m.from)) return;
-      state.feed.push({ id: String(p.id).slice(0, 40), from: m.from, gid: m.gid || '', ts, w: null, pub: { text, m: md }, react: {}, cmt: [] });
+      state.feed.push({ id: String(p.id).slice(0, 40), from: m.from, gid: m.gid || '', ts, w: null, pub: { text, m: md }, tp: TOPIC_IDS.includes(p.tp) ? p.tp : '', react: {}, cmt: [] });
       if (state.feed.length > 150) state.feed.sort(postSort).length = 150;
       if (currentTab !== 'inicio') toast(`📸 ${personName(m.from)} ${T('ha publicado')}`);
       maybeNewPill();
@@ -3261,6 +3291,17 @@ function pullPub(force) {
   pubPulled = Date.now();
   srvSend({ t: 'pubfeed' });
 }
+// Entreno público recibido del servidor: solo los campos esperados y acotados
+function normPubW(w) {
+  if (!w || typeof w !== 'object' || !TYPES.some(t => t.id === w.ty)) return null;
+  const n = (v, mx) => Math.max(0, Math.min(mx, Math.round(Number(v)) || 0));
+  const o = { ty: w.ty, dur: n(w.dur, 600), ex: n(w.ex, 60), sets: n(w.sets, 400), d: DAY_RE.test(String(w.d)) ? w.d : '' };
+  o.pr = (Array.isArray(w.pr) ? w.pr : []).slice(0, 5).map(x => ({ n: str(x && x.n, 40), k: ['1rm', 'peso', 'vol', 'reps'].includes(x && x.k) ? x.k : 'peso', v: Math.max(0, Math.min(2000, Number(x && x.v) || 0)) })).filter(x => x.n);
+  if (n(w.feel, 5)) o.feel = n(w.feel, 5);
+  if (w.vol !== undefined) o.vol = n(w.vol, 1e6);
+  if (w.note) o.note = str(w.note, 140);
+  return o;
+}
 function applyPubFeed(m) {
   const names = m.names && typeof m.names === 'object' ? m.names : {};
   Object.keys(names).forEach(c => { if (!CODE_RE.test(c)) return; state.names[c] = str(names[c].name, 24) || 'Alguien'; if (names[c].handle) pubHandles[c] = str(names[c].handle, 20); });
@@ -3269,13 +3310,13 @@ function applyPubFeed(m) {
   const next = [];
   (Array.isArray(m.posts) ? m.posts : []).forEach(x => {
     if (!x || typeof x.id !== 'string' || !CODE_RE.test(String(x.from)) || isBlocked(x.from)) return;
-    const md = normMedia(x.m), text = str(x.text, 400);
-    if (!text && !md) return;
+    const md = normMedia(x.m), text = str(x.text, 400), wk = normPubW(x.w), tp = TOPIC_IDS.includes(x.tp) ? x.tp : '';
+    if (!text && !md && !wk) return;
     const react = {}; Object.keys(x.r || {}).forEach(c => { if (CODE_RE.test(c) && REACTS.includes(x.r[c])) react[c] = x.r[c]; });
     const cmt = (Array.isArray(x.c) ? x.c : []).filter(c => c && typeof c.text === 'string' && CODE_RE.test(String(c.from))).slice(-30).map(c => ({ id: str(c.id, 40), from: c.from, text: str(c.text, 140), ts: Math.min(Date.now(), Number(c.ts) || 0) }));
     const own = keep.find(k => k.id === x.id && k.from === x.from);
     if (own) { Object.assign(own.react, react); cmt.forEach(c => { if (!own.cmt.some(o => o.id === c.id)) own.cmt.push(c); }); return; }   // ya la tengo por amigos, grupos o es mía
-    next.push({ id: x.id.slice(0, 40), from: x.from, gid: '', ts: Math.min(Date.now(), Number(x.ts) || 0), w: null, pub: { text, m: md }, react, cmt, pubx: true });
+    next.push({ id: x.id.slice(0, 40), from: x.from, gid: '', ts: Math.min(Date.now(), Number(x.ts) || 0), w: wk, pub: wk ? null : { text, m: md }, tp, react, cmt, pubx: true });
   });
   const before = state.feed.filter(x => x.pubx).length;
   oldMine.forEach(o => { if (!next.some(x => x.id === o.id && x.from === o.from) && !isBlocked(o.from)) next.push(Object.assign(o, { stale: true })); });
@@ -3840,6 +3881,7 @@ function bind() {
   $('#restStart').addEventListener('click', () => { const run = rest.end > Date.now(); if (run) { rest.end += 30000; rest.total += 30; restPaint(); } else restStart(state.settings.rest); });
   $('#restStop').addEventListener('click', () => restStop());
   $('#shFriends').addEventListener('change', e => { edShare.f = e.target.checked; paintShare(); });
+  $('#shPublic').addEventListener('change', e => { edShare.p = e.target.checked; paintShare(); });
   $('#shVol').addEventListener('change', e => { edShare.vol = e.target.checked; });
   $('#shNote').addEventListener('change', e => { edShare.note = e.target.checked; });
 

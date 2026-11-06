@@ -2299,3 +2299,8 @@ h1, h2, h3, .today-card h2 { font-weight: 800; letter-spacing: -.01em; }
 .pr-chip { background: linear-gradient(135deg, rgba(255,201,51,.3), rgba(255,107,94,.22)); }
 :root, :root[data-theme="day"] { --orb-op: .62; }
 :root[data-theme="night"] { --orb-op: .5; }
+
+/* Temas */
+.tp-chips { margin: 0 0 10px; }
+.tw-tp { background: color-mix(in srgb, var(--accent) 14%, transparent); }
+.shopts .chips, #shTopics, #pTopics { margin: 4px 0 8px; }
