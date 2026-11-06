@@ -130,7 +130,7 @@ const normLock = l => { const o = l && typeof l === 'object' ? l : {}; const ok 
 
 function defaults() {
   return {
-    workouts: [], routines: [], custom: [], feed: [], stories: [], notes: [], blocked: [], account: null, loginSkipped: false, tutorialDone: false,
+    workouts: [], routines: [], custom: [], feed: [], stories: [], notes: [], blocked: [], account: null, loginSkipped: false, tutorialDone: false, welcomeDone: false,
     me: { name: 'Yo', code: '', photo: '', frame: '', handle: '', priv: true },
     net: { following: [], followers: [], freqIn: [], freqOut: [] },
     friends: [], groups: [], names: {},
@@ -152,6 +152,7 @@ function load(src) {
     blocked: (Array.isArray(d.blocked) ? d.blocked : []).filter(c => CODE_RE.test(c)).slice(0, 200),
     account: d.account && typeof d.account === 'object' && typeof d.account.email === 'string' && d.account.email ? { email: str(d.account.email, 120) } : null,
     loginSkipped: !!d.loginSkipped,
+    welcomeDone: !!d.welcomeDone || !!d.account || !!d.loginSkipped,
     tutorialDone: d.tutorialDone !== undefined ? !!d.tutorialDone : !!((Array.isArray(d.workouts) && d.workouts.length) || (Array.isArray(d.friends) && d.friends.length)),
     me: Object.assign(base.me, d.me), net: normNet(d.net),
     friends: Array.isArray(d.friends) ? d.friends : [],
@@ -541,6 +542,7 @@ async function submitLogin(e) {
     catch { bad('net'); return; }
     if (!r.ok || !j.ok) { bad(j.err || 'server'); return; }
     if (!su && j.code !== state.me.code) { state.friends = state.friends.filter(f => !f.srv); state.me.code = j.code; }
+    if (!su) { state.me.handle = /^[a-z0-9_.]{3,20}$/.test(String(j.handle)) ? j.handle : ''; state.me.priv = j.priv !== false; }
     state.me.name = String(j.name || name || state.me.name).slice(0, 20);
     state.account = { email };
     state.loginSkipped = false;
@@ -554,6 +556,61 @@ async function submitLogin(e) {
   } finally { lgBusy = false; $('#lgGo').disabled = false; }
 }
 
+/* ---------- Primera vez: guía de cuenta y @usuario obligatorio ---------- */
+const WELCOME = [
+  { i: '👋', t: 'Crea tu cuenta', d: 'Con una cuenta tu perfil social te acompaña en cualquier móvil: tu nombre, tu @usuario, tus amigos y tus seguidores. Son solo 3 pasos.' },
+  { i: '✍️', t: 'Tus datos', d: 'Escribe tu nombre (así te verán), tu correo y una contraseña de al menos 8 caracteres. Confirma que tienes 16 años o más. Guarda bien la contraseña: no se puede recuperar.' },
+  { i: '＠', t: 'Tu @usuario', d: 'Justo después elegirás tu @usuario. Es obligatorio: es lo que usan los demás para encontrarte y seguirte. Luego te enseñaremos cómo se usa la app.' }
+];
+let wlI = 0;
+function paintWelcome() {
+  const s = WELCOME[wlI];
+  $('#wlIco').textContent = s.i; $('#wlTitle').textContent = T(s.t); $('#wlText').textContent = T(s.d);
+  $('#wlCount').textContent = `${wlI + 1} / ${WELCOME.length}`;
+  $$('#wlDots i').forEach((d, k) => d.classList.toggle('on', k === wlI));
+  $('#wlBack').classList.toggle('hidden', wlI === 0);
+  $('#wlNext').textContent = T(wlI === WELCOME.length - 1 ? 'Crear mi cuenta' : 'Siguiente');
+  replay($('.wl-card'), 'pop');
+}
+function showWelcome() { wlI = 0; $('#welcome').classList.remove('hidden', 'fade'); paintWelcome(); }
+function endWelcome(mode) {
+  state.welcomeDone = true; save();
+  $('#welcome').classList.add('hidden');
+  $('#login').classList.remove('hidden', 'fade');
+  setLgMode(mode); paintLoginSkip();
+  setTimeout(() => $(mode === 'signup' ? '#lgName' : '#lgEmail').focus({ preventScroll: true }), 300);
+}
+const needHandle = () => !!state.account && !state.me.handle;
+const HANDLE_RE = /^[a-z0-9_.]{3,20}$/;
+const handleOk = h => HANDLE_RE.test(h) && !/^\.|\.$|\.\./.test(h);
+const gateOpen = () => !$('#handleGate').classList.contains('hidden');
+function showGate() {
+  if (gateOpen()) return;
+  $('#handleGate').classList.remove('hidden', 'fade');
+  const g = $('#gateInput');
+  if (!g.value) { const guess = String(state.me.name || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9_.]/g, '').slice(0, 20); g.value = guess.length >= 3 ? guess : ''; }
+  paintGate(); setGateMsg('');
+  setTimeout(() => g.focus({ preventScroll: true }), 300);
+}
+function hideGate() {
+  if (!gateOpen()) return;
+  $('#handleGate').classList.add('fade');
+  setTimeout(() => $('#handleGate').classList.add('hidden'), 400);
+  maybeTutorial();
+}
+function setGateMsg(k, ok) { const m = $('#gateMsg'); m.textContent = k ? T(k) : ''; m.classList.toggle('ok', !!ok); }
+function paintGate() { const h = $('#gateInput').value.trim().toLowerCase().replace(/^@/, ''); $('#gateGo').disabled = !handleOk(h) || gateBusy; }
+let gateBusy = false, gatePending = '';
+function submitGate(e) {
+  e.preventDefault();
+  const h = $('#gateInput').value.trim().toLowerCase().replace(/^@/, '');
+  if (!handleOk(h)) { setGateMsg(HDL_ERR.invalid); return; }
+  gateBusy = true; paintGate();
+  if (!srvSend({ t: 'handle', h })) { gatePending = h; setGateMsg('Conectando…', true); }   // se envía solo en cuanto haya conexión
+  else setGateMsg('Guardando…', true);
+  setTimeout(() => { if (gateBusy) { gateBusy = false; paintGate(); if (gateOpen() && needHandle()) setGateMsg('Sin conexión con el servidor. Inténtalo en unos segundos.'); } }, 8000);
+}
+
 function showLogin() {
   closeSheets();
   $('#chat').classList.remove('open');
@@ -564,6 +621,8 @@ function showLogin() {
   openGroupId = null;
   $('#app').classList.add('hidden');
   $('#tabbar').classList.add('hidden');
+  $('#login').classList.add('hidden');
+  if (!state.welcomeDone && !state.account) { showWelcome(); return; }
   $('#login').classList.remove('hidden', 'fade');
   setLgMode(state.account ? 'login' : 'signup');
   paintLoginSkip();
@@ -635,6 +694,7 @@ const TOUR = [
 let tourI = -1;
 
 function maybeTutorial() {
+  if (needHandle()) { if (!$('#app').classList.contains('hidden')) showGate(); return; }
   if (state.tutorialDone || tourI >= 0) return;
   if (!splashDone || $('#app').classList.contains('hidden') || (!$('#login').classList.contains('hidden') && !$('#login').classList.contains('fade'))) return;
   setTimeout(() => { if (!state.tutorialDone && tourI < 0) startTour(); }, 700);
@@ -2853,7 +2913,8 @@ function renderFriends() {
 let hdlEdit = false, found = [], srchTimer = 0;
 const HDL_ERR = { taken: 'Ese nombre de usuario ya está cogido.', invalid: 'Usa de 3 a 20 caracteres: letras, números, punto o guion bajo.', busy: 'Has cambiado el nombre demasiadas veces hoy. Inténtalo mañana.' };
 const FOLLOW_ERR = { 'no-user': 'No se puede seguir a esa persona.', full: 'Ya sigues a demasiada gente.', many: 'Tienes demasiadas solicitudes pendientes.', busy: 'Demasiadas acciones seguidas. Espera un poco.' };
-function setHdlMsg(text, kind) { const m = $('#hdlMsg'); m.textContent = text || ''; m.classList.remove('ok', 'err'); if (kind) m.classList.add(kind); }
+function setHdlMsg(text, kind) { if (gateOpen() && text) { gateBusy = false; paintGate(); setGateMsg(text, kind === 'ok'); }
+   const m = $('#hdlMsg'); m.textContent = text || ''; m.classList.remove('ok', 'err'); if (kind) m.classList.add(kind); }
 const relOf = c => (friendByCode(c) ? 'friend' : isFollowed(c) ? 'following' : state.net.freqOut.some(x => x.code === c) ? 'requested' : 'none');
 
 function personRow(c, actions) {
@@ -3253,6 +3314,9 @@ function srvReady(m) {
   srvFlush();
   save();
   renderAll();
+  if (gatePending && !state.me.handle) { srvSend({ t: 'handle', h: gatePending }); setGateMsg('Guardando…', true); }
+  gatePending = '';
+  if (gateOpen() && state.me.handle) hideGate(); else if (needHandle() && !$('#app').classList.contains('hidden')) showGate();
   pullPub(true);
 }
 
@@ -3277,11 +3341,11 @@ function onSrvMsg(m) {
     }
     case 'found': found = (m.list || []).map(normCard); renderSearch(); return;
     case 'ok':
-      if (m.re === 'handle') { state.me.handle = m.h; hdlEdit = false; $('#hdlInput').value = ''; setHdlMsg(''); save(); renderRequests(); paintProfileNet(); toast(`${T('Tu usuario es')} @${m.h}`); }
+      if (m.re === 'handle') { gateBusy = false; state.me.handle = m.h; hdlEdit = false; $('#hdlInput').value = ''; setHdlMsg(''); save(); renderRequests(); paintProfileNet(); toast(`${T('Tu usuario es')} @${m.h}`); if (gateOpen()) hideGate(); }
       else if (m.re === 'follow') toast(m.state === 'requested' ? T('Solicitud enviada') : T('Ahora sigues a esta persona'));
       return;
     case 'err':
-      if (m.re === 'handle') setHdlMsg(T(HDL_ERR[m.why] || HDL_ERR.invalid), 'err');
+      if (m.re === 'handle') { gateBusy = false; setHdlMsg(T(HDL_ERR[m.why] || HDL_ERR.invalid), 'err'); }
       else if (m.re === 'follow') toast(FOLLOW_ERR[m.why] || FOLLOW_ERR['no-user']);
       else if (m.re === 'gx' && m.why === 'nohandle') toast(T('Para publicar en público primero elige tu @usuario (Social → Amigos).'));
       else if (m.re === 'gx' && m.why === 'busy') toast(T('Demasiadas acciones seguidas. Espera un poco.'));
@@ -3807,6 +3871,11 @@ function bind() {
 
   document.addEventListener('visibilitychange', () => { if (!document.hidden) applyTheme(); });
   $('#lgForm').addEventListener('submit', submitLogin);
+  $('#wlNext').addEventListener('click', () => { if (wlI < WELCOME.length - 1) { wlI++; paintWelcome(); } else endWelcome('signup'); });
+  $('#wlBack').addEventListener('click', () => { if (wlI > 0) { wlI--; paintWelcome(); } });
+  $('#wlHave').addEventListener('click', () => endWelcome('login'));
+  $('#gateForm').addEventListener('submit', submitGate);
+  $('#gateInput').addEventListener('input', () => { setGateMsg(''); paintGate(); });
   $$('#lgMode button').forEach(b => b.addEventListener('click', () => setLgMode(b.dataset.lg)));
   $('#loginSkip').addEventListener('click', () => { state.loginSkipped = true; save(); hideLogin(); });
   $('#btnLogout').addEventListener('click', logout);

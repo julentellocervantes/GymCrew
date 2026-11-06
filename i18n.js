@@ -1140,6 +1140,15 @@ Object.assign(EX, {
   'Respondiste a': 'You replied to', 'ti': 'you', 'entreno': 'workout'
 });
 Object.assign(EX, { 'Hoy, historial, rutinas y progreso por ejercicio, con tu volumen semanal por grupo muscular.': 'Today, history, routines and per-exercise progress, with your weekly volume by muscle group.' });
+Object.assign(EX, {
+  'Atrás': 'Back', 'Siguiente': 'Next', 'Crear mi cuenta': 'Create my account', 'Ya tengo cuenta': 'I already have an account',
+  'Crea tu cuenta': 'Create your account', 'Tus datos': 'Your details', 'Tu @usuario': 'Your @username', 'Elige tu @usuario': 'Choose your @username', 'Continuar': 'Continue', 'Tu @usuario ': 'Your @username',
+  'Con una cuenta tu perfil social te acompaña en cualquier móvil: tu nombre, tu @usuario, tus amigos y tus seguidores. Son solo 3 pasos.': 'With an account your social profile follows you to any phone: your name, @username, friends and followers. It only takes 3 steps.',
+  'Escribe tu nombre (así te verán), tu correo y una contraseña de al menos 8 caracteres. Confirma que tienes 16 años o más. Guarda bien la contraseña: no se puede recuperar.': 'Enter your name (how others will see you), your email and a password of at least 8 characters. Confirm you are 16 or older. Keep your password safe: it cannot be recovered.',
+  'Justo después elegirás tu @usuario. Es obligatorio: es lo que usan los demás para encontrarte y seguirte. Luego te enseñaremos cómo se usa la app.': 'Right after that you will choose your @username. It is required: it is what others use to find and follow you. Then we will show you how to use the app.',
+  'Así te encontrarán los demás para seguirte. Es obligatorio y puedes cambiarlo más adelante. Usa de 3 a 20 letras minúsculas, números, punto o guion bajo.': 'This is how others will find you to follow you. It is required and you can change it later. Use 3 to 20 lowercase letters, numbers, dot or underscore.',
+  'por ejemplo ana_fit': 'for example ana_fit', 'Sin conexión con el servidor. Inténtalo en unos segundos.': 'No connection to the server. Try again in a few seconds.'
+});
 // Glosario para trozos sueltos dentro de otras frases
   const GLOSS = [
     ['Reto relámpago', 'Flash challenge'], ['Encuesta', 'Poll'], ['Pulso del grupo', 'Group pulse'], ['Meta del grupo', 'Group goal'],
