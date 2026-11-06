@@ -103,6 +103,18 @@ function flush() {
     fs.renameSync(tmp, DATA_FILE);
   } catch (e) { console.error('No se pudo guardar:', e.message); dirty = true; }
 }
+// Guarda ya y devuelve true solo si de verdad quedó guardado (cuentas y dispositivos nuevos no pueden perderse)
+async function persistNow() {
+  for (let i = 0; i < 3; i++) {
+    if (saving) await saving;
+    if (timer) { clearTimeout(timer); timer = null; }
+    dirty = true;
+    const p = flush();
+    if (p) await p;
+    if (!dirty) return true;
+  }
+  return false;
+}
 function shutdown() {
   if (timer) clearTimeout(timer);
   dirty = dirty || false;
@@ -794,11 +806,15 @@ function onAuth(req, res, url, headers) {
         if (u && (!tokenOk(u, token) || u.email)) return j(409, { err: 'taken' });   // ese perfil ya es de otra persona o ya tiene cuenta
         const salt = crypto.randomBytes(16).toString('hex'), pwh = (await scryptP(pw, salt)).toString('hex');
         if (db.accounts[email]) return j(409, { err: 'exists' });
+        const created = !u;
         if (!u) { u = db.users[code] = { name, hash: sha(token), created: Date.now() }; friendsOf(code); }
         else if (name !== u.name) { u.name = name; for (const f of friendsOf(code)) emit(f, { t: 'fname', code, name }); }
         u.email = email;
         db.accounts[email] = { code, salt, pw: pwh, ts: Date.now() };
-        persist();
+        if (!(await persistNow())) {                                   // no se pudo guardar: no se crea la cuenta a medias
+          delete db.accounts[email]; delete u.email; if (created) delete db.users[code];
+          return j(503, { err: 'server' });
+        }
         return j(200, { ok: true, code, name: u.name });
       }
       // login
@@ -811,7 +827,11 @@ function onAuth(req, res, url, headers) {
       if (!acc || !same(acc.pw, got.toString('hex'))) return j(401, { err: 'bad' });
       const u = db.users[acc.code];
       if (!u) return j(401, { err: 'bad' });
-      if (!tokenOk(u, token)) { u.alts = (u.alts || []).concat(sha(token)).slice(-7); persist(); }   // este dispositivo pasa a ser de confianza
+      if (!tokenOk(u, token)) {                                          // este dispositivo pasa a ser de confianza
+        const before = u.alts;
+        u.alts = (u.alts || []).concat(sha(token)).slice(-7);
+        if (!(await persistNow())) { u.alts = before; return j(503, { err: 'server' }); }
+      }
       return j(200, { ok: true, code: acc.code, name: u.name, handle: u.handle || '', priv: u.priv !== false });
     } catch { return j(500, { err: 'server' }); }
   });
