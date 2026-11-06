@@ -337,7 +337,7 @@ button { font: inherit; color: inherit; }
 
 label { display: block; font-size: .85rem; color: var(--muted); margin-top: 12px; }
 .label { font-size: .85rem; color: var(--muted); margin-top: 14px; }
-input[type=text], input[type=password], input[type=date], input[type=time], input[type=number], input[type=search], input[type=url], textarea {
+input[type=text], input[type=email], input[type=password], input[type=date], input[type=time], input[type=number], input[type=search], input[type=url], textarea {
   width: 100%;
   background: var(--fill);
   color: var(--text);
@@ -1991,7 +1991,6 @@ input:not([type=checkbox]):not([type=radio]):not([type=range]), select { min-hei
 .story-view .btn { color: #fff; background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.3); }
 
 /* ===== Inicio estilo timeline + notificaciones ===== */
-#homeSeg { margin-bottom: 10px; }
 .bell { position: relative; }
 .bell-badge { position: absolute; top: 2px; right: 2px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--danger); color: #fff; font-size: .7rem; font-weight: 800; display: grid; place-items: center; line-height: 1; border: 2px solid var(--bg); }
 .ff-chips { margin: 2px 0 10px; }
@@ -2160,3 +2159,39 @@ html.rm .rev.pre { opacity: 1; transform: none; }
 }
 
 .tw-hdl { color: var(--muted, #8a93a6); font-size: 12px; font-weight: 500; margin-left: 6px; }
+
+/* Entrenos: cuatro pestañas (Hoy · Historial · Rutinas · Progreso) */
+.seg4::before { width: calc(25% - 4.5px); }
+.seg4[data-idx="1"]::before { transform: translateX(calc(100% + 3px)); }
+.seg4[data-idx="2"]::before { transform: translateX(calc(200% + 6px)); }
+.seg4[data-idx="3"]::before { transform: translateX(calc(300% + 9px)); }
+.seg4 button { padding: 10px 2px; font-size: .86rem; }
+.seg4[data-idx="0"] button:nth-child(1), .seg4[data-idx="1"] button:nth-child(2), .seg4[data-idx="2"] button:nth-child(3), .seg4[data-idx="3"] button:nth-child(4) { color: var(--text); }
+
+/* Pantalla de cuenta */
+.login { overflow-y: auto; }
+.login-card { max-height: 96dvh; overflow-y: auto; text-align: left; }
+.login-card h1 { text-align: center; }
+.login-card .seg { margin-bottom: 0; }
+.lg-form { display: flex; flex-direction: column; gap: 2px; }
+.lg-form label { margin-top: 8px; }
+.lg-check { display: flex !important; align-items: center; gap: 10px; min-height: 44px; color: var(--text); }
+.lg-check input { width: 22px; height: 22px; flex: none; accent-color: var(--accent, #2f7bff); margin: 0; }
+.lg-msg { min-height: 1.2em; color: #d93a4a; margin: 6px 0 2px; }
+.lg-msg.ok { color: var(--muted); }
+.lg-form .btn { margin-top: 6px; }
+.login-card .muted.small { text-align: center; }
+
+/* Perfil: nombre, @ y actividad */
+.prof-handle { text-align: center; color: var(--muted); font-weight: 600; margin-top: 2px; }
+#pfAct { margin-top: 14px; }
+#pfAct .rows { margin-top: 4px; }
+.pf-reply .main { min-width: 0; }
+.pf-reply .main strong { display: block; white-space: normal; overflow-wrap: anywhere; }
+.pf-reply .pf-gist { display: block; white-space: normal; overflow-wrap: anywhere; opacity: .8; }
+.pf-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 4px; }
+.pf-grid > .empty { grid-column: 1 / -1; }
+.pf-cell { position: relative; aspect-ratio: 1; padding: 0; border: 1px solid var(--gb); border-radius: 16px; overflow: hidden; background: var(--fill); cursor: pointer; min-height: 44px; }
+.pf-cell img, .pf-cell video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.pf-cell.gone { display: flex; align-items: center; justify-content: center; font-size: 1.6rem; opacity: .6; }
+.pf-play { position: absolute; right: 6px; bottom: 6px; background: rgba(0,0,0,.55); color: #fff; border-radius: 999px; font-size: .7rem; padding: 2px 6px; }

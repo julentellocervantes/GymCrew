@@ -96,6 +96,8 @@
     get status() { return S.status; },
     get why() { return S.why || ''; },
     get online() { return S.status === 'online'; },
+    // Se resuelve cuando ya se sabe si hay servidor (api.http vacío = no hay)
+    discovered() { return S.discP || new Promise(r => { const t = setInterval(() => { if (S.discP) { clearInterval(t); r(S.discP); } }, 50); }); },
     // 'none' = sin servidor: la app trabaja en local. Con servidor, las acciones sociales van por él.
     get enabled() { return S.status !== 'none'; },
     get base() { return S.base; },
@@ -109,7 +111,8 @@
       S.lastN = Number(store().lastN) || 0;
       if (S.started) return;
       S.started = true;
-      S.base = await discover();
+      S.discP = discover();
+      S.base = await S.discP;
       if (!S.base) { setStatus('none'); return; }
       open();
       const wake = () => { if (S.base && !S.fatal && (!S.ws || S.ws.readyState > 1)) { S.ws = null; S.tries = 0; clearTimeout(S.timer); open(); } };

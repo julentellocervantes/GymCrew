@@ -116,12 +116,13 @@ const NOTE_TYPES = ['like', 'cmt', 'req', 'friend', 'join', 'follow', 'freq', 'f
 const normNotes = a => (Array.isArray(a) ? a : []).filter(n => n && NOTE_TYPES.includes(n.type) && typeof n.id === 'string').slice(-100).map(n => ({ id: n.id.slice(0, 40), ts: Number(n.ts) || 0, type: n.type, from: str(n.from, 12), pid: str(n.pid, 40), e: str(n.e, 4), text: str(n.text, 140), gname: str(n.gname, 24), name: str(n.name, 24), seen: !!n.seen }));
 const normCard = c => ({ code: str(c && c.code, 12), name: str(c && c.name, 24) || 'Alguien', handle: str(c && c.handle, 20), priv: !(c && c.priv === false) });
 const normNet = n => { n = n && typeof n === 'object' ? n : {}; const L = a => (Array.isArray(a) ? a : []).filter(c => c && CODE_RE.test(String(c.code))).slice(0, 500).map(normCard); return { following: L(n.following), followers: L(n.followers), freqIn: L(n.freqIn), freqOut: L(n.freqOut) }; };
-const normFeed = a => (Array.isArray(a) ? a : []).filter(p => p && typeof p.id === 'string' && !p.pubx && ((p.w && typeof p.w === 'object') || (p.pub && typeof p.pub === 'object'))).slice(-150).map(p => {
+const normFeed = a => (Array.isArray(a) ? a : []).filter(p => p && typeof p.id === 'string' && ((p.w && typeof p.w === 'object') || (p.pub && typeof p.pub === 'object'))).slice(-150).map(p => {
   const o = {
     id: p.id.slice(0, 40), from: str(p.from, 12), gid: p.gid ? str(p.gid, 40) : '', ts: Number(p.ts) || 0, w: p.w && typeof p.w === 'object' ? p.w : null,
     react: p.react && typeof p.react === 'object' ? p.react : {}, cmt: (Array.isArray(p.cmt) ? p.cmt : []).filter(c => c && typeof c.text === 'string').slice(-30)
   };
   if (p.pub && typeof p.pub === 'object') { o.pub = { text: str(p.pub.text, 400), m: normMedia(p.pub.m) }; o.aud = normAud(p.aud); }
+  if (p.pubx) { o.pubx = true; o.stale = true; }
   return o;
 });
 const normStories = a => (Array.isArray(a) ? a : []).filter(s => s && typeof s.id === 'string' && Date.now() - (Number(s.ts) || 0) < 24 * 3600e3 && (s.text || normMedia(s.m))).slice(-60).map(s => ({ id: s.id.slice(0, 40), from: str(s.from, 12), gid: s.gid ? str(s.gid, 40) : '', ts: Number(s.ts) || 0, text: str(s.text, 140), m: normMedia(s.m), seen: !!s.seen, aud: normAud(s.aud) }));
@@ -135,7 +136,7 @@ function defaults() {
     friends: [], groups: [], names: {},
     requests: { incoming: [], outgoing: [] },
     achievements: {},
-    ui: { fold: {}, tab: '', home: 'feed', ff: '', fl: 'friends', seg: 'groups', hseg: 'hist', filter: '', draft: null, lastRoutine: '', quickType: 'fuerza' },
+    ui: { fold: {}, tab: '', home: 'feed', ff: '', fl: 'friends', seg: 'groups', pf: 'posts', hseg: 'today', filter: '', draft: null, lastRoutine: '', quickType: 'fuerza' },
     settings: { noteToast: true, browserNotif: false, theme: 'auto', lang: 'es', haptics: true, goal: 3, rest: 90, lock: { on: false, h: '', s: '', after: 0 } }
   };
 }
@@ -149,7 +150,7 @@ function load(src) {
   const s = {
     workouts: normWorkouts(d.workouts), routines: normRoutines(d.routines), custom: normCustom(d.custom), feed: normFeed(d.feed), stories: normStories(d.stories), notes: normNotes(d.notes),
     blocked: (Array.isArray(d.blocked) ? d.blocked : []).filter(c => CODE_RE.test(c)).slice(0, 200),
-    account: d.account && typeof d.account === 'object' && d.account.sub ? d.account : null,
+    account: d.account && typeof d.account === 'object' && typeof d.account.email === 'string' && d.account.email ? { email: str(d.account.email, 120) } : null,
     loginSkipped: !!d.loginSkipped,
     tutorialDone: d.tutorialDone !== undefined ? !!d.tutorialDone : !!((Array.isArray(d.workouts) && d.workouts.length) || (Array.isArray(d.friends) && d.friends.length)),
     me: Object.assign(base.me, d.me), net: normNet(d.net),
@@ -159,9 +160,10 @@ function load(src) {
     requests: { incoming: Array.isArray(rq.incoming) ? rq.incoming : [], outgoing: Array.isArray(rq.outgoing) ? rq.outgoing : [] },
     achievements: d.achievements && typeof d.achievements === 'object' ? d.achievements : {},
     ui: {
+      pf: ['posts', 'replies', 'photos'].includes(ui.pf) ? ui.pf : 'posts',
       home: ui.home === 'day' ? 'day' : 'feed', fl: ['friends', 'following', 'followers'].includes(ui.fl) ? ui.fl : 'friends', ff: ['f', 'g', 'p'].includes(ui.ff) ? ui.ff : '',
       fold: Object.assign({}, ui.fold), tab: str(ui.tab, 12), seg: ['groups', 'chats', 'friends'].includes(ui.seg) ? ui.seg : 'groups',
-      hseg: ['hist', 'routines', 'progress'].includes(ui.hseg) ? ui.hseg : 'hist', filter: TYPE_IDS.includes(ui.filter) ? ui.filter : '',
+      hseg: ['today', 'hist', 'routines', 'progress'].includes(ui.hseg) ? ui.hseg : 'today', filter: TYPE_IDS.includes(ui.filter) ? ui.filter : '',
       draft: ui.draft && typeof ui.draft === 'object' && normWorkout(ui.draft) ? Object.assign(normWorkout(ui.draft), { at: Number(ui.draft.at) || 0 }) : null,
       lastRoutine: str(ui.lastRoutine, 40), quickType: TYPE_IDS.includes(ui.quickType) ? ui.quickType : 'fuerza'
     },
@@ -185,7 +187,7 @@ function load(src) {
 let state = load();
 
 function save() {
-  try { localStorage.setItem(KEY, JSON.stringify(state, (k, v) => (k === 'feed' && Array.isArray(v) ? v.filter(x => !x.pubx) : v))); }
+  try { localStorage.setItem(KEY, JSON.stringify(state, (k, v) => (k === 'feed' && Array.isArray(v) ? v.filter(x => !x.pubx || x.cmt.some(c => c.from === state.me.code)) : v))); }
   catch { toast('No se pudo guardar. Revisa que el navegador permita almacenamiento local.'); }
 }
 save();
@@ -383,7 +385,7 @@ function renderAccount() {
   const a = state.account;
   $('#accIn').classList.toggle('hidden', !a);
   $('#accOut').classList.toggle('hidden', !!a);
-  if (a) { $('#accName').textContent = a.name || a.email; $('#accMail').textContent = a.email; }
+  if (a) { $('#accName').textContent = state.me.name; $('#accMail').textContent = a.email; }
 }
 
 /* ---------- Apariencia: tema e idioma ---------- */
@@ -494,59 +496,62 @@ function bindSplash() {
   splash.focus({ preventScroll: true });
 }
 
-/* ---------- Cuenta de Google ---------- */
-// Inicio de sesión con Google Identity Services. Necesita un ID de cliente en config.js (ver README).
-// Los datos siguen guardándose en este dispositivo: la cuenta solo identifica tu perfil.
-const CFG = window.GYM_CONFIG || {};
-let gReady = false;
-
+/* ---------- Cuenta con correo y contraseña ---------- */
+// Lo primero que ve una persona nueva. El servidor guarda la contraseña con scrypt; aquí solo queda el correo.
+// Los entrenos siguen guardándose en este dispositivo: la cuenta identifica tu perfil social.
 const needLogin = () => !state.account && !state.loginSkipped;
-
-function decodeJwt(t) {
-  const p = String(t).split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
-  const bin = atob(p + '='.repeat((4 - (p.length % 4)) % 4));
-  return JSON.parse(decodeURIComponent([...bin].map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')));
+const EMAIL_RE = /^[^\s@<>]{1,64}@[^\s@<>]{1,200}\.[^\s@<>.]{2,24}$/;
+let lgMode = 'signup', lgBusy = false;
+const LG_ERR = {
+  email: 'Ese correo no parece válido.', pass: 'La contraseña necesita entre 8 y 100 caracteres.', name: 'Escribe tu nombre.',
+  exists: 'Ya hay una cuenta con ese correo. Prueba en «Entrar».', taken: 'Este perfil ya tiene otra cuenta. Entra con ella en «Entrar».',
+  bad: 'Correo o contraseña incorrectos.', busy: 'Demasiados intentos. Espera unos minutos.', format: 'No se pudo enviar. Inténtalo de nuevo.',
+  server: 'El servidor falló. Inténtalo en un momento.', age: 'Tienes que tener 16 años o más.', none: 'No hay servidor al que conectarse.', net: 'Sin conexión con el servidor.'
+};
+function setLgMsg(k, ok) { const m = $('#loginMsg'); m.textContent = k ? T(LG_ERR[k] || k) : ''; m.classList.toggle('ok', !!ok); }
+function setLgMode(m) {
+  lgMode = m === 'login' ? 'login' : 'signup';
+  const su = lgMode === 'signup';
+  $('#lgMode').dataset.idx = su ? 0 : 1;
+  $$('#lgMode button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.lg === lgMode)));
+  $('#lgNameRow').classList.toggle('hidden', !su);
+  $('#lgAgeRow').classList.toggle('hidden', !su);
+  $('#lgPass').autocomplete = su ? 'new-password' : 'current-password';
+  $('#lgGo').textContent = T(su ? 'Crear cuenta' : 'Entrar');
+  setLgMsg('');
 }
-
-function onGoogleCredential(resp) {
+function paintLoginSkip() { $('#loginSkip').classList.toggle('hidden', !!(window.Srv && Srv.http) || !window.Srv); }
+async function submitLogin(e) {
+  e.preventDefault();
+  if (lgBusy) return;
+  const su = lgMode === 'signup', email = $('#lgEmail').value.trim().toLowerCase(), pw = $('#lgPass').value, name = $('#lgName').value.trim().slice(0, 20);
+  const bad = k => { setLgMsg(k); replay($('.login-card'), 'shake'); };
+  if (su && !name) return bad('name');
+  if (!EMAIL_RE.test(email)) return bad('email');
+  if (su && (pw.length < 8 || pw.length > 100)) return bad('pass');
+  if (!su && !pw) return bad('bad');
+  if (su && !$('#lgAge').checked) return bad('age');
+  lgBusy = true; $('#lgGo').disabled = true; setLgMsg('Conectando…', true);
   try {
-    const p = decodeJwt(resp.credential);
-    if (!p || !p.sub) throw new Error('sin sub');
-    state.account = { sub: String(p.sub), name: p.name || '', email: p.email || '', picture: p.picture || '' };
-    if (!state.me.name || state.me.name === 'Yo') { state.me.name = String(p.given_name || p.name || 'Yo').slice(0, 20); if (window.Srv) Srv.identify({ code: state.me.code, name: state.me.name }); }
-    if (!state.me.photo && /^https:\/\//.test(p.picture || '')) state.me.photo = p.picture;
+    await Srv.discovered();
+    if (!Srv.http) { bad('none'); return; }
+    const a = Srv.auth, body = su ? { email, password: pw, name, code: a.code, token: a.token } : { email, password: pw, token: a.token };
+    let r, j = {};
+    try { r = await fetch(Srv.http + '/auth/' + (su ? 'signup' : 'login'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); j = await r.json().catch(() => ({})); }
+    catch { bad('net'); return; }
+    if (!r.ok || !j.ok) { bad(j.err || 'server'); return; }
+    if (!su && j.code !== state.me.code) { state.friends = state.friends.filter(f => !f.srv); state.me.code = j.code; }
+    state.me.name = String(j.name || name || state.me.name).slice(0, 20);
+    state.account = { email };
     state.loginSkipped = false;
+    $('#lgPass').value = '';
     save();
-    toast(`Sesión iniciada: ${state.account.email || state.account.name}`);
+    Srv.identify({ code: state.me.code, name: state.me.name }, true);
+    setLgMsg('');
+    toast(su ? 'Cuenta creada. ¡Bienvenido!' : 'Sesión iniciada');
     hideLogin();
     renderAll();
-  } catch { toast('No se pudo iniciar sesión con Google'); }
-}
-
-function loadGoogle(cb) {
-  if (window.google && google.accounts && google.accounts.id) { cb(); return; }
-  const s = document.createElement('script');
-  s.src = 'https://accounts.google.com/gsi/client';
-  s.async = true;
-  s.onload = cb;
-  s.onerror = () => { $('#loginMsg').textContent = 'No se pudo cargar Google. Revisa tu conexión.'; };
-  document.head.appendChild(s);
-}
-
-function setupGoogleButton() {
-  const box = $('#gBtn');
-  if (!CFG.googleClientId) {
-    $('#gFallback').classList.remove('hidden');
-    $('#loginMsg').textContent = 'Falta configurar el ID de cliente de Google en config.js (mira el README).';
-    return;
-  }
-  $('#gFallback').classList.add('hidden');
-  $('#loginMsg').textContent = '';
-  loadGoogle(() => {
-    if (!gReady) { google.accounts.id.initialize({ client_id: CFG.googleClientId, callback: onGoogleCredential }); gReady = true; }
-    box.innerHTML = '';
-    google.accounts.id.renderButton(box, { theme: 'outline', size: 'large', shape: 'pill', text: 'continue_with', width: 280 });
-  });
+  } finally { lgBusy = false; $('#lgGo').disabled = false; }
 }
 
 function showLogin() {
@@ -560,7 +565,9 @@ function showLogin() {
   $('#app').classList.add('hidden');
   $('#tabbar').classList.add('hidden');
   $('#login').classList.remove('hidden', 'fade');
-  setupGoogleButton();
+  setLgMode(state.account ? 'login' : 'signup');
+  paintLoginSkip();
+  setTimeout(() => $('#lgEmail').focus({ preventScroll: true }), 300);
 }
 
 function hideLogin() {
@@ -615,10 +622,10 @@ function sparkle(host, n, gold) {
 /* ---------- Tutorial guiado (primera vez) ---------- */
 const TOUR = [
   { t: '¡Bienvenido a GymCrew! 💪', d: 'Un repaso rápido. Tus entrenos se guardan solo en tu móvil. Compartir con amigos o con tu gimnasio es siempre opcional y lo decides en cada entreno. Para mayores de 16 años.', tab: 'inicio' },
-  { sel: '#todayCard', tab: 'inicio', t: 'Hoy ☀️', d: 'Apunta un entreno en un toque (tipo y cómo te sentiste) o empieza tu siguiente rutina.' },
-  { sel: '#weekCard', tab: 'inicio', t: 'Tu semana 📅', d: 'Tu objetivo semanal es flexible: los días de descanso cuentan. Si una semana no sale, la siguiente empieza de cero, sin dramas.' },
+  { sel: '#todayCard', tab: 'historial', hs: 'today', t: 'Hoy ☀️', d: 'Apunta un entreno en un toque (tipo y cómo te sentiste) o empieza tu siguiente rutina.' },
+  { sel: '#weekCard', tab: 'historial', hs: 'today', t: 'Tu semana 📅', d: 'Tu objetivo semanal es flexible: los días de descanso cuentan. Si una semana no sale, la siguiente empieza de cero, sin dramas.' },
   { sel: '#fab', tab: 'inicio', t: 'Registro completo ➕', d: 'Ejercicios, series, peso, repeticiones y RPE. Con temporizador de descanso, rutinas y récords automáticos.' },
-  { sel: '#hsegBar', tab: 'historial', t: 'Entrenos 🏋️', d: 'Historial, rutinas y progreso por ejercicio, con tu volumen semanal por grupo muscular.' },
+  { sel: '#hsegBar', tab: 'historial', hs: 'today', t: 'Entrenos 🏋️', d: 'Hoy, historial, rutinas y progreso por ejercicio, con tu volumen semanal por grupo muscular.' },
   { sel: '.tab[data-tab="amigos"]', tab: 'amigos', t: 'Social 👥', d: 'Añade amigos con su código o crea un grupo de tu gimnasio con otro código. Nada se comparte si tú no quieres. Puedes bloquear, reportar y salir cuando quieras.' },
   { sel: '.tab[data-tab="perfil"]', tab: 'perfil', t: 'Perfil 🙂', d: 'Tu foto, tu código de amigo y tus logros con marcos.' },
   { sel: '#openSettings', tab: 'inicio', t: 'Ajustes ⚙️', d: 'Tema, idioma, objetivo semanal, descanso, PIN opcional y copia de seguridad. GymCrew no sustituye a un profesional de la salud ni da consejos médicos ni de dieta.' },
@@ -644,6 +651,7 @@ function tourShow(i) {
   const st = TOUR[i];
   tourI = i;
   if (st.tab && st.tab !== currentTab) showTab(st.tab);
+  if (st.hs && state.ui.hseg !== st.hs) setHseg(st.hs);
   const card = $('#tourCard');
   $('#tourN').textContent = `${i + 1} / ${TOUR.length}`;
   $('#tourT').textContent = T(st.t);
@@ -901,6 +909,7 @@ function renderProfile(animate) {
   const input = $('#nameInput');
   if (document.activeElement !== input) input.value = state.me.name === 'Yo' ? '' : state.me.name;
   paintProfileNet();
+  renderProfileActivity();
   $('#photoDel').disabled = !state.me.photo;
   renderFrames();
   const st = streakInfo();
@@ -923,6 +932,52 @@ function renderProfile(animate) {
   fill($('#achDone'), done, true);
   fill($('#achTodo'), todo, false);
   if (animate) requestAnimationFrame(() => requestAnimationFrame(() => fills.forEach(f => { f.style.width = f.dataset.w; })));
+}
+
+/* Tu actividad en el perfil: publicaciones, respuestas y fotos */
+const myPosts = () => state.feed.filter(p => p.from === state.me.code).sort(postSort);
+function myReplies() {
+  const out = [];
+  state.feed.forEach(p => { if (isBlocked(p.from)) return; p.cmt.forEach(c => { if (c.from === state.me.code) out.push({ c, p }); }); });
+  return out.sort((a, b) => b.c.ts - a.c.ts);
+}
+function postGist(p) { return p.pub ? (p.pub.text || T('una foto')) : `${T('entreno')} · ${T(typeOf(p.w.ty).n)}`; }
+function renderProfileActivity() {
+  if (!$('#pfList')) return;
+  const v = state.ui.pf;
+  $('#pfSeg').dataset.idx = ['posts', 'replies', 'photos'].indexOf(v);
+  $$('#pfSeg button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.pf === v)));
+  const ul = $('#pfList'), grid = $('#pfGrid');
+  ul.innerHTML = ''; grid.innerHTML = '';
+  ul.classList.toggle('hidden', v === 'photos'); grid.classList.toggle('hidden', v !== 'photos');
+  if (v === 'posts') {
+    const list = myPosts().slice(0, 60);
+    if (!list.length) ul.appendChild(emptyState('📝', 'Todavía no has publicado nada', 'Lo que compartas aparecerá aquí. Tú decides quién lo ve.'));
+    list.forEach(p => ul.appendChild(feedCard(p)));
+  } else if (v === 'replies') {
+    const list = myReplies().slice(0, 80);
+    if (!list.length) ul.appendChild(emptyState('💬', 'Aún no has respondido a nadie', 'Tus respuestas a publicaciones de otras personas aparecerán aquí.'));
+    list.forEach(({ c, p }) => {
+      const li = el('li', 'glass row tappable pf-reply'); li.tabIndex = 0; li.setAttribute('role', 'button');
+      const main = el('div', 'main');
+      main.append(el('small', '', `${T('Respondiste a')} ${p.from === state.me.code ? T('ti') : personName(p.from)} · ${dayLabel(c.ts)} ${fmtClock(c.ts)}`), ut(el('strong', '', c.text)), ut(el('small', 'pf-gist', '“' + postGist(p).slice(0, 80) + '”')));
+      li.appendChild(main);
+      const open = () => openThread(p);
+      li.addEventListener('click', open); li.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } });
+      ul.appendChild(li);
+    });
+  } else {
+    const list = myPosts().filter(p => p.pub && p.pub.m).slice(0, 90);
+    if (!list.length) { grid.classList.add('hidden'); ul.classList.remove('hidden'); ul.appendChild(emptyState('📷', 'Todavía no hay fotos', 'Las fotos y vídeos que publiques saldrán aquí.')); return; }
+    list.forEach(p => {
+      const b = el('button', 'pf-cell'); b.type = 'button'; b.setAttribute('aria-label', `${p.pub.m.k === 'vid' ? T('Vídeo') : T('Foto')} · ${dayLabel(p.ts)}`);
+      const gone = () => { b.classList.add('gone'); b.textContent = '🖼'; };
+      if (p.pub.m.k === 'img') { const im = document.createElement('img'); im.loading = 'lazy'; im.alt = ''; im.src = mediaUrl(p.pub.m.id); im.onerror = gone; b.appendChild(im); }
+      else { const vd = document.createElement('video'); vd.muted = true; vd.playsInline = true; vd.preload = 'metadata'; vd.src = mediaUrl(p.pub.m.id); vd.onerror = gone; b.append(vd, el('span', 'pf-play', '▶')); }
+      b.addEventListener('click', () => openThread(p));
+      grid.appendChild(b);
+    });
+  }
 }
 
 function achRow(a, isDone, animate, fills) {
@@ -1100,7 +1155,8 @@ function renderHome() {
   prs.forEach(p => { const li = el('li', 'glass row static'); li.append(el('span', 'ach-ico', '🏅'), ut(el('div', 'main', '')), el('div', 'side', dayLabel(parse(p.date).getTime()))); li.children[1].append(ut(el('strong', '', exName(p.k))), el('small', '', prText(p).split(' · ')[1])); pl.appendChild(li); });
 
   renderFeed();
-  paintHome(); paintBell();
+  if (currentTab === 'perfil') renderProfileActivity();
+  paintBell();
   if (thOpen) renderThread();
   void s;
 }
@@ -1185,6 +1241,7 @@ function renderBars(container, values, labels) {
   });
 }
 
+const HSEGS = ['today', 'hist', 'routines', 'progress'];
 function setHseg(v) {
   state.ui.hseg = v;
   save();
@@ -1193,9 +1250,10 @@ function setHseg(v) {
 
 function renderEntrenos() {
   const v = state.ui.hseg;
-  $('#hsegBar').dataset.idx = ['hist', 'routines', 'progress'].indexOf(v);
-  ['hist', 'routines', 'progress'].forEach(p => $('#hpane-' + p).classList.toggle('hidden', p !== v));
-  if (v === 'hist') renderHist(); else if (v === 'routines') renderRoutines(); else renderProgress();
+  $('#hsegBar').dataset.idx = HSEGS.indexOf(v);
+  $$('#hsegBar button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.hseg === v)));
+  HSEGS.forEach(p => $('#hpane-' + p).classList.toggle('hidden', p !== v));
+  if (v === 'today') renderHome(); else if (v === 'hist') renderHist(); else if (v === 'routines') renderRoutines(); else renderProgress();
 }
 
 function renderHist() {
@@ -1709,7 +1767,7 @@ function swapList() {
 const postSort = (a, b) => b.ts - a.ts;
 function visibleFeed(gid) { return state.feed.filter(p => !isBlocked(p.from) && (gid === undefined || p.gid === gid)).sort(postSort); }
 const isOpenPost = p => !!p.pubx || !!(p.aud && p.aud.p);
-const homeFeed = () => visibleFeed().filter(p => !state.ui.ff || (state.ui.ff === 'g' ? !!p.gid : state.ui.ff === 'p' ? isOpenPost(p) : !p.gid && (!p.pubx || isFollowed(p.from))));
+const homeFeed = () => visibleFeed().filter(p => !p.stale && !state.ui.ff || (state.ui.ff === 'g' ? !!p.gid : state.ui.ff === 'p' ? isOpenPost(p) : !p.gid && (!p.pubx || isFollowed(p.from))));
 
 function feedSummary(w) {
   const t = typeOf(w.ty), bits = [];
@@ -1961,20 +2019,11 @@ function closeNotes(restore = true) {
 }
 
 /* ---------- Inicio estilo timeline ---------- */
-function paintHome() {
-  const h = state.ui.home;
-  $('#homeSeg').dataset.idx = h === 'day' ? 1 : 0;
-  $$('#homeSeg button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.home === h)));
-  $('#homeFeed').classList.toggle('hidden', h !== 'feed');
-  $('#homeDay').classList.toggle('hidden', h !== 'day');
-  if (h !== 'feed') $('#newPill').classList.add('hidden');
-}
-function setHome(h) { if (state.ui.home === h) return; state.ui.home = h; save(); paintHome(); window.scrollTo(0, 0); }
 function bindTimeline() {
-  $$('#homeSeg button').forEach(b => b.addEventListener('click', () => setHome(b.dataset.home)));
   $$('#ffChips .chip').forEach(c => c.addEventListener('click', () => { state.ui.ff = c.dataset.ff; save(); renderFeed(); }));
   $('#newPill').addEventListener('click', () => { window.scrollTo({ top: 0, behavior: reduceMotion() ? 'auto' : 'smooth' }); $('#newPill').classList.add('hidden'); });
   window.addEventListener('scroll', () => { if (window.scrollY < 120) $('#newPill').classList.add('hidden'); }, { passive: true });
+  $$('#pfSeg button').forEach(b => b.addEventListener('click', () => { state.ui.pf = b.dataset.pf; save(); renderProfileActivity(); }));
   $('#bellBtn').addEventListener('click', openNotes);
   $('#ntBack').addEventListener('click', () => closeNotes());
   $('#ntRead').addEventListener('click', () => { markNotesSeen(); renderNotes(); });
@@ -1990,7 +2039,7 @@ function bindTimeline() {
   $('#rsNoteToast').addEventListener('change', e => { state.settings.noteToast = e.target.checked; save(); });
   // «＋»: elegir qué crear
   $('#fab').addEventListener('click', () => openSheet('sheetNew'));
-  $('#nwQuick').addEventListener('click', () => { closeSheets(); showTab('inicio'); setHome('day'); });
+  $('#nwQuick').addEventListener('click', () => { closeSheets(); showTab('historial'); setHseg('today'); });
   $('#nwWorkout').addEventListener('click', () => { closeSheets(); openWorkout(null); });
   $('#nwPost').addEventListener('click', () => { closeSheets(); openPost('pub'); });
   $('#nwStory').addEventListener('click', () => { closeSheets(); openPost('story'); });
@@ -1998,10 +2047,10 @@ function bindTimeline() {
     if (e.key !== 'Escape') return;
     if ($('#thread.open')) closeThread(); else if ($('#notes.open')) closeNotes();
   });
-  paintHome(); paintBell();
+  paintBell();
 }
 // Aviso discreto cuando llegan publicaciones nuevas y estás leyendo más abajo
-function maybeNewPill() { if (currentTab === 'inicio' && state.ui.home === 'feed' && window.scrollY > 400) $('#newPill').classList.remove('hidden'); }
+function maybeNewPill() { if (currentTab === 'inicio' && window.scrollY > 400) $('#newPill').classList.remove('hidden'); }
 
 /* ---------- Publicaciones con foto/vídeo e historias ---------- */
 const STORY_MS = 24 * 3600e3, VID_MAX = 15, IMG_MAX_PX = 1280;
@@ -2910,6 +2959,8 @@ function applyGraph(g) {
 }
 function paintProfileNet() {
   if (!$('#myHandle')) return;
+  $('#profHandle').textContent = state.me.handle ? '@' + state.me.handle : '';
+  $('#profHandle').classList.toggle('hidden', !state.me.handle);
   $('#myHandle').textContent = state.me.handle ? '@' + state.me.handle : T('Sin nombre de usuario');
   $('#editHandle').textContent = T(state.me.handle ? 'Cambiar nombre de usuario' : 'Elegir nombre de usuario');
   $('#rsPriv').checked = state.me.priv;
@@ -3153,6 +3204,7 @@ function applyPubFeed(m) {
   const names = m.names && typeof m.names === 'object' ? m.names : {};
   Object.keys(names).forEach(c => { if (!CODE_RE.test(c)) return; state.names[c] = str(names[c].name, 24) || 'Alguien'; if (names[c].handle) pubHandles[c] = str(names[c].handle, 20); });
   const keep = state.feed.filter(x => !x.pubx);
+  const oldMine = state.feed.filter(x => x.pubx && x.cmt.some(c => c.from === state.me.code));   // las que comenté siguen en mi perfil aunque ya no salgan en el feed
   const next = [];
   (Array.isArray(m.posts) ? m.posts : []).forEach(x => {
     if (!x || typeof x.id !== 'string' || !CODE_RE.test(String(x.from)) || isBlocked(x.from)) return;
@@ -3165,6 +3217,7 @@ function applyPubFeed(m) {
     next.push({ id: x.id.slice(0, 40), from: x.from, gid: '', ts: Math.min(Date.now(), Number(x.ts) || 0), w: null, pub: { text, m: md }, react, cmt, pubx: true });
   });
   const before = state.feed.filter(x => x.pubx).length;
+  oldMine.forEach(o => { if (!next.some(x => x.id === o.id && x.from === o.from) && !isBlocked(o.from)) next.push(Object.assign(o, { stale: true })); });
   state.feed = keep.concat(next);
   if (next.length || before) { save(); renderHome(); if (thOpen) renderThread(); }
 }
@@ -3346,7 +3399,7 @@ function srvStatusUI() {
 }
 function onSrvStatus(st, why) {
   // Código repetido y todavía sin amigos en el servidor: se estrena otro sin avisar
-  if (st === 'error' && why === 'taken' && !state.friends.some(f => f.srv) && srvRegen++ < 5) {
+  if (st === 'error' && why === 'taken' && !state.account && !state.friends.some(f => f.srv) && srvRegen++ < 5) {
     state.me.code = genCode();
     save();
     renderAll();
@@ -3368,7 +3421,7 @@ function bindSrv() {
   });
   Srv.onmsg = onSrvMsg;
   Srv.onstatus = onSrvStatus;
-  Srv.start({ code: state.me.code, name: state.me.name }).then(srvStatusUI);
+  Srv.start({ code: state.me.code, name: state.me.name }).then(() => { srvStatusUI(); paintLoginSkip(); });
 }
 
 const FOLD_DEFAULT = { inv: false, achDone: true, achTodo: true, missions: true, trophies: true };
@@ -3753,7 +3806,8 @@ function bind() {
   $('#photoDel').addEventListener('click', () => { state.me.photo = ''; save(); renderAll(); toast('Foto quitada'); });
 
   document.addEventListener('visibilitychange', () => { if (!document.hidden) applyTheme(); });
-  $('#gFallback').addEventListener('click', () => { $('#loginMsg').textContent = 'Falta configurar el ID de cliente de Google en config.js (mira el README).'; replay($('.login-card'), 'shake'); });
+  $('#lgForm').addEventListener('submit', submitLogin);
+  $$('#lgMode button').forEach(b => b.addEventListener('click', () => setLgMode(b.dataset.lg)));
   $('#loginSkip').addEventListener('click', () => { state.loginSkipped = true; save(); hideLogin(); });
   $('#btnLogout').addEventListener('click', logout);
   $('#btnLogin').addEventListener('click', () => { $('#settings').classList.remove('open'); syncOverlayClass(); showLogin(); });

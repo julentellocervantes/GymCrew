@@ -667,6 +667,7 @@
     [/^Tú y (.+)$/, m => `You and ${m[1]}`],
     [/^(.+) quiere ser tu amigo$/, m => `${m[1]} wants to be your friend`],
     [/^(.+) quiere seguirte$/, m => `${m[1]} wants to follow you`],
+    [/^Respondiste a (.+) · (.+)$/, m => `You replied to ${m[1] === 'ti' ? 'you' : m[1]} · ${tr(m[2])}`],
     [/^(.+) empezó a seguirte$/, m => `${m[1]} started following you`],
     [/^(.+) aceptó tu solicitud$/, m => `${m[1]} accepted your request`],
     [/^Racha de (\d+) semanas$/, m => `${m[1]}-week streak`],
@@ -1118,6 +1119,27 @@ Object.assign(EX, {
   'Para publicar en público primero elige tu @usuario (Social → Amigos).': 'To post publicly, first choose your @username (Social → Friends).',
   'Demasiadas acciones seguidas. Espera un poco.': 'Too many actions in a row. Wait a moment.'
 });
+Object.assign(EX, {
+  'Hoy': 'Today', 'Historial': 'History', 'Rutinas': 'Routines', 'Progreso': 'Progress',
+  'Crear cuenta': 'Create account', 'Entrar': 'Sign in', 'Crear cuenta o entrar': 'Create account or sign in', 'Nombre': 'Name', 'Correo': 'Email', 'Contraseña': 'Password',
+  'Cómo te verán los demás': 'How others will see you', 'tu@correo.com': 'you@email.com', 'Mínimo 8 caracteres': 'At least 8 characters', 'Tengo 16 años o más': 'I am 16 or older',
+  'Tus entrenos se guardan en este dispositivo. La cuenta solo identifica tu perfil social. No podemos recuperar la contraseña si la olvidas.': 'Your workouts are stored on this device. The account only identifies your social profile. We cannot recover your password if you forget it.',
+  'Continuar sin cuenta (solo en este dispositivo)': 'Continue without an account (this device only)',
+  'No has iniciado sesión. Con una cuenta (correo y contraseña) puedes volver a entrar desde otro dispositivo.': 'You are not signed in. With an account (email and password) you can sign back in from another device.',
+  'Ese correo no parece válido.': 'That email does not look valid.', 'La contraseña necesita entre 8 y 100 caracteres.': 'The password needs 8 to 100 characters.', 'Escribe tu nombre.': 'Enter your name.',
+  'Ya hay una cuenta con ese correo. Prueba en «Entrar».': 'There is already an account with that email. Try “Sign in”.',
+  'Este perfil ya tiene otra cuenta. Entra con ella en «Entrar».': 'This profile already has another account. Use “Sign in”.',
+  'Correo o contraseña incorrectos.': 'Wrong email or password.', 'Demasiados intentos. Espera unos minutos.': 'Too many attempts. Wait a few minutes.',
+  'No se pudo enviar. Inténtalo de nuevo.': 'Could not send. Try again.', 'El servidor falló. Inténtalo en un momento.': 'The server failed. Try again shortly.',
+  'Tienes que tener 16 años o más.': 'You must be 16 or older.', 'No hay servidor al que conectarse.': 'There is no server to connect to.', 'Sin conexión con el servidor.': 'No connection to the server.',
+  'Conectando…': 'Connecting…', 'Cuenta creada. ¡Bienvenido!': 'Account created. Welcome!', 'Sesión iniciada': 'Signed in',
+  'Tu actividad': 'Your activity', 'Publicaciones': 'Posts', 'Respuestas': 'Replies', 'Fotos': 'Photos', 'Foto': 'Photo', 'Vídeo': 'Video', 'una foto': 'a photo',
+  'Todavía no has publicado nada': 'You have not posted anything yet', 'Lo que compartas aparecerá aquí. Tú decides quién lo ve.': 'What you share will show up here. You decide who sees it.',
+  'Aún no has respondido a nadie': 'You have not replied to anyone yet', 'Tus respuestas a publicaciones de otras personas aparecerán aquí.': 'Your replies to other people’s posts will show up here.',
+  'Todavía no hay fotos': 'No photos yet', 'Las fotos y vídeos que publiques saldrán aquí.': 'Photos and videos you post will show up here.',
+  'Respondiste a': 'You replied to', 'ti': 'you', 'entreno': 'workout'
+});
+Object.assign(EX, { 'Hoy, historial, rutinas y progreso por ejercicio, con tu volumen semanal por grupo muscular.': 'Today, history, routines and per-exercise progress, with your weekly volume by muscle group.' });
 // Glosario para trozos sueltos dentro de otras frases
   const GLOSS = [
     ['Reto relámpago', 'Flash challenge'], ['Encuesta', 'Poll'], ['Pulso del grupo', 'Group pulse'], ['Meta del grupo', 'Group goal'],

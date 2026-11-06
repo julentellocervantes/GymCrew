@@ -18,6 +18,8 @@ Objetivo: descubrir qué sobra, qué falla y qué se siente bien. Úsala como la
 - [ ] Cambiar el objetivo semanal en Ajustes. ¿La racha en semanas se siente justa, sin presión?
 
 ## Día 3 — lo social (necesita el servidor: `server/DEPLOY.md`)
+- [ ] Primer arranque: crear cuenta con correo y contraseña. Cerrar y abrir la app: ¿sigue dentro? En otro móvil (o navegador) usar «Entrar» con el mismo correo: ¿aparece tu mismo nombre y @?
+- [ ] Entrenos → «Hoy»: ¿se registra un entreno con un toque? Perfil: ¿se ven tus publicaciones, respuestas y fotos?
 - [ ] Elegir tu @usuario (Social → Amigos), buscar al otro por el suyo y seguiros los dos (con perfil privado, aceptar la solicitud). Al seguiros pasáis a ser amigos. Compartir un entreno solo con él (¿queda claro qué se envía?).
 - [ ] Que tu amigo reaccione y comente. Comprobar que la nota y los kilos NO le llegan.
 - [ ] Crear un grupo del gimnasio y que entren 2–3 personas con el código.

@@ -73,13 +73,14 @@ const MEDIA_DIR = process.env.MEDIA_DIR || path.join(path.dirname(DATA_FILE), 'm
 const MEDIA = { maxImg: 600 * 1024, maxVid: 4 * 1024 * 1024, perUserBytes: 40 * 1024 * 1024, perUserCount: 60, postMs: 30 * 24 * 3600e3, storyMs: 25 * 3600e3 };
 
 /* ---------- Base de datos (un JSON, guardado de forma atómica) ---------- */
-let db = { users: {}, friends: {}, reqs: [], groups: {}, inbox: {}, seq: {}, blocks: {}, reports: [], media: {}, follows: {}, freqs: [], notes: {}, nseen: {}, handles: {}, pubs: [] };
+let db = { users: {}, friends: {}, reqs: [], groups: {}, inbox: {}, seq: {}, blocks: {}, reports: [], media: {}, follows: {}, freqs: [], notes: {}, nseen: {}, handles: {}, pubs: [], accounts: {} };
 try { db = Object.assign(db, JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'))); } catch { /* base nueva */ }
 function normDb() {
   if (!db.media || typeof db.media !== 'object') db.media = {};
   for (const k of ['follows', 'notes', 'nseen', 'handles']) if (!db[k] || typeof db[k] !== 'object' || Array.isArray(db[k])) db[k] = {};
   if (!Array.isArray(db.freqs)) db.freqs = [];
   if (!Array.isArray(db.pubs)) db.pubs = [];
+  if (!db.accounts || typeof db.accounts !== 'object' || Array.isArray(db.accounts)) db.accounts = {};
   // Las amistades antiguas cuentan como seguirse los dos
   for (const [a, list] of Object.entries(db.friends)) for (const b of list) { const f = db.follows[a] || (db.follows[a] = []); if (!f.includes(b)) f.push(b); }
 }
@@ -115,6 +116,7 @@ process.on('SIGINT', shutdown);
 /* ---------- Utilidades ---------- */
 const sha = s => crypto.createHash('sha256').update(s).digest('hex');
 const same = (a, b) => { const x = Buffer.from(a), y = Buffer.from(b); return x.length === y.length && crypto.timingSafeEqual(x, y); };
+const tokenOk = (u, token) => !!u && (same(u.hash, sha(token)) || (u.alts || []).some(h => same(h, sha(token))));
 const cleanName = s => String(s || '').replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, 24);
 const send = (ws, o) => { if (ws.readyState === 1) ws.send(JSON.stringify(o)); };
 const online = new Map();       // código -> Set<ws>
@@ -673,7 +675,7 @@ function onApp(ws, ip) {
         u = db.users[code] = { name, hash: sha(token), created: Date.now() };
         friendsOf(code);
         persist();
-      } else if (!same(u.hash, sha(token))) {
+      } else if (!tokenOk(u, token)) {
         send(ws, { t: 'err', re: 'hello', why: 'taken' });
         return ws.close();
       } else {
@@ -724,7 +726,7 @@ sweepMedia();
 function authHttp(req) {
   const code = String(req.headers['x-code'] || ''), token = String(req.headers['x-token'] || '');
   const u = CODE_RE.test(code) && TOKEN_RE.test(token) ? db.users[code] : null;
-  return u && same(u.hash, sha(token)) ? code : null;
+  return tokenOk(u, token) ? code : null;
 }
 function corsH(req) {
   const o = req.headers.origin;
@@ -753,6 +755,66 @@ function gxPublic(ws, me, k, p) {
     }
     persist(); noteGx(me, k, p, x.by);
   } else return fail(ws, 'gx', 'invalid');
+}
+/* ---------- Cuentas con correo y contraseña ----------
+   El correo es solo el identificador para volver a entrar (no se verifica ni se envía nada).
+   La contraseña se guarda con scrypt y sal propia; nunca viaja a otros usuarios. Entrar desde otro
+   dispositivo añade una clave nueva a la misma persona (máx. 8 dispositivos). */
+const EMAIL_RE = /^[^\s@<>]{1,64}@[^\s@<>]{1,200}\.[^\s@<>.]{2,24}$/;
+const scryptP = (pw, salt) => new Promise((res, rej) => crypto.scrypt(pw, salt, 32, { N: 16384, r: 8, p: 1, maxmem: 64 * 1024 * 1024 }, (e, k) => (e ? rej(e) : res(k))));
+const normEmail = e => String(e || '').trim().toLowerCase();
+function readJson(req, cb) {
+  const chunks = []; let size = 0, dead = false;
+  req.on('data', c => { size += c.length; if (size > 4096) { dead = true; req.destroy(); return; } chunks.push(c); });
+  req.on('end', () => { if (dead) return; try { cb(JSON.parse(Buffer.concat(chunks).toString() || '{}')); } catch { cb(null); } });
+}
+function onAuth(req, res, url, headers) {
+  const cors = corsH(req);
+  if (!cors) { res.writeHead(403, headers); return res.end(); }
+  const H = Object.assign({}, headers, cors, { 'Cache-Control': 'no-store' });
+  const j = (code, o) => { res.writeHead(code, Object.assign({ 'Content-Type': 'application/json' }, H)); res.end(JSON.stringify(o)); };
+  if (req.method === 'OPTIONS') { res.writeHead(204, H); return res.end(); }
+  if (req.method !== 'POST') return j(405, { err: 'method' });
+  const ip = String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
+  const which = url.pathname.slice('/auth/'.length);
+  if (which !== 'signup' && which !== 'login') return j(404, { err: 'none' });
+  readJson(req, async b => {
+    try {
+      if (!b || typeof b !== 'object') return j(400, { err: 'format' });
+      const email = normEmail(b.email), pw = typeof b.password === 'string' ? b.password : '';
+      if (!EMAIL_RE.test(email) || email.length > 120) return j(400, { err: 'email' });
+      if (which === 'signup') {
+        if (!rate('signup:' + ip, 10, 3600e3)) return j(429, { err: 'busy' });
+        if (pw.length < 8 || pw.length > 100) return j(400, { err: 'pass' });
+        const code = String(b.code || ''), token = String(b.token || ''), name = cleanName(b.name);
+        if (!CODE_RE.test(code) || !TOKEN_RE.test(token)) return j(400, { err: 'format' });
+        if (!name) return j(400, { err: 'name' });
+        if (db.accounts[email]) return j(409, { err: 'exists' });
+        let u = db.users[code];
+        if (u && (!tokenOk(u, token) || u.email)) return j(409, { err: 'taken' });   // ese perfil ya es de otra persona o ya tiene cuenta
+        const salt = crypto.randomBytes(16).toString('hex'), pwh = (await scryptP(pw, salt)).toString('hex');
+        if (db.accounts[email]) return j(409, { err: 'exists' });
+        if (!u) { u = db.users[code] = { name, hash: sha(token), created: Date.now() }; friendsOf(code); }
+        else if (name !== u.name) { u.name = name; for (const f of friendsOf(code)) emit(f, { t: 'fname', code, name }); }
+        u.email = email;
+        db.accounts[email] = { code, salt, pw: pwh, ts: Date.now() };
+        persist();
+        return j(200, { ok: true, code, name: u.name });
+      }
+      // login
+      if (!rate('login:' + ip, 30, 600e3) || !rate('loginm:' + email, 10, 600e3)) return j(429, { err: 'busy' });
+      const token = String(b.token || '');
+      if (!TOKEN_RE.test(token)) return j(400, { err: 'format' });
+      const acc = db.accounts[email];
+      const salt = acc ? acc.salt : '00'.repeat(16);
+      const got = await scryptP(pw.slice(0, 100), salt);           // siempre se calcula: no se nota si el correo existe
+      if (!acc || !same(acc.pw, got.toString('hex'))) return j(401, { err: 'bad' });
+      const u = db.users[acc.code];
+      if (!u) return j(401, { err: 'bad' });
+      if (!tokenOk(u, token)) { u.alts = (u.alts || []).concat(sha(token)).slice(-7); persist(); }   // este dispositivo pasa a ser de confianza
+      return j(200, { ok: true, code: acc.code, name: u.name, handle: u.handle || '', priv: u.priv !== false });
+    } catch { return j(500, { err: 'server' }); }
+  });
 }
 function onMedia(req, res, url, headers) {
   const cors = corsH(req);
@@ -811,6 +873,7 @@ const server = http.createServer((req, res) => {
     res.writeHead(200, Object.assign({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }, headers));
     return res.end(JSON.stringify({ app: 'gymcrew', ok: true, users: Object.keys(db.users).length, online: online.size }));
   }
+  if (url.pathname.startsWith('/auth/')) return onAuth(req, res, url, headers);
   if (url.pathname === '/media' || url.pathname.startsWith('/media/')) return onMedia(req, res, url, headers);
   if (!STATIC_DIR || req.method !== 'GET') { res.writeHead(404, headers); return res.end('No encontrado'); }
   let name = decodeURIComponent(url.pathname).slice(1) || 'index.html';

@@ -62,15 +62,24 @@
     </button>
   </section>
 
-  <!-- Inicio de sesión -->
-  <section id="login" class="login hidden" aria-label="Iniciar sesión">
+  <!-- Cuenta: crear o entrar (lo primero que ve una persona nueva) -->
+  <section id="login" class="login hidden" aria-label="Cuenta">
     <div class="glass login-card">
       <h1>GymCrew</h1>
-      <p class="muted">Inicia sesión con Google para crear tu perfil. Para mayores de 16 años.</p>
-      <div id="gBtn" class="g-btn"></div>
-      <button id="gFallback" class="btn wide gbtn" type="button"><b>G</b> Continuar con Google</button>
-      <p id="loginMsg" class="muted small"></p>
-      <button id="loginSkip" class="btn wide" type="button">Continuar sin cuenta</button>
+      <div id="lgMode" class="seg seg2 glass" data-idx="0" role="tablist">
+        <button type="button" data-lg="signup" role="tab" aria-selected="true">Crear cuenta</button>
+        <button type="button" data-lg="login" role="tab" aria-selected="false">Entrar</button>
+      </div>
+      <form id="lgForm" class="lg-form" novalidate>
+        <label id="lgNameRow">Nombre<input id="lgName" type="text" maxlength="20" autocomplete="nickname" placeholder="Cómo te verán los demás"></label>
+        <label>Correo<input id="lgEmail" type="email" maxlength="120" autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false" placeholder="tu@correo.com"></label>
+        <label>Contraseña<input id="lgPass" type="password" maxlength="100" autocomplete="new-password" placeholder="Mínimo 8 caracteres"></label>
+        <label id="lgAgeRow" class="lg-check"><input id="lgAge" type="checkbox"><span>Tengo 16 años o más</span></label>
+        <p id="loginMsg" class="lg-msg small" role="alert"></p>
+        <button id="lgGo" class="btn primary wide" type="submit">Crear cuenta</button>
+      </form>
+      <p id="lgNote" class="muted small">Tus entrenos se guardan en este dispositivo. La cuenta solo identifica tu perfil social. No podemos recuperar la contraseña si la olvidas.</p>
+      <button id="loginSkip" class="btn wide hidden" type="button">Continuar sin cuenta (solo en este dispositivo)</button>
     </div>
   </section>
 
@@ -95,10 +104,6 @@
       <div class="views">
         <!-- INICIO -->
         <section id="view-inicio" class="view active">
-          <div id="homeSeg" class="seg seg2 glass" data-idx="0" role="tablist">
-            <button type="button" data-home="feed" role="tab">Para ti</button>
-            <button type="button" data-home="day" role="tab">Mi día</button>
-          </div>
           <button id="newPill" class="new-pill hidden" type="button">↑ Publicaciones nuevas</button>
           <div id="homeFeed">
             <ul id="crewBox" class="rows crew-box"></ul>
@@ -110,7 +115,19 @@
             </div>
             <ul id="feedList" class="rows"></ul>
           </div>
-          <div id="homeDay" class="hidden">
+          <p class="muted small center">GymCrew no sustituye a un profesional de la salud ni da consejos médicos o de dieta.</p>
+        </section>
+
+        <!-- ENTRENOS -->
+        <section id="view-historial" class="view">
+          <div id="hsegBar" class="seg seg4 glass" data-idx="0">
+            <button data-hseg="today">Hoy</button>
+            <button data-hseg="hist">Historial</button>
+            <button data-hseg="routines">Rutinas</button>
+            <button data-hseg="progress">Progreso</button>
+          </div>
+
+          <div id="hpane-today" class="pane">
           <div id="todayCard" class="glass card today-card">
             <span id="todayBurst" class="pl-burst" aria-hidden="true"></span>
             <h2 id="todayTitle">Hoy</h2>
@@ -141,20 +158,9 @@
             <h2 class="sec">Récords recientes 🏅</h2>
             <ul id="prList" class="rows"></ul>
           </div>
-
-          </div>
-          <p class="muted small center">GymCrew no sustituye a un profesional de la salud ni da consejos médicos o de dieta.</p>
-        </section>
-
-        <!-- ENTRENOS -->
-        <section id="view-historial" class="view">
-          <div id="hsegBar" class="seg seg3 glass" data-idx="0">
-            <button data-hseg="hist">Historial</button>
-            <button data-hseg="routines">Rutinas</button>
-            <button data-hseg="progress">Progreso</button>
           </div>
 
-          <div id="hpane-hist" class="pane">
+          <div id="hpane-hist" class="pane hidden">
             <div class="glass card">
               <div class="cal-head">
                 <button id="prevMonth" class="icon-btn glass" aria-label="Mes anterior"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
@@ -252,6 +258,7 @@
             <button id="avaBig" class="ava-big" aria-label="Cambiar foto de perfil"></button>
             <input id="photoInput" type="file" accept="image/*" hidden>
             <input id="nameInput" class="name-input" type="text" maxlength="20" placeholder="Tu nombre" autocomplete="off">
+            <p id="profHandle" class="prof-handle" translate="no"></p>
             <div class="prof-streak"><span id="profStreak" class="streak-pill"></span></div>
             <div class="row2">
               <button id="photoBtn" class="btn" type="button">Cambiar foto</button>
@@ -270,6 +277,16 @@
               <button id="pfFollowing" class="btn" type="button">Siguiendo <b id="pfFingN">0</b></button>
             </div>
           </div>
+
+          <section id="pfAct" aria-label="Tu actividad">
+            <div id="pfSeg" class="seg seg3 glass" data-idx="0" role="tablist">
+              <button type="button" data-pf="posts" role="tab" aria-selected="true">Publicaciones</button>
+              <button type="button" data-pf="replies" role="tab" aria-selected="false">Respuestas</button>
+              <button type="button" data-pf="photos" role="tab" aria-selected="false">Fotos</button>
+            </div>
+            <ul id="pfList" class="rows"></ul>
+            <div id="pfGrid" class="pf-grid hidden"></div>
+          </section>
 
           <div class="glass card">
             <h3>Marco de perfil</h3>
@@ -511,8 +528,8 @@
           <button id="btnLogout" class="btn wide" type="button">Cerrar sesión</button>
         </div>
         <div id="accOut">
-          <p class="muted small">No has iniciado sesión.</p>
-          <button id="btnLogin" class="btn primary wide" type="button">Iniciar sesión con Google</button>
+          <p class="muted small">No has iniciado sesión. Con una cuenta (correo y contraseña) puedes volver a entrar desde otro dispositivo.</p>
+          <button id="btnLogin" class="btn primary wide" type="button">Crear cuenta o entrar</button>
         </div>
         <p class="muted small">Tus datos se guardan solo en este navegador.</p>
       </div>
