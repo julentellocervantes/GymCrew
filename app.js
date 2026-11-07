@@ -981,15 +981,31 @@ const BANNERS = [
   'linear-gradient(135deg, #ffd447, #ff9f5c 55%, #e0523f)', 'linear-gradient(135deg, #ff7a6b, #c92f55 60%, #4a1236)',
   'linear-gradient(135deg, #8f7bff, #5b95ff 55%, #17b983)', 'linear-gradient(135deg, #2b3a38, #111a19 60%, #000)'
 ];
+async function setBannerFromFile(file) {
+  if (!file) return;
+  try {
+    const url = URL.createObjectURL(file);
+    const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
+    const W = 900, H = 300, c = document.createElement('canvas');
+    c.width = W; c.height = H;
+    const k = Math.max(W / img.naturalWidth, H / img.naturalHeight), sw = W / k, sh = H / k;
+    c.getContext('2d').drawImage(img, (img.naturalWidth - sw) / 2, (img.naturalHeight - sh) / 2, sw, sh, 0, 0, W, H);
+    URL.revokeObjectURL(url);
+    state.me.bannerImg = c.toDataURL('image/jpeg', 0.8);
+    save(); paintBanner(); toast('Banner actualizado');
+  } catch { toast('No se pudo cargar esa imagen'); }
+}
 const bannerIdx = () => Math.max(0, Math.min(BANNERS.length - 1, Math.floor(Number(state.me.banner)) || 0));
 function paintBanner() {
-  $('#pfBanner').style.background = BANNERS[bannerIdx()];
+  const bi = /^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(state.me.bannerImg || '') ? state.me.bannerImg : '';
+  $('#pfBanner').style.background = bi ? `center / cover no-repeat url("${bi}")` : BANNERS[bannerIdx()];
+  $('#bnPhotoDel').disabled = !bi;
   const box = $('#bannerPick');
   box.innerHTML = '';
   BANNERS.forEach((g, i) => {
     const b = el('button', 'bn-sw' + (i === bannerIdx() ? ' on' : '')); b.type = 'button'; b.style.background = g;
     b.setAttribute('aria-label', `Banner ${i + 1}`); b.setAttribute('aria-pressed', String(i === bannerIdx()));
-    b.addEventListener('click', () => { state.me.banner = i; save(); paintBanner(); });
+    b.addEventListener('click', () => { state.me.banner = i; state.me.bannerImg = ''; save(); paintBanner(); });
     box.appendChild(b);
   });
 }
@@ -1720,10 +1736,71 @@ const isOpenPost = p => !!p.pubx || !!p.open || !!(p.aud && p.aud.p);
 // «Para ti»: todo lo público, con lo que más conversación genera un poco por delante. «Siguiendo»: tú, tus amigos, tus grupos y la gente que sigues.
 const feedScore = p => p.ts + Math.min(30, reactTotal(p) + 2 * p.cmt.length) * 20 * 60e3 + (isFollowed(p.from) ? 3600e3 : 0);
 const homeFeed = () => {
-  const tp = state.ui.tp, fy = state.ui.feedTab !== 'following';
-  const list = visibleFeed().filter(p => (!tp || p.tp === tp) && (fy ? isOpenPost(p) && !p.stale : p.from === state.me.code || !p.pubx || isFollowed(p.from)));
+  const fy = state.ui.feedTab !== 'following';
+  const list = visibleFeed().filter(p => (fy ? isOpenPost(p) && !p.stale : p.from === state.me.code || !p.pubx || isFollowed(p.from)));
   return fy ? list.sort((x, y) => feedScore(y) - feedScore(x)) : list;
 };
+
+/* ---------- Búsqueda global (lupa) ---------- */
+let gsTimer = 0, gsTopic = '';
+// Temas recomendados: los de tus entrenos y los que más se mueven en tu feed; si no hay datos, los de siempre para empezar.
+function recTopics() {
+  const sc = {}; TOPIC_IDS.forEach(id => { sc[id] = 0; });
+  state.workouts.slice(-30).forEach(w => { if (sc[w.type] !== undefined) sc[w.type] += 2; });
+  state.feed.forEach(p => { if (p.tp && sc[p.tp] !== undefined) sc[p.tp] += 1 + Math.min(5, reactTotal(p) + p.cmt.length); });
+  ['principiantes', 'motivacion', 'tecnica', 'preguntas', 'progreso'].forEach((id, i) => { sc[id] += (5 - i) * 0.01; });
+  return TOPICS.slice().sort((a, b) => sc[b.id] - sc[a.id]).slice(0, 6);
+}
+const norm = v => String(v || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+function postHay(p) {
+  const bits = [p.pub && p.pub.text, personName(p.from), pubHandles[p.from], topicOf(p.tp) && topicOf(p.tp).n, p.w && typeOf(p.w.ty).n];
+  if (p.w && p.w.det) p.w.det.forEach(e => bits.push(e.n));
+  return norm(bits.filter(Boolean).join(' '));
+}
+function openGSearch() {
+  rememberOpener();
+  $('#gsInput').value = ''; gsTopic = '';
+  renderGSearch();
+  $('#gsearch').classList.add('open'); $('#gsearch').setAttribute('aria-hidden', 'false');
+  syncOverlayClass();
+  setTimeout(() => $('#gsInput').focus({ preventScroll: true }), 350);
+}
+function closeGSearch() {
+  if (!$('#gsearch').classList.contains('open')) return;
+  $('#gsearch').classList.remove('open'); $('#gsearch').setAttribute('aria-hidden', 'true');
+  syncOverlayClass(); restoreFocus();
+}
+function onGSInput() {
+  clearTimeout(gsTimer); gsTopic = '';
+  const q = $('#gsInput').value.trim().replace(/^@/, '');
+  found = [];
+  if (q.length >= 2 && srvOn()) gsTimer = setTimeout(() => { gsTimer = 0; srvSend({ t: 'search', q }); }, 300);
+  renderGSearch();
+}
+function renderGSearch() {
+  const q = $('#gsInput').value.trim(), nq = norm(q.replace(/^@/, ''));
+  paintTopicRow($('#gsTopics'), gsTopic, id => { gsTopic = id; $('#gsInput').value = ''; found = []; renderGSearch(); });
+  const out = $('#gsOut'); out.innerHTML = '';
+  if (nq.length < 2 && !gsTopic) { out.appendChild(el('p', 'muted small', T('Busca por texto, ejercicio, tema o @usuario.'))); return; }
+  const posts = visibleFeed().filter(p => p.pub || p.w).filter(p => gsTopic ? p.tp === gsTopic : postHay(p).includes(nq)).slice(0, 30);
+  const tps = gsTopic ? [] : TOPICS.filter(t => norm(T(t.n)).includes(nq) || norm(t.n).includes(nq));
+  const ppl = gsTopic ? [] : found.filter(c => c.code !== state.me.code && !isBlocked(c.code));
+  if (tps.length) {
+    out.appendChild(el('p', 'label', T('Temas')));
+    const row = el('div', 'chips row-scroll');
+    tps.forEach(t => { const b = el('button', 'chip', `${t.e} ${T(t.n)}`); b.type = 'button'; b.addEventListener('click', () => { gsTopic = t.id; $('#gsInput').value = ''; renderGSearch(); }); row.appendChild(b); });
+    out.appendChild(row);
+  }
+  if (ppl.length) {
+    out.appendChild(el('p', 'label', T('Personas')));
+    const ul = el('ul', 'rows'); ppl.forEach(c => ul.appendChild(personRow(c, [relButton(c)]))); out.appendChild(ul);
+  }
+  if (posts.length) {
+    out.appendChild(el('p', 'label', T('Publicaciones')));
+    const ul = el('ul', 'rows'); posts.forEach(p => ul.appendChild(feedCard(p))); out.appendChild(ul);
+  }
+  if (!tps.length && !ppl.length && !posts.length) out.appendChild(emptyState('🔎', 'Sin resultados', gsTopic ? 'Aún no hay publicaciones con este tema.' : 'Prueba con otra palabra o con un @usuario.'));
+}
 
 function feedSummary(w) {
   const t = typeOf(w.ty), bits = [];
@@ -1996,7 +2073,9 @@ function closeNotes(restore = true) {
 /* ---------- Inicio estilo timeline ---------- */
 function bindTimeline() {
   $$('#feedTabs button').forEach(b => b.addEventListener('click', () => { state.ui.feedTab = b.dataset.ft; save(); renderFeed(); }));
-  $('#tpSel').addEventListener('change', e => { state.ui.tp = TOPIC_IDS.includes(e.target.value) ? e.target.value : ''; save(); renderFeed(); });
+  $('#openSearch').addEventListener('click', openGSearch);
+  $('#gsBack').addEventListener('click', closeGSearch);
+  $('#gsInput').addEventListener('input', onGSInput);
   $('#newPill').addEventListener('click', () => { window.scrollTo({ top: 0, behavior: reduceMotion() ? 'auto' : 'smooth' }); $('#newPill').classList.add('hidden'); });
   window.addEventListener('scroll', () => { if (window.scrollY < 120) $('#newPill').classList.add('hidden'); }, { passive: true });
   $('#pfEdit').addEventListener('click', () => setPfEdit($('#pfEdit').getAttribute('aria-expanded') !== 'true'));
@@ -2023,7 +2102,7 @@ function bindTimeline() {
   $('#nwStory').addEventListener('click', () => { closeSheets(); openPost('story'); });
   document.addEventListener('keydown', e => {
     if (e.key !== 'Escape') return;
-    if ($('#thread.open')) closeThread(); else if ($('#notes.open')) closeNotes();
+    if ($('#thread.open')) closeThread(); else if ($('#gsearch.open')) closeGSearch(); else if ($('#notes.open')) closeNotes();
   });
   paintBell();
 }
@@ -2363,18 +2442,13 @@ function renderFeed() {
   box.innerHTML = '';
   box.appendChild(crewStrip(fy));
   const nw = box.querySelector('.crew-strip'); if (nw) nw.scrollLeft = sx;   // no saltar al principio al repintar
-  const sel = $('#tpSel');
-  if (!sel.options.length) {
-    sel.add(new Option(T('Temas'), ''));
-    TOPICS.forEach(t => sel.add(new Option(`${t.e} ${T(t.n)}`, t.id)));
-  }
-  sel.value = state.ui.tp || '';
   const ul = $('#feedList');
   ul.innerHTML = '';
   const list = homeFeed().slice(0, 40);
-  if (!list.length) ul.appendChild(fy ? emptyState('🌍', state.ui.tp ? 'Nada con este tema todavía' : 'Aún no hay publicaciones públicas', state.ui.tp ? 'Prueba con otro tema o publica tú el primero.' : 'Cuando alguien publique en público, saldrá aquí. Tú también puedes ser el primero.') : emptyState('👥', 'Aquí verás a tu gente', 'Publicaciones e historias de tus amigos, tus grupos y la gente que sigues. Búscalos en Social.'));
+  if (!list.length) ul.appendChild(fy ? emptyState('🌍', 'Aún no hay publicaciones públicas', 'Cuando alguien publique en público, saldrá aquí. Tú también puedes ser el primero.') : emptyState('👥', 'Aquí verás a tu gente', 'Publicaciones e historias de tus amigos, tus grupos y la gente que sigues. Búscalos en Social.'));
   list.forEach(p => ul.appendChild(feedCard(p)));
   setStagger(ul);
+  if ($('#gsearch').classList.contains('open')) renderGSearch();
 }
 
 function upsertPost(item) {
@@ -3340,7 +3414,7 @@ function onSrvMsg(m) {
       if (ch) { save(); paintBell(); }
       return;
     }
-    case 'found': found = (m.list || []).map(normCard); renderSearch(); return;
+    case 'found': found = (m.list || []).map(normCard); renderSearch(); if ($('#gsearch').classList.contains('open')) renderGSearch(); return;
     case 'ok':
       if (m.re === 'handle') { gateBusy = false; state.me.handle = m.h; hdlEdit = false; $('#hdlInput').value = ''; setHdlMsg(''); save(); renderRequests(); paintProfileNet(); toast(`${T('Tu usuario es')} @${m.h}`); if (gateOpen()) hideGate(); }
       else if (m.re === 'follow') toast(m.state === 'requested' ? T('Solicitud enviada') : T('Ahora sigues a esta persona'));
@@ -3859,6 +3933,9 @@ function bind() {
   $('#avaBig').addEventListener('click', pickPhoto);
   $('#photoBtn').addEventListener('click', pickPhoto);
   $('#photoInput').addEventListener('change', async e => { await setPhotoFromFile(e.target.files[0]); e.target.value = ''; });
+  $('#bnPhotoBtn').addEventListener('click', () => $('#bnInput').click());
+  $('#bnInput').addEventListener('change', async e => { await setBannerFromFile(e.target.files[0]); e.target.value = ''; });
+  $('#bnPhotoDel').addEventListener('click', () => { state.me.bannerImg = ''; save(); paintBanner(); toast('Foto quitada'); });
   $('#photoDel').addEventListener('click', () => { state.me.photo = ''; save(); renderAll(); toast('Foto quitada'); });
 
   document.addEventListener('visibilitychange', () => { if (!document.hidden) applyTheme(); });

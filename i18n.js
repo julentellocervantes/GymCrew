@@ -6,6 +6,10 @@
 
   // Frases completas (se buscan tal cual)
   const EX = {
+    "Usar mi foto": "Use my photo", "Quitar foto": "Remove photo", "Banner actualizado": "Banner updated", "Foto quitada": "Photo removed",
+    "Buscar": "Search", "Buscar en GymCrew": "Search GymCrew", "Temas recomendados": "Recommended topics",
+    "Busca por texto, ejercicio, tema o @usuario.": "Search by text, exercise, topic or @username.", "Temas": "Topics", "Personas": "People", "Publicaciones": "Posts",
+    "Sin resultados": "No results", "Aún no hay publicaciones con este tema.": "No posts with this topic yet.", "Prueba con otra palabra o con un @usuario.": "Try another word or an @username.",
     "Sin conexión: no se puede buscar personas ahora.": "Offline: people search is unavailable right now.",
     "Entrenar": "Train", "Mensajes": "Messages", "Personas": "People", "Apuntar entreno": "Log workout",
     "Apunta tu entreno y, si quieres, compártelo.": "Log your workout and share it if you want.",

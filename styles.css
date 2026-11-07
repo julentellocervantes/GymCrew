@@ -2448,3 +2448,12 @@ h1#viewTitle, h1 {
 .tw-actions .tw-act { flex: none; min-width: 58px; }
 .tw-actions .feed-summary { margin: 0 6px 0 auto; font-size: 1rem; white-space: nowrap; }
 .tweet.cm { padding-bottom: 14px; }
+
+/* Lupa y búsqueda global */
+.feed-bar #openSearch { flex: none; width: 48px; height: 48px; }
+#openSearch svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.gs-input { flex: 1; min-width: 0; min-height: 44px; padding: 0 14px; border-radius: 14px; border: 1px solid var(--gb); background: var(--fill); color: var(--text); font: inherit; font-size: 1rem; }
+#gsearch .label { margin: 14px 2px 6px; }
+#gsOut { display: flex; flex-direction: column; gap: 6px; }
+.pf-banner { background-size: cover; }
+#gsTopics { flex-wrap: wrap; overflow: visible; }
