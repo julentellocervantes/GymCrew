@@ -122,3 +122,10 @@ Capturas revisadas a 390×844 y 360×640, día y noche: Inicio, Entrenos, regist
 ## Detalle del entreno y feed sin atajo
 - Al compartir un entreno hay un interruptor **Mostrar cada ejercicio** (activado por defecto en entrenos nuevos): quien lo vea puede abrir «Ver ejercicios» y leer cada ejercicio con sus series (reps × kg). Si lo apagas, solo se comparte el resumen.
 - Inicio ya no tiene el atajo «Comparte…»: se publica con el botón ＋ de la barra. Las historias van justo debajo de Para ti / Siguiendo.
+
+## Cuenta segura y moderación
+- **Código de recuperación:** al crear la cuenta se muestra uno (20 letras y números) que hay que confirmar como guardado. Sirve en «¿Olvidaste tu contraseña?» para poner una contraseña nueva; se renueva cada vez que se usa. Se puede cambiar la contraseña y generar otro código en Ajustes › Tu cuenta. No se envía ningún correo (el correo sigue sin verificarse).
+- **Borrar cuenta:** Ajustes › Zona de peligro. Borra del servidor la cuenta, el @, las publicaciones, historias, amistades, grupos y fotos. Los entrenos del móvil se quedan.
+- **Moderación automática de lo público:** 3 personas distintas que reporten una publicación o historia la ocultan; 5 que reporten a una cuenta en 7 días la silencian en público durante 7 días. Los reportes quedan en `db.reports` del servidor para revisarlos a mano.
+- **Iconos:** `icons/` (PNG 192/512, maskable y apple-touch) y `icon.svg`: un disco de gimnasio. El servidor solo publica esa subcarpeta.
+- **Supabase gratis:** el servidor hace una lectura mínima cada 12 h para que el proyecto no se pause por inactividad.

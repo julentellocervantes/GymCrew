@@ -2343,3 +2343,13 @@ h1, h2, h3, .today-card h2 { font-weight: 800; letter-spacing: -.01em; }
 .det-ex { display: flex; flex-direction: column; gap: 2px; padding: 8px 0; border-top: 1px solid color-mix(in srgb, currentColor 10%, transparent); }
 .det-sets { color: var(--muted); font-size: .86rem; font-variant-numeric: tabular-nums; line-height: 1.5; }
 .crew-box { margin-bottom: 8px; }
+
+/* Código de recuperación */
+.rc-code { font: 700 1.25rem/1.4 ui-monospace, "SF Mono", Menlo, Consolas, monospace; letter-spacing: .06em; text-align: center; padding: 16px 10px; margin: 6px 0 12px; border-radius: 18px; background: var(--fill); word-break: break-all; user-select: all; -webkit-user-select: all; }
+.lg-form .link-btn { align-self: center; }
+
+/* Pantalla de inicio: el disco gira una vez al abrir */
+.splash-plate { width: 84px; height: 84px; display: block; margin: 0 auto 14px; animation: plateSpin 1.4s cubic-bezier(.2,.8,.2,1) 1; }
+@keyframes plateSpin { from { transform: rotate(-200deg) scale(.7); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .splash-plate { animation: none; } }
+#recovery { z-index: 130; }

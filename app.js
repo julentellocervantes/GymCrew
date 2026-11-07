@@ -160,7 +160,7 @@ function load(src) {
   const s = {
     workouts: normWorkouts(d.workouts), routines: normRoutines(d.routines), custom: normCustom(d.custom), feed: normFeed(d.feed), stories: normStories(d.stories), notes: normNotes(d.notes),
     blocked: (Array.isArray(d.blocked) ? d.blocked : []).filter(c => CODE_RE.test(c)).slice(0, 200),
-    account: d.account && typeof d.account === 'object' && typeof d.account.email === 'string' && d.account.email ? { email: str(d.account.email, 120) } : null,
+    account: d.account && typeof d.account === 'object' && typeof d.account.email === 'string' && d.account.email ? { email: str(d.account.email, 120), rcPending: /^[A-Z2-9]{5}(-[A-Z2-9]{5}){3}$/.test(String(d.account.rcPending)) ? d.account.rcPending : '' } : null,
     loginSkipped: !!d.loginSkipped,
     welcomeDone: !!d.welcomeDone || !!d.account || !!d.loginSkipped,
     tutorialDone: d.tutorialDone !== undefined ? !!d.tutorialDone : !!((Array.isArray(d.workouts) && d.workouts.length) || (Array.isArray(d.friends) && d.friends.length)),
@@ -517,44 +517,60 @@ const LG_ERR = {
   email: 'Ese correo no parece válido.', pass: 'La contraseña necesita entre 8 y 100 caracteres.', name: 'Escribe tu nombre.',
   exists: 'Ya hay una cuenta con ese correo. Prueba en «Entrar».', taken: 'Este perfil ya tiene otra cuenta. Entra con ella en «Entrar».',
   bad: 'Correo o contraseña incorrectos.', busy: 'Demasiados intentos. Espera unos minutos.', format: 'No se pudo enviar. Inténtalo de nuevo.',
-  server: 'El servidor falló. Inténtalo en un momento.', age: 'Tienes que tener 16 años o más.', none: 'No hay servidor al que conectarse.', net: 'Sin conexión con el servidor.'
+  server: 'El servidor falló. Inténtalo en un momento.', age: 'Tienes que tener 16 años o más.', none: 'No hay servidor al que conectarse.', net: 'Sin conexión con el servidor.',
+  rc: 'Escribe tu código de recuperación (20 letras y números).', rcbad: 'El correo o el código de recuperación no son correctos.'
 };
 function setLgMsg(k, ok) { const m = $('#loginMsg'); m.textContent = k ? T(LG_ERR[k] || k) : ''; m.classList.toggle('ok', !!ok); }
 function setLgMode(m) {
-  lgMode = m === 'login' ? 'login' : 'signup';
-  const su = lgMode === 'signup';
+  lgMode = m === 'login' ? 'login' : m === 'recover' ? 'recover' : 'signup';
+  const su = lgMode === 'signup', rec = lgMode === 'recover';
   $('#lgMode').dataset.idx = su ? 0 : 1;
+  $('#lgMode').classList.toggle('hidden', rec);
+  $('#lgRcRow').classList.toggle('hidden', !rec);
+  $('#lgForgot').classList.toggle('hidden', lgMode !== 'login');
+  $('#lgBack').classList.toggle('hidden', !rec);
+  $('#lgRecTitle').classList.toggle('hidden', !rec);
+  $('#lgPass').placeholder = T(rec ? 'Contraseña nueva (mínimo 8)' : 'Mínimo 8 caracteres');
   $$('#lgMode button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.lg === lgMode)));
   $('#lgNameRow').classList.toggle('hidden', !su);
   $('#lgAgeRow').classList.toggle('hidden', !su);
   $('#lgPass').autocomplete = su ? 'new-password' : 'current-password';
-  $('#lgGo').textContent = T(su ? 'Crear cuenta' : 'Entrar');
+  $('#lgGo').textContent = T(su ? 'Crear cuenta' : rec ? 'Restablecer contraseña' : 'Entrar');
   setLgMsg('');
 }
 function paintLoginSkip() { $('#loginSkip').classList.toggle('hidden', !!(window.Srv && Srv.http) || !window.Srv); }
 async function submitLogin(e) {
   e.preventDefault();
   if (lgBusy) return;
-  const su = lgMode === 'signup', email = $('#lgEmail').value.trim().toLowerCase(), pw = $('#lgPass').value, name = $('#lgName').value.trim().slice(0, 20);
+  const su = lgMode === 'signup', rec = lgMode === 'recover', email = $('#lgEmail').value.trim().toLowerCase(), pw = $('#lgPass').value, name = $('#lgName').value.trim().slice(0, 20), rcIn = $('#lgRc').value;
   const bad = k => { setLgMsg(k); replay($('.login-card'), 'shake'); };
   if (su && !name) return bad('name');
   if (!EMAIL_RE.test(email)) return bad('email');
-  if (su && (pw.length < 8 || pw.length > 100)) return bad('pass');
-  if (!su && !pw) return bad('bad');
+  if ((su || rec) && (pw.length < 8 || pw.length > 100)) return bad('pass');
+  if (rec && rcIn.replace(/[^A-Za-z2-9]/g, '').length < 20) return bad('rc');
+  if (!su && !rec && !pw) return bad('bad');
   if (su && !$('#lgAge').checked) return bad('age');
   lgBusy = true; $('#lgGo').disabled = true; setLgMsg('Conectando…', true);
   try {
     await Srv.discovered();
     if (!Srv.http) { bad('none'); return; }
-    const a = Srv.auth, body = su ? { email, password: pw, name, code: a.code, token: a.token } : { email, password: pw, token: a.token };
+    const a = Srv.auth, body = su ? { email, password: pw, name, code: a.code, token: a.token } : rec ? { email, password: pw, rc: rcIn } : { email, password: pw, token: a.token };
     let r, j = {};
-    try { r = await fetch(Srv.http + '/auth/' + (su ? 'signup' : 'login'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); j = await r.json().catch(() => ({})); }
+    try { r = await fetch(Srv.http + '/auth/' + (su ? 'signup' : rec ? 'recover' : 'login'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); j = await r.json().catch(() => ({})); }
     catch { bad('net'); return; }
-    if (!r.ok || !j.ok) { bad(j.err || 'server'); return; }
+    if (!r.ok || !j.ok) { bad(rec && j.err === 'bad' ? 'rcbad' : j.err || 'server'); return; }
+    if (rec) {                                                      // contraseña restablecida: se guarda el código nuevo y se entra
+      lgBusy = false; $('#lgGo').disabled = false;
+      $('#lgRc').value = '';
+      state.account = { email, rcPending: j.rc }; save();
+      setLgMode('login'); setLgMsg('Contraseña cambiada. Ya puedes entrar.', true);
+      showRecovery(j.rc, () => {});
+      return;
+    }
     if (!su && j.code !== state.me.code) { state.friends = state.friends.filter(f => !f.srv); state.me.code = j.code; }
     if (!su) { state.me.handle = /^[a-z0-9_.]{3,20}$/.test(String(j.handle)) ? j.handle : ''; state.me.priv = j.priv !== false; }
     state.me.name = String(j.name || name || state.me.name).slice(0, 20);
-    state.account = { email };
+    state.account = { email, rcPending: su && j.rc ? String(j.rc) : '' };
     state.loginSkipped = false;
     $('#lgPass').value = '';
     save();
@@ -563,6 +579,7 @@ async function submitLogin(e) {
     toast(su ? 'Cuenta creada. ¡Bienvenido!' : 'Sesión iniciada');
     hideLogin();
     renderAll();
+    if (state.account.rcPending) showRecovery(state.account.rcPending);
   } finally { lgBusy = false; $('#lgGo').disabled = false; }
 }
 
@@ -649,6 +666,17 @@ function hideLogin() {
   maybeTutorial();
 }
 
+/* ---------- Código de recuperación: se enseña una vez y hay que confirmar que está guardado ---------- */
+function showRecovery(rc, after) {
+  $('#rcCode').textContent = rc;
+  $('#rcOk').checked = false; $('#rcGo').disabled = true;
+  $('#recovery').classList.remove('hidden');
+  $('#rcGo').onclick = () => {
+    if (state.account) state.account.rcPending = '';
+    save(); $('#recovery').classList.add('hidden');
+    if (after) after();
+  };
+}
 function logout() {
   state.account = null;
   state.loginSkipped = false;
@@ -1958,7 +1986,7 @@ function feedCard(p, opt = {}) {
   menu.type = 'button';
   menu.setAttribute('aria-label', mine ? T(p.pub ? 'Borrar publicación' : 'Dejar de compartir') : T('Más opciones'));
   menu.textContent = mine ? '🗑' : '⋯';
-  menu.addEventListener('click', e => { e.stopPropagation(); if (mine) { unsharePost(p); closeThread(); } else openMod(p.from, 'entreno de ' + personName(p.from)); });
+  menu.addEventListener('click', e => { e.stopPropagation(); if (mine) { unsharePost(p); closeThread(); } else openMod(p.from, p.pub ? 'publicación de ' + personName(p.from) : 'entreno de ' + personName(p.from), isOpenPost(p) ? p.id : ''); });
   head.append(who, menu);
   col.appendChild(head);
   col.appendChild(p.pub ? pubBody(p) : workoutEmbed(p, opt.thread));
@@ -2464,7 +2492,7 @@ function bindStories() {
   $('#svPrev').addEventListener('click', prevStory);
   $('#svDel').addEventListener('click', deleteStory);
   $('#svAdd').addEventListener('click', () => { closeStories(); openPost('story'); });
-  $('#svMore').addEventListener('click', () => { const c = sv && sv.code; closeStories(); if (c) openMod(c, 'historia de ' + personName(c)); });
+  $('#svMore').addEventListener('click', () => { const c = sv && sv.code, cur = sv && sv.list[sv.i]; closeStories(); if (c) openMod(c, 'historia de ' + personName(c), cur && cur.pubx ? cur.id : ''); });
   document.addEventListener('keydown', e => {
     if (!sv) return;
     if (e.key === 'Escape') closeStories(); else if (e.key === 'ArrowRight') nextStory(); else if (e.key === 'ArrowLeft') prevStory();
@@ -2625,9 +2653,9 @@ function deleteSharedData() {
 }
 
 /* ---------- Moderación: reportar y bloquear ---------- */
-function openMod(code, text) {
+function openMod(code, text, pid) {
   if (!CODE_RE.test(code) || code === state.me.code) return;
-  modTarget = { code, text: String(text || '').slice(0, 300) };
+  modTarget = { code, text: String(text || '').slice(0, 300), pid: pid || '' };
   $('#modWho').textContent = personName(code);
   $('#modWho').setAttribute('translate', 'no');
   $('#modText').textContent = modTarget.text;
@@ -2652,8 +2680,64 @@ function unblockUser(code) {
   srvSend({ t: 'unblock', code });
   save(); paintBlocked(); renderSocial();
 }
-function reportUser(code, text) {
-  if (!srvSend({ t: 'report', code, why: 'msg', text })) { toast('Necesitas conexión con el servidor para reportar'); return; }
+/* ---------- Cuenta: cambiar contraseña, nuevo código de recuperación y borrar la cuenta ---------- */
+let accMode = 'pw', accBusy = false;
+const ACC_TXT = {
+  pw: ['Cambiar contraseña', 'Se cerrarán los códigos de recuperación anteriores y recibirás uno nuevo.', 'Cambiar contraseña'],
+  rc: ['Nuevo código de recuperación', 'El código anterior dejará de valer. Guarda el nuevo en un lugar seguro.', 'Generar código'],
+  del: ['Borrar mi cuenta', 'Se borran del servidor tu cuenta, tu @usuario, tus publicaciones, historias, amistades y grupos. Tus entrenos de este móvil se conservan. No se puede deshacer.', 'Borrar mi cuenta']
+};
+function openAcc(mode) {
+  if (!state.account) { toast('Primero inicia sesión'); return; }
+  accMode = mode;
+  const [t, d, b] = ACC_TXT[mode];
+  $('#accTitle').textContent = T(t); $('#accDesc').textContent = T(d); $('#accGo').textContent = T(b);
+  $('#accGo').classList.toggle('danger', mode === 'del');
+  $('#accNewRow').classList.toggle('hidden', mode !== 'pw');
+  $('#accPass').value = ''; $('#accNew').value = ''; $('#accMsg').textContent = '';
+  openSheet('sheetAcc');
+}
+async function submitAcc(e) {
+  e.preventDefault();
+  if (accBusy || !state.account) return;
+  const pw = $('#accPass').value, np = $('#accNew').value, msg = t => { $('#accMsg').textContent = T(t); };
+  if (!pw) return msg('Escribe tu contraseña actual.');
+  if (accMode === 'pw' && (np.length < 8 || np.length > 100)) return msg('La contraseña nueva necesita entre 8 y 100 caracteres.');
+  if (accMode === 'del' && !confirm(T('¿Seguro? Se borrará tu cuenta del servidor y no se puede deshacer.'))) return;
+  accBusy = true; $('#accGo').disabled = true; msg('Conectando…');
+  try {
+    await Srv.discovered();
+    if (!Srv.http) return msg('Sin conexión con el servidor.');
+    const body = { email: state.account.email, password: pw, token: Srv.auth.token };
+    if (accMode === 'pw') body.newPassword = np;
+    let r, j = {};
+    try { r = await fetch(Srv.http + '/auth/' + (accMode === 'del' ? 'delete' : accMode === 'pw' ? 'password' : 'rcode'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); j = await r.json().catch(() => ({})); }
+    catch { return msg('Sin conexión con el servidor.'); }
+    if (!r.ok || !j.ok) return msg(j.err === 'bad' ? 'La contraseña no es correcta.' : j.err === 'busy' ? 'Demasiados intentos. Espera unos minutos.' : 'El servidor falló. Inténtalo en un momento.');
+    closeSheets(); $('#accPass').value = ''; $('#accNew').value = '';
+    if (accMode === 'del') { forgetAccountLocal(); return; }
+    state.account.rcPending = j.rc; save();
+    showRecovery(j.rc);
+    toast(accMode === 'pw' ? 'Contraseña cambiada' : 'Código nuevo generado');
+  } finally { accBusy = false; $('#accGo').disabled = false; }
+}
+// Tras borrar la cuenta: se queda tu historial de entrenos, pero todo lo social y la identidad se reinician
+function forgetAccountLocal() {
+  state.account = null; state.loginSkipped = false;
+  state.me.handle = ''; state.me.priv = true; state.me.code = genCode();
+  state.friends = []; state.groups = []; state.notes = []; state.blocked = [];
+  state.feed = []; state.stories = []; state.requests = { incoming: [], outgoing: [] };
+  state.net = { following: [], followers: [], freqIn: [], freqOut: [] };
+  state.workouts.forEach(w => { delete w.sh; });
+  openGroupId = null; openGym = null;
+  Srv.forget(); Srv.identify({ code: state.me.code, name: state.me.name }, true);
+  save();
+  $('#settings').classList.remove('open'); syncOverlayClass();
+  showLogin();
+  toast('Cuenta borrada');
+}
+function reportUser(code, text, pid) {
+  if (!srvSend({ t: 'report', code, why: pid ? 'post' : 'msg', text, pid: pid || undefined })) { toast('Necesitas conexión con el servidor para reportar'); return; }
   closeSheets();
   toast('Reporte enviado. Gracias por avisar.');
 }
@@ -3454,6 +3538,7 @@ function onSrvMsg(m) {
       else if (m.re === 'follow') toast(FOLLOW_ERR[m.why] || FOLLOW_ERR['no-user']);
       else if (m.re === 'gx' && m.why === 'nohandle') toast(T('Para publicar en público primero elige tu @usuario (Social → Amigos).'));
       else if (m.re === 'gx' && m.why === 'busy') toast(T('Demasiadas acciones seguidas. Espera un poco.'));
+      else if (m.re === 'gx' && m.why === 'muted') toast(T('Varias personas han reportado tus publicaciones. No puedes publicar en público durante unos días.'));
       else if (m.re === 'search') $('#srchMsg').textContent = T(FOLLOW_ERR.busy);
       else if (m.re === 'gnew') toast('No se pudo crear el grupo en el servidor');
       else if (m.re === 'gcreate' || m.re === 'gjoin') { const t = T(ERR_GYM[m.why] || ERR_GYM.invalid); if ($('#sheetGym').classList.contains('open')) $('#gjMsg').textContent = t; else toast(t); }
@@ -3983,7 +4068,7 @@ function bind() {
   $('#mSave').addEventListener('click', proposeMeet);
 
   // Moderación
-  $('#modReport').addEventListener('click', () => modTarget && reportUser(modTarget.code, modTarget.text));
+  $('#modReport').addEventListener('click', () => modTarget && reportUser(modTarget.code, modTarget.text, modTarget.pid));
   $('#modBlock').addEventListener('click', () => modTarget && confirm(T('¿Bloquear a esta persona? Dejaréis de veros y se quitará de tus amigos.')) && blockUser(modTarget.code));
   $('#msgs').addEventListener('click', e => {
     const b = e.target.closest('.bubble.them');
@@ -4013,6 +4098,14 @@ function bind() {
   $$('#lgMode button').forEach(b => b.addEventListener('click', () => setLgMode(b.dataset.lg)));
   $('#loginSkip').addEventListener('click', () => { state.loginSkipped = true; save(); hideLogin(); });
   $('#btnLogout').addEventListener('click', logout);
+  $('#lgForgot').addEventListener('click', () => setLgMode('recover'));
+  $('#lgBack').addEventListener('click', () => setLgMode('login'));
+  $('#rcOk').addEventListener('change', e => { $('#rcGo').disabled = !e.target.checked; });
+  $('#rcCopy').addEventListener('click', async () => { try { await navigator.clipboard.writeText($('#rcCode').textContent); toast('Código copiado'); } catch { toast('No se pudo copiar: anótalo a mano'); } });
+  $('#accPw').addEventListener('click', () => openAcc('pw'));
+  $('#accRc').addEventListener('click', () => openAcc('rc'));
+  $('#delAccount').addEventListener('click', () => openAcc('del'));
+  $('#accForm').addEventListener('submit', submitAcc);
   $('#btnLogin').addEventListener('click', () => { $('#settings').classList.remove('open'); syncOverlayClass(); showLogin(); });
 
   // Ajustes
@@ -4108,5 +4201,6 @@ paintAppearance();
 if (state.settings.lang === 'en') applyLang(false);
 checkAchievements(true);
 if (needLogin()) showLogin(); else showApp();
+if (state.account && state.account.rcPending) showRecovery(state.account.rcPending);
 bindSrv();
 if (state.tutorialDone && state.ui.tab && state.ui.tab !== 'inicio' && TITLES[state.ui.tab]) showTab(state.ui.tab);

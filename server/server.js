@@ -21,6 +21,7 @@ const HOST = process.env.HOST || '0.0.0.0';
 const DATA_FILE = process.env.DATA_FILE || path.join(__dirname, 'data', 'db.json');
 const STATIC_DIR = process.env.STATIC_DIR === undefined ? path.join(__dirname, '..') : process.env.STATIC_DIR;
 const ORIGINS = (process.env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean);
+const MOD = { hidePost: 3, muteAuthor: 5, muteMs: 7 * 24 * 3600e3 };   // personas distintas que reportan
 const LIM = { friends: 200, groups: 40, groupSize: 30, inbox: 500, perIp: 25, reports: 500, blocks: 200 };
 
 const CODE_RE = /^\d{4}[A-Z]{3}$/;
@@ -51,6 +52,8 @@ async function loadRemote() {
   normDb();
   return rows.length ? 'datos cargados' : 'base nueva';
 }
+// Supabase gratis pausa los proyectos tras ~7 días sin actividad: una lectura mínima cada 12 h lo evita
+if (REMOTE) setInterval(() => { sb('/rest/v1/gc_kv?key=eq.db&select=key&limit=1').catch(() => {}); }, 12 * 3600e3).unref();
 async function saveRemote() {
   const r = await sb('/rest/v1/gc_kv?on_conflict=key', { method: 'POST', headers: { 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates,return=minimal' }, body: JSON.stringify([{ key: 'db', val: db, updated_at: new Date().toISOString() }]) });
   if (!r.ok) throw new Error('Supabase respondió ' + r.status + ' al guardar');
@@ -200,8 +203,8 @@ setInterval(() => { prunePubs(); persist(); }, 3600e3).unref();
 const pubOf = (by, id) => db.pubs.find(x => x.by === by && x.id === id);
 function pubView(me) {
   const names = {}, nm = c => { names[c] = { name: nameOf(c), handle: (db.users[c] || {}).handle || '' }; return c; };
-  const stories = db.pubs.filter(x => x.story && Date.now() - x.ts < PUB.story && !blockedEither(me, x.by)).slice(-40).map(x => ({ id: x.id, from: nm(x.by), ts: x.ts, text: x.text, m: x.m || undefined }));
-  const posts = db.pubs.filter(x => !x.story && !blockedEither(me, x.by)).slice(-PUB.show).reverse().map(x => ({
+  const stories = db.pubs.filter(x => x.story && !x.hidden && Date.now() - x.ts < PUB.story && !blockedEither(me, x.by)).slice(-40).map(x => ({ id: x.id, from: nm(x.by), ts: x.ts, text: x.text, m: x.m || undefined }));
+  const posts = db.pubs.filter(x => !x.story && !x.hidden && !blockedEither(me, x.by)).slice(-PUB.show).reverse().map(x => ({
     id: x.id, from: nm(x.by), ts: x.ts, text: x.text, m: x.m || undefined, w: x.w || undefined, tp: x.tp || undefined,
     r: Object.fromEntries(Object.entries(x.r).filter(([c]) => !blockedEither(me, c))),
     c: x.c.filter(k => !blockedEither(me, k.from)).map(k => ({ id: k.id, from: nm(k.from), text: k.text, ts: k.ts }))
@@ -556,8 +559,17 @@ const H = {
   report(ws, m) {
     const me = ws.code, c = String(m.code || '');
     if (!CODE_RE.test(c) || !rate('report:' + me, 20, 3600e3)) return;
-    db.reports.push({ by: me, who: c, why: String(m.why || '').slice(0, 20), text: String(m.text || '').slice(0, 300), ts: Date.now() });
+    const pid = typeof m.pid === 'string' ? m.pid.slice(0, 40) : '';
+    db.reports.push({ by: me, who: c, why: String(m.why || '').slice(0, 20), text: String(m.text || '').slice(0, 300), pid, ts: Date.now() });
     while (db.reports.length > LIM.reports) db.reports.shift();
+    // Moderación automática de lo público: varias personas distintas ocultan la publicación; muchas, silencian al autor unos días
+    const week = Date.now() - 7 * 24 * 3600e3, mine = db.reports.filter(r => r.who === c && r.ts > week);
+    if (pid) {
+      const n = new Set(db.reports.filter(r => r.pid === pid && r.who === c).map(r => r.by)).size;
+      const x = db.pubs.find(y => y.id === pid && y.by === c);
+      if (x && n >= MOD.hidePost) x.hidden = true;
+    }
+    if (new Set(mine.map(r => r.by)).size >= MOD.muteAuthor && db.users[c]) db.users[c].muteUntil = Date.now() + MOD.muteMs;
     persist();
   },
   /* ---- Nombre de usuario, perfil privado/público y seguidores ---- */
@@ -680,7 +692,7 @@ function onApp(ws, ip) {
     if (--bucket.n < 0) { ws.close(1008, 'rate'); return; }
     let m;
     try { m = JSON.parse(raw.toString()); } catch { return; }
-    if (!m || typeof m.t !== 'string') return;
+    if (!m || typeof m.t !== 'string' || ws.gone) return;
 
     if (!ws.code) {
       if (m.t !== 'hello') return;
@@ -754,6 +766,7 @@ function corsH(req) {
 }
 function gxPublic(ws, me, k, p) {
   if (k === 'pub' || k === 'post' || k === 'story') {
+    if ((db.users[me] || {}).muteUntil > Date.now()) return fail(ws, 'gx', 'muted');
     if (!(db.users[me] || {}).handle) return fail(ws, 'gx', 'nohandle');
     if (!rate('pub:' + me, PUB.perHour, 3600e3)) return fail(ws, 'gx', 'busy');
     if (pubOf(me, p.id)) return;
@@ -787,6 +800,33 @@ function readJson(req, cb) {
   req.on('data', c => { size += c.length; if (size > 4096) { dead = true; req.destroy(); return; } chunks.push(c); });
   req.on('end', () => { if (dead) return; try { cb(JSON.parse(Buffer.concat(chunks).toString() || '{}')); } catch { cb(null); } });
 }
+const RC_ABC = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+function genRc() { const b = crypto.randomBytes(20); let o = ''; for (let i = 0; i < 20; i++) o += RC_ABC[b[i] % RC_ABC.length] + (i % 5 === 4 && i < 19 ? '-' : ''); return o; }
+const normRc = v => String(v || '').toUpperCase().replace(/[^A-Z2-9]/g, '').slice(0, 20);
+// Borra a una persona y todo lo suyo del servidor: cuenta, amistades, grupos, mensajes pendientes, publicaciones y fotos
+async function purgeUser(code, email) {
+  const u = db.users[code]; if (!u) return;
+  for (const f of friendsOf(code)) { db.friends[f] = friendsOf(f).filter(x => x !== code); queue(f, { t: 'unfriended', code }); }
+  for (const f of Object.keys(db.follows)) if (db.follows[f].includes(code)) { db.follows[f] = db.follows[f].filter(x => x !== code); pushGraph(f); }
+  for (const f of Object.keys(db.blocks)) if (db.blocks[f].includes(code)) db.blocks[f] = db.blocks[f].filter(x => x !== code);
+  db.reqs = db.reqs.filter(r => r.from !== code && r.to !== code);
+  db.freqs = db.freqs.filter(r => r.from !== code && r.to !== code);
+  for (const c of Object.keys(db.notes)) if (c !== code) dropNote(c, x => x.from === code);
+  for (const [gid, g] of Object.entries(db.groups)) {
+    if (!g.members.includes(code)) continue;
+    g.members = g.members.filter(c => c !== code);
+    if (g.members.length < (g.code ? 1 : 2)) { for (const c of g.members) queue(c, { t: 'gleft', gid, code, closed: true }); delete db.groups[gid]; }
+    else for (const c of g.members) queue(c, { t: 'gleft', gid, code });
+  }
+  if (u.handle) delete db.handles[u.handle];
+  db.pubs = db.pubs.filter(x => x.by !== code);
+  for (const x of db.pubs) { x.c = (x.c || []).filter(c => c.by !== code && c.from !== code); if (x.r) delete x.r[code]; }
+  dropMediaWhere(m => m.by === code);
+  for (const k of ['friends', 'follows', 'blocks', 'notes', 'nseen', 'inbox', 'seq']) delete db[k][code];
+  delete db.users[code]; delete db.accounts[email];
+  for (const w of (online.get(code) || [])) w.gone = true;       // la conexión queda muda; el móvil la cierra al olvidar su identidad (si se cerrara ya, volvería a entrar con la clave vieja)
+  online.delete(code);
+}
 function onAuth(req, res, url, headers) {
   const cors = corsH(req);
   if (!cors) { res.writeHead(403, headers); return res.end(); }
@@ -796,7 +836,7 @@ function onAuth(req, res, url, headers) {
   if (req.method !== 'POST') return j(405, { err: 'method' });
   const ip = String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
   const which = url.pathname.slice('/auth/'.length);
-  if (which !== 'signup' && which !== 'login') return j(404, { err: 'none' });
+  if (!['signup', 'login', 'recover', 'password', 'rcode', 'delete'].includes(which)) return j(404, { err: 'none' });
   readJson(req, async b => {
     try {
       if (!b || typeof b !== 'object') return j(400, { err: 'format' });
@@ -817,14 +857,30 @@ function onAuth(req, res, url, headers) {
         if (!u) { u = db.users[code] = { name, hash: sha(token), created: Date.now() }; friendsOf(code); }
         else if (name !== u.name) { u.name = name; for (const f of friendsOf(code)) emit(f, { t: 'fname', code, name }); }
         u.email = email;
-        db.accounts[email] = { code, salt, pw: pwh, ts: Date.now() };
+        const rc = genRc();
+        db.accounts[email] = { code, salt, pw: pwh, rc: sha(salt + normRc(rc)), ts: Date.now() };
         if (!(await persistNow())) {                                   // no se pudo guardar: no se crea la cuenta a medias
           delete db.accounts[email]; delete u.email; if (created) delete db.users[code];
           return j(503, { err: 'server' });
         }
-        return j(200, { ok: true, code, name: u.name });
+        return j(200, { ok: true, code, name: u.name, rc });
       }
-      // login
+      if (which === 'recover') {
+        // Restablecer la contraseña con el código de recuperación guardado al crear la cuenta
+        if (!rate('rec:' + ip, 10, 3600e3) || !rate('recm:' + email, 5, 3600e3)) return j(429, { err: 'busy' });
+        if (pw.length < 8 || pw.length > 100) return j(400, { err: 'pass' });
+        const acc = db.accounts[email], rc = normRc(b.rc);
+        const ok = !!(acc && acc.rc && rc && same(acc.rc, sha(acc.salt + rc)));
+        if (!ok) return j(401, { err: 'bad' });
+        const u = db.users[acc.code]; if (!u) return j(401, { err: 'bad' });
+        const before = { salt: acc.salt, pw: acc.pw, rc: acc.rc, alts: u.alts };
+        const salt = crypto.randomBytes(16).toString('hex'), newRc = genRc();
+        acc.salt = salt; acc.pw = (await scryptP(pw, salt)).toString('hex'); acc.rc = sha(salt + normRc(newRc));
+        u.alts = [];                                                  // se cierra la sesión en los demás dispositivos
+        if (!(await persistNow())) { Object.assign(acc, { salt: before.salt, pw: before.pw, rc: before.rc }); u.alts = before.alts; return j(503, { err: 'server' }); }
+        return j(200, { ok: true, rc: newRc });
+      }
+      // login, password, rcode y delete: todos piden la contraseña actual
       if (!rate('login:' + ip, 30, 600e3) || !rate('loginm:' + email, 10, 600e3)) return j(429, { err: 'busy' });
       const token = String(b.token || '');
       if (!TOKEN_RE.test(token)) return j(400, { err: 'format' });
@@ -834,6 +890,24 @@ function onAuth(req, res, url, headers) {
       if (!acc || !same(acc.pw, got.toString('hex'))) return j(401, { err: 'bad' });
       const u = db.users[acc.code];
       if (!u) return j(401, { err: 'bad' });
+      if (which === 'password' || which === 'rcode') {
+        if (!tokenOk(u, token)) return j(401, { err: 'bad' });
+        const salt = crypto.randomBytes(16).toString('hex'), before = Object.assign({}, acc), rc = genRc();
+        if (which === 'password') {
+          const np = typeof b.newPassword === 'string' ? b.newPassword : '';
+          if (np.length < 8 || np.length > 100) return j(400, { err: 'pass' });
+          acc.salt = salt; acc.pw = (await scryptP(np, salt)).toString('hex');
+          acc.rc = sha(salt + normRc(rc));                          // la sal cambia: se entrega un código nuevo
+        } else acc.rc = sha(acc.salt + normRc(rc));
+        if (!(await persistNow())) { Object.assign(acc, before); return j(503, { err: 'server' }); }
+        return j(200, { ok: true, rc });
+      }
+      if (which === 'delete') {
+        if (!tokenOk(u, token)) return j(401, { err: 'bad' });
+        await purgeUser(acc.code, email);
+        if (!(await persistNow())) return j(503, { err: 'server' });
+        return j(200, { ok: true });
+      }
       if (!tokenOk(u, token)) {                                          // este dispositivo pasa a ser de confianza
         const before = u.alts;
         u.alts = (u.alts || []).concat(sha(token)).slice(-7);
@@ -906,7 +980,8 @@ const server = http.createServer((req, res) => {
   let name = decodeURIComponent(url.pathname).slice(1) || 'index.html';
   const ext = path.extname(name).toLowerCase();
   // Solo ficheros sueltos de la carpeta de la app, nunca subcarpetas (server/, data/...)
-  if (name.includes('/') || name.includes('\\') || name.startsWith('.') || !MIME[ext] || name === 'package.json') { res.writeHead(404, headers); return res.end('No encontrado'); }
+  const iconOk = /^icons\/[a-z0-9-]{1,40}\.png$/.test(name);   // única subcarpeta pública: los iconos
+  if (!iconOk && (name.includes('/') || name.includes('\\') || name.startsWith('.') || !MIME[ext] || name === 'package.json')) { res.writeHead(404, headers); return res.end('No encontrado'); }
   fs.readFile(path.join(STATIC_DIR, name), (err, buf) => {
     if (err) { res.writeHead(404, headers); return res.end('No encontrado'); }
     res.writeHead(200, Object.assign({ 'Content-Type': MIME[ext], 'Cache-Control': 'no-cache' }, headers));

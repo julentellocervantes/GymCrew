@@ -15,6 +15,7 @@
   </script>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="GymCrew">
@@ -54,7 +55,7 @@
   <section id="splash" class="splash" tabindex="0" aria-label="Pantalla de bienvenida">
     <p class="splash-top">TELLO APPS</p>
     <div class="splash-mid">
-      <div class="splash-glass glass"><h1 class="splash-title">GymCrew</h1><p class="splash-sub">Entrena. Anota. Comparte si quieres.</p></div>
+      <div class="splash-glass glass"><svg class="splash-plate" viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="56" fill="#17b983"/><circle cx="60" cy="60" r="44" fill="none" stroke="#04120d" stroke-opacity=".5" stroke-width="3"/><circle cx="60" cy="60" r="36" fill="none" stroke="#ffd447" stroke-width="7"/><circle cx="60" cy="60" r="26" fill="#06100c" stroke="#ff6b5e" stroke-width="3"/><circle cx="60" cy="60" r="10" fill="#0a1411" stroke="#5b95ff" stroke-width="3"/></svg><h1 class="splash-title">GymCrew</h1><p class="splash-sub">Entrena. Anota. Comparte si quieres.</p></div>
     </div>
     <button id="splashHint" class="splash-hint" type="button">
       <svg viewBox="0 0 24 24"><path d="M6 15l6-6 6 6"/></svg>
@@ -103,13 +104,28 @@
       <form id="lgForm" class="lg-form" novalidate>
         <label id="lgNameRow">Nombre<input id="lgName" type="text" maxlength="20" autocomplete="nickname" placeholder="Cómo te verán los demás"></label>
         <label>Correo<input id="lgEmail" type="email" maxlength="120" autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false" placeholder="tu@correo.com"></label>
+        <p id="lgRecTitle" class="hidden"><strong>Restablecer contraseña</strong><br><span class="muted small">Usa el código de recuperación que te dimos al crear la cuenta.</span></p>
+        <label id="lgRcRow" class="hidden">Código de recuperación<input id="lgRc" type="text" maxlength="30" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="XXXXX-XXXXX-XXXXX-XXXXX"></label>
         <label>Contraseña<input id="lgPass" type="password" maxlength="100" autocomplete="new-password" placeholder="Mínimo 8 caracteres"></label>
         <label id="lgAgeRow" class="lg-check"><input id="lgAge" type="checkbox"><span>Tengo 16 años o más</span></label>
         <p id="loginMsg" class="lg-msg small" role="alert"></p>
         <button id="lgGo" class="btn primary wide" type="submit">Crear cuenta</button>
+        <button id="lgForgot" class="link-btn hidden" type="button">¿Olvidaste tu contraseña?</button>
+        <button id="lgBack" class="link-btn hidden" type="button">Volver</button>
       </form>
-      <p id="lgNote" class="muted small">Tus entrenos se guardan en este dispositivo. La cuenta solo identifica tu perfil social. No podemos recuperar la contraseña si la olvidas.</p>
+      <p id="lgNote" class="muted small">Tus entrenos se guardan en este dispositivo. La cuenta solo identifica tu perfil social. Al crear la cuenta te daremos un código para recuperar la contraseña: guárdalo.</p>
       <button id="loginSkip" class="btn wide hidden" type="button">Continuar sin cuenta (solo en este dispositivo)</button>
+    </div>
+  </section>
+
+  <section id="recovery" class="login hidden" aria-label="Código de recuperación" role="dialog" aria-modal="true">
+    <div class="glass login-card">
+      <h1>Guarda este código</h1>
+      <p class="muted">Es la única forma de recuperar tu contraseña si la olvidas. No lo vas a volver a ver y no podemos reenviarlo. Cópialo o anótalo en un sitio seguro.</p>
+      <p id="rcCode" class="rc-code" translate="no"></p>
+      <button id="rcCopy" class="btn wide" type="button">Copiar código</button>
+      <label class="lg-check"><input id="rcOk" type="checkbox"><span>Lo he guardado en un lugar seguro</span></label>
+      <button id="rcGo" class="btn primary wide" type="button" disabled>Continuar</button>
     </div>
   </section>
 
@@ -591,6 +607,8 @@
         <div id="accIn" class="hidden">
           <p><strong id="accName"></strong></p>
           <p id="accMail" class="muted small" translate="no"></p>
+          <button id="accPw" class="btn wide" type="button">Cambiar contraseña</button>
+          <button id="accRc" class="btn wide" type="button">Nuevo código de recuperación</button>
           <button id="btnLogout" class="btn wide" type="button">Cerrar sesión</button>
         </div>
         <div id="accOut">
@@ -681,6 +699,7 @@
         <button id="wipeShared" class="btn danger wide">Borrar mis datos compartidos</button>
         <button id="wipeEntries" class="btn danger wide">Borrar mis entrenos</button>
         <button id="wipeSocial" class="btn danger wide">Borrar amigos y chats</button>
+        <button id="delAccount" class="btn danger wide" type="button">Borrar mi cuenta y mis datos del servidor</button>
       </div>
       </div>
       <div class="set-page hidden" data-page="help" data-title="Ayuda y tutorial">
@@ -688,6 +707,8 @@
         <h3>Ayuda</h3>
         <p class="muted small">Un repaso guiado por todas las secciones de la app.</p>
         <button id="btnTour" class="btn wide">Ver el tutorial</button>
+        <h3>Normas de la comunidad</h3>
+        <p class="muted small">Respeta a los demás: nada de acoso, odio, spam ni contenido sexual. No compartas datos privados de otras personas ni consejos médicos o de dieta. Puedes reportar o bloquear desde el menú ⋯ de cada publicación, historia o comentario. Cuando varias personas reportan algo, se oculta solo; si reportan mucho a una cuenta, deja de poder publicar en público unos días.</p>
         <p class="muted small">GymCrew no sustituye a un profesional de la salud ni da consejos médicos o de dieta. Pensada para mayores de 16 años.</p>
       </div>
       </div>
@@ -817,6 +838,18 @@
     <label>Nota (opcional)<input type="text" id="mNote" maxlength="60" placeholder="Ej. Día de pierna"></label>
     <p class="muted small">Se envía una vez al grupo. Nadie recibe recordatorios.</p>
     <button id="mSave" class="btn primary wide" type="button">Proponer</button>
+  </div>
+
+  <div id="sheetAcc" class="sheet glass">
+    <div class="grab"></div>
+    <h2 id="accTitle">Cuenta</h2>
+    <p id="accDesc" class="muted small"></p>
+    <form id="accForm" class="lg-form" novalidate>
+      <label>Contraseña actual<input id="accPass" type="password" maxlength="100" autocomplete="current-password"></label>
+      <label id="accNewRow" class="hidden">Contraseña nueva<input id="accNew" type="password" maxlength="100" autocomplete="new-password" placeholder="Mínimo 8 caracteres"></label>
+      <p id="accMsg" class="lg-msg small" role="alert"></p>
+      <button id="accGo" class="btn primary wide" type="submit">Continuar</button>
+    </form>
   </div>
 
   <div id="sheetMod" class="sheet glass">

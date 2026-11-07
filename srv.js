@@ -119,6 +119,8 @@
       window.addEventListener('online', wake);
       document.addEventListener('visibilitychange', () => { if (!document.hidden) wake(); });
     },
+    // Olvida la clave de este dispositivo (tras borrar la cuenta): la siguiente identidad empieza de cero
+    forget() { put({ token: '' }); if (S.ws) { try { S.ws.close(); } catch { /* ya cerrada */ } } S.ws = null; S.fatal = ''; S.tries = 0; clearTimeout(S.timer); },
     // Cambia nombre o código y vuelve a entrar
     identify(ident, reset) {
       S.ident = { code: ident.code, name: ident.name };
