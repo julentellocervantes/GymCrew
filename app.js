@@ -1800,7 +1800,7 @@ function feedCard(p, opt = {}) {
   menu.setAttribute('aria-label', mine ? T(p.pub ? 'Borrar publicación' : 'Dejar de compartir') : T('Más opciones'));
   menu.textContent = mine ? '🗑' : '⋯';
   menu.addEventListener('click', e => { e.stopPropagation(); if (mine) { unsharePost(p); closeThread(); } else openMod(p.from, p.pub ? 'publicación de ' + personName(p.from) : 'entreno de ' + personName(p.from), isOpenPost(p) ? p.id : ''); });
-  head.append(who, menu);
+  head.append(av, who, menu);
   col.appendChild(head);
   col.appendChild(p.pub ? pubBody(p) : workoutEmbed(p, opt.thread));
 
@@ -1822,7 +1822,7 @@ function feedCard(p, opt = {}) {
     Object.values(p.react).forEach(e => { counts[e] = (counts[e] || 0) + 1; });
     const sm = el('div', 'feed-summary');
     sm.append(el('span', 'em-stack', Object.keys(counts).sort((x, y) => counts[y] - counts[x]).slice(0, 4).join('')));
-    col.appendChild(sm);
+    bar.appendChild(sm);
   }
   if (rxOpen.has(p.id) && !mine) {
     const tray = el('div', 'react-row');
@@ -1834,7 +1834,7 @@ function feedCard(p, opt = {}) {
     });
     col.appendChild(tray);
   }
-  li.append(av, col);
+  li.append(col);
   if (!opt.thread) {
     li.classList.add('tappable');
     li.addEventListener('click', e => { if (e.target.closest('button, video, a, input, details')) return; openThread(p); });
@@ -1882,10 +1882,10 @@ function renderThread() {
     const head = el('div', 'tw-head');
     const who = el('span', 'tw-who');
     who.append(ut(el('strong', '', me ? T('Tú') : personName(c.from))), el('small', '', `${dayLabel(c.ts)} · ${fmtClock(c.ts)}`));
-    head.appendChild(who);
+    head.append(av, who);
     if (!me) { const m = el('button', 'icon-btn plain'); m.type = 'button'; m.textContent = '⋯'; m.setAttribute('aria-label', T('Más opciones')); m.addEventListener('click', () => openMod(c.from, c.text)); head.appendChild(m); }
     col.append(head, ut(el('p', 'pub-text', c.text)));
-    li.append(av, col);
+    li.append(col);
     ul.appendChild(li);
   });
 }

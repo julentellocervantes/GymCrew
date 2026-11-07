@@ -2433,3 +2433,18 @@ h1#viewTitle, h1 {
 @media (prefers-reduced-motion: reduce) { .btn.primary:active { transform: none; } }
 .seg3 button, .seg button { padding-inline: 6px; }
 .seg3 button { letter-spacing: .03em; font-size: .72rem; }
+
+/* Publicaciones: avatar en la cabecera y mensaje a todo el ancho; acciones en una sola fila */
+.tweet { display: block; padding: 14px 16px 6px; }
+.tweet .tw-col { gap: 10px; }
+.tw-head { align-items: center; gap: 10px; }
+.tweet .avatar { width: 40px; height: 40px; flex: none; }
+.tweet .tw-who { display: flex; flex-direction: column; gap: 2px; align-items: flex-start; }
+.tweet .tw-who strong { font-size: 1rem; }
+.tw-who .tw-grp, .tw-who .tw-hdl { margin-left: 0; }
+.tweet .pub-text { font-size: 1.04rem; line-height: 1.45; width: 100%; overflow-wrap: anywhere; }
+.tw-embed { width: 100%; }
+.tw-actions { display: flex; align-items: center; gap: 2px; margin: 0 -8px; }
+.tw-actions .tw-act { flex: none; min-width: 58px; }
+.tw-actions .feed-summary { margin: 0 6px 0 auto; font-size: 1rem; white-space: nowrap; }
+.tweet.cm { padding-bottom: 14px; }
