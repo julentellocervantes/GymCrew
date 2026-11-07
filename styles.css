@@ -2353,3 +2353,83 @@ h1, h2, h3, .today-card h2 { font-weight: 800; letter-spacing: -.01em; }
 @keyframes plateSpin { from { transform: rotate(-200deg) scale(.7); opacity: 0; } to { transform: none; opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .splash-plate { animation: none; } }
 #recovery { z-index: 130; }
+
+/* ===== Identidad «Hierro y tiza» =====
+   Suelo de goma con moleteado (el agarre de una barra), títulos de cartel de gimnasio en mayúsculas
+   y cursiva, tarjetas de chapa con esquinas más duras, barras de carga por discos y un amarillo de
+   seguridad como segundo acento. Todo con CSS: sin imágenes ni recursos externos. */
+:root, :root[data-theme="day"] { --safety: #f2b705; --knurl: rgba(20, 40, 35, .035); --edge: rgba(10, 40, 30, .28); }
+:root[data-theme="night"] { --safety: #ffd447; --knurl: rgba(255, 255, 255, .03); --edge: rgba(0, 0, 0, .6); }
+
+/* Moleteado: rombos finos y muy suaves sobre todo el fondo */
+body::before {
+  content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image:
+    repeating-linear-gradient(45deg, var(--knurl) 0 1px, transparent 1px 6px),
+    repeating-linear-gradient(-45deg, var(--knurl) 0 1px, transparent 1px 6px);
+}
+.app, .views, .tabbar { position: relative; z-index: 1; }
+.tabbar { position: fixed; }
+
+/* Títulos de cartel */
+h1#viewTitle, h1 {
+  font-style: italic; font-weight: 900; text-transform: uppercase; letter-spacing: .005em; font-size: 2.1rem; line-height: 1;
+  padding-bottom: 6px; background: linear-gradient(var(--safety), var(--safety)) left bottom / 44px 4px no-repeat;
+}
+.sec, h2.sec {
+  display: flex; align-items: center; gap: 10px; text-transform: uppercase; letter-spacing: .12em; font-size: .78rem; font-weight: 800; color: var(--muted);
+  font-family: "Avenir Next Condensed", "Roboto Condensed", "Arial Narrow", system-ui, sans-serif;
+}
+.sec::after { content: ""; flex: 1; height: 2px; background: repeating-linear-gradient(90deg, var(--edge) 0 6px, transparent 6px 10px); opacity: .5; }
+.card h3, .week-top h3, .login-card h3 { text-transform: uppercase; letter-spacing: .08em; font-size: .82rem; font-weight: 800; color: var(--muted); }
+.tab-l { text-transform: uppercase; letter-spacing: .06em; font-weight: 800; font-size: .62rem; }
+
+/* Chapa: esquinas más duras y canto inferior como una pletina */
+.card, .tweet, .thread-main { border-radius: 18px; }
+.row { border-radius: 14px; }
+.glass { box-shadow: 0 2px 0 var(--edge), 0 14px 26px -18px var(--shadow), inset 0 1px 0 var(--hi); }
+.seg { border-radius: 14px; }
+.seg button { border-radius: 10px; text-transform: uppercase; letter-spacing: .08em; font-size: .8rem; font-weight: 800; }
+.btn { border-radius: 12px; font-weight: 800; letter-spacing: .02em; }
+.btn.primary, .btn.main { text-transform: uppercase; letter-spacing: .07em; box-shadow: 0 3px 0 color-mix(in srgb, var(--accent) 55%, #000), 0 12px 20px -12px color-mix(in srgb, var(--accent) 80%, transparent), inset 0 1px 0 rgba(255,255,255,.35); }
+.btn.primary:active, .btn.main:active { transform: translateY(2px); box-shadow: 0 1px 0 color-mix(in srgb, var(--accent) 55%, #000); }
+.chip { border-radius: 10px; font-weight: 700; }
+
+/* Cifras tipo marcador / tablero de pesas */
+.num, .grid3 b, .week-top b, .pstat b { font-style: italic; font-weight: 900; letter-spacing: -.01em; }
+.pstat, .grid3 > div { border-radius: 14px; border-bottom: 3px solid var(--safety); }
+.pstat span, .grid3 span { text-transform: uppercase; letter-spacing: .08em; font-size: .66rem; font-weight: 700; }
+
+/* Barra de carga: tramos como discos en la barra */
+.track { height: 12px; border-radius: 3px; background: repeating-linear-gradient(90deg, var(--fill2) 0 14px, transparent 14px 16px); }
+.fill { border-radius: 3px; background: repeating-linear-gradient(90deg, var(--accent) 0 14px, transparent 14px 16px) !important; }
+.week-dots .wd i { border-radius: 10px; }
+
+/* Tarjeta de Hoy: lleva una cinta de precaución arriba */
+#todayCard::before, #weekCard::before {
+  content: ""; position: absolute; left: 0; right: 0; top: 0; height: 6px; border-radius: 18px 18px 0 0; opacity: .9;
+  background: repeating-linear-gradient(-45deg, var(--safety) 0 10px, #15191a 10px 20px);
+}
+#todayCard, #weekCard { position: relative; padding-top: 24px; overflow: hidden; }
+#weekCard::before { opacity: .55; height: 4px; }
+#todayCard { border-left-width: 0; } #weekCard { border-left-width: 0; }
+
+/* Racha: placa metálica */
+.streak-pill { border-radius: 8px; font-style: italic; font-weight: 900; letter-spacing: .04em; }
+
+/* Barra inferior: pletina con indicador de disco */
+.tabbar { border-radius: 20px; box-shadow: 0 3px 0 var(--edge), 0 18px 30px -14px var(--shadow); }
+.tab-ind { border-radius: 14px; }
+
+/* Banner del perfil: barra olímpica con discos en los extremos */
+.pf-banner { border-radius: 14px; }
+.pf-banner::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 14px; height: 6px; background: linear-gradient(#e8ecee, #8a9498 55%, #4b5558); opacity: .55;
+}
+.ava-big { border-radius: 50%; }
+
+/* Ajustes y filas */
+.set-grp { text-transform: uppercase; letter-spacing: .12em; font-weight: 800; font-size: .74rem; }
+@media (prefers-reduced-motion: reduce) { .btn.primary:active { transform: none; } }
+.seg3 button, .seg button { padding-inline: 6px; }
+.seg3 button { letter-spacing: .03em; font-size: .72rem; }
