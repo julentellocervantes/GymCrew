@@ -6,6 +6,15 @@
 
   // Frases completas (se buscan tal cual)
   const EX = {
+    "Sin conexión: no se puede buscar personas ahora.": "Offline: people search is unavailable right now.",
+    "Entrenar": "Train", "Mensajes": "Messages", "Personas": "People", "Apuntar entreno": "Log workout",
+    "Apunta tu entreno y, si quieres, compártelo.": "Log your workout and share it if you want.",
+    "Entrenar 🏋️": "Train 🏋️", "Mensajes 💬": "Messages 💬", "Crear ➕": "Create ➕",
+    "Apunta tu entreno con ejercicios, series y kilos. Los récords se detectan solos y el historial queda en el calendario.": "Log exercises, sets and weights. Records are detected automatically and your history lives in the calendar.",
+    "Apunta un entreno, escribe una publicación o sube una historia de 24 h. Tú decides quién lo ve.": "Log a workout, write a post or share a 24 h story. You decide who sees it.",
+    "Chats, grupos de tu gimnasio y búsqueda de personas por @usuario. Puedes bloquear, reportar y salir cuando quieras.": "Chats, gym groups and people search by @username. You can block, report and leave whenever you want.",
+    "Tu banner, tus publicaciones y tu progreso: racha y récords.": "Your banner, your posts and your progress: streak and records.",
+    "Tema, idioma, privacidad y copia de seguridad. GymCrew no sustituye a un profesional de la salud ni da consejos médicos ni de dieta.": "Theme, language, privacy and backup. GymCrew is not a substitute for a health professional and gives no medical or diet advice.",
     "para probar sin servidor": "to try things without a server",
     "Añadir registro de hoy": "Add today's entry",
     "✅ Hoy ya registraste": "✅ You already logged today",

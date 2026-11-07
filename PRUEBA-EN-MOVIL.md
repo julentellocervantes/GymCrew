@@ -11,11 +11,9 @@ Objetivo: descubrir qué sobra, qué falla y qué se siente bien. Úsala como la
 
 - [ ] Pulsa ＋, dale a distintos botones y reacciona con emojis: ¿se siente fluido o va a tirones? ¿Algo te agobia por moverse demasiado?
 
-## Día 2 — rutina y récords
-- [ ] Guardar el entreno como rutina y empezarla desde «Hoy» al día siguiente. «Repetir el último».
+## Día 2 — récords
+- [ ] Usar «Repetir el último» desde Entrenar al día siguiente.
 - [ ] ¿Salió algún récord automático? ¿Tiene sentido (1RM estimado, peso máximo, volumen)?
-- [ ] Ver Entrenos → Progreso: gráfica por ejercicio y volumen semanal por grupo muscular.
-- [ ] Cambiar el objetivo semanal en Ajustes. ¿La racha en semanas se siente justa, sin presión?
 
 ## Día 3 — lo social (necesita el servidor: `server/DEPLOY.md`)
 - [ ] Primer arranque (borra los datos del sitio antes): ¿sale la guía de 3 pasos, luego el formulario, luego «Elige tu @usuario» sin poder saltarla y por último el tutorial de la app?

@@ -167,11 +167,9 @@
 
         <!-- ENTRENOS -->
         <section id="view-historial" class="view">
-          <div id="hsegBar" class="seg seg4 glass" data-idx="0">
+          <div id="hsegBar" class="seg seg2 glass" data-idx="0">
             <button data-hseg="today">Hoy</button>
             <button data-hseg="hist">Historial</button>
-            <button data-hseg="routines">Rutinas</button>
-            <button data-hseg="progress">Progreso</button>
           </div>
 
           <div id="hpane-today" class="pane">
@@ -180,18 +178,8 @@
             <h2 id="todayTitle">Hoy</h2>
             <p id="todaySub" class="muted small"></p>
             <div class="row2 today-main">
-              <button id="todayGo" class="btn primary" type="button">Entreno completo</button>
+              <button id="todayGo" class="btn primary" type="button">Apuntar entreno</button>
               <button id="repeatLast" class="btn" type="button">Repetir el último</button>
-            </div>
-            <div class="today-quick">
-            <p class="label">O regístralo en un toque · tipo</p>
-            <div id="quickType" class="chips row-scroll" role="group" aria-label="Tipo de entreno"></div>
-            <p class="label">¿Cómo te fue? Toca para guardar</p>
-            <div id="quickFeel" class="quick-mood" role="group" aria-label="Sensación">
-              <button type="button" data-qf="1" aria-label="Mal">😞</button><button type="button" data-qf="2" aria-label="Regular">😕</button>
-              <button type="button" data-qf="3" aria-label="Normal">😐</button><button type="button" data-qf="4" aria-label="Bien">🙂</button>
-              <button type="button" data-qf="5" aria-label="Genial">😄</button>
-            </div>
             </div>
           </div>
 
@@ -224,35 +212,14 @@
             <ul id="monthList" class="rows"></ul>
           </div>
 
-          <div id="hpane-routines" class="pane hidden">
-            <p class="muted small">Guarda tus entrenos favoritos como plantillas y empieza uno con un toque.</p>
-            <ul id="routineList" class="rows"></ul>
-          </div>
-
-          <div id="hpane-progress" class="pane hidden">
-            <div class="grid2">
-              <div class="glass stat"><p class="muted">Entrenos</p><p id="totalCount" class="num">0</p></div>
-              <div class="glass stat"><p class="muted">Este mes</p><p id="monthCount" class="num">0</p></div>
-              <div class="glass stat"><p class="muted">Récords</p><p id="prTotal" class="num">0</p></div>
-              <div class="glass stat"><p class="muted">Mejor racha (sem.)</p><p id="bestWeeks" class="num">0</p></div>
-            </div>
-            <div class="glass card"><h3>Últimas 8 semanas</h3><div id="chart" class="chart"></div></div>
-            <div class="glass card">
-              <h3>Volumen de esta semana</h3>
-              <div id="volBars"></div>
-              <p id="volEmpty" class="muted small">Apunta ejercicios con series para ver tu volumen por grupo muscular.</p>
-            </div>
-            <h2 class="sec">Tus ejercicios</h2>
-            <ul id="exProgList" class="rows"></ul>
-          </div>
         </section>
 
         <!-- SOCIAL -->
         <section id="view-amigos" class="view">
           <div id="seg" class="seg seg3 glass" data-idx="0">
-            <button data-seg="friends">Amigos<span id="segBadge" class="badge xs hidden">0</span></button>
             <button data-seg="chats">Chats</button>
             <button data-seg="groups">Grupos</button>
+            <button data-seg="friends">Personas<span id="segBadge" class="badge xs hidden">0</span></button>
           </div>
           <p id="srvNotice" class="glass notice small muted">Sin conexión al servidor: tus chats se guardan solo en este móvil.</p>
 
@@ -332,37 +299,7 @@
             </div>
           </div></div>
 
-          <button id="pfMoreBtn" class="fold glass" data-fold="pfMore" data-target="pfMore" aria-expanded="false">
-            <span class="fold-ico">🏅</span>
-            <span class="fold-t"><strong>Racha, logros y marco</strong></span>
-            <svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
-          </button>
-          <div id="pfMore" class="collapse"><div>
-            <div id="profStats" class="grid3"></div>
-                      <button id="frameTitle" class="fold glass" data-fold="frame" data-target="frameBody" aria-expanded="false">
-            <span class="fold-ico">🖼️</span>
-            <span class="fold-t"><strong>Marco de perfil</strong></span>
-            <svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
-          </button>
-          <div id="frameBody" class="collapse"><div>
-            <div id="frameGrid" class="frame-grid"></div>
-            <p id="frameHint" class="muted small hidden">Desbloquea marcos con tus logros.</p>
-          </div></div>
-
-          <button id="achDoneTitle" class="fold glass" data-fold="achDone" data-target="achDoneBody" aria-expanded="true">
-            <span class="fold-ico">🏅</span>
-            <span class="fold-t"><strong id="achDoneLbl">Logros completados</strong></span>
-            <svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
-          </button>
-          <div id="achDoneBody" class="collapse open"><div><ul id="achDone" class="rows"></ul></div></div>
-
-          <button id="achTodoTitle" class="fold glass" data-fold="achTodo" data-target="achTodoBody" aria-expanded="true">
-            <span class="fold-ico">🎯</span>
-            <span class="fold-t"><strong id="achTodoLbl">Por completar</strong></span>
-            <svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
-          </button>
-          <div id="achTodoBody" class="collapse open"><div><ul id="achTodo" class="rows"></ul></div></div>
-          </div></div>
+          <div id="profStats" class="grid3"></div>
 
           <section id="pfAct" aria-label="Tu actividad">
             <div id="pfSeg" class="seg seg3 glass" data-idx="0" role="tablist">
@@ -385,16 +322,16 @@
       <svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>
       <span class="tab-l">Inicio</span>
     </button>
-    <button class="tab" data-tab="historial" aria-label="Entrenos">
+    <button class="tab" data-tab="historial" aria-label="Entrenar">
       <svg viewBox="0 0 24 24"><path d="M3 9v6M6 7v10M18 7v10M21 9v6M6 12h12"/></svg>
-      <span class="tab-l">Entrenos</span>
+      <span class="tab-l">Entrenar</span>
     </button>
     <button id="fab" class="fab" aria-label="Nuevo entreno">
       <svg viewBox="0 0 24 24" style="stroke-width:2.4"><path d="M12 5v14M5 12h14"/></svg>
     </button>
-    <button class="tab" data-tab="amigos" aria-label="Social">
+    <button class="tab" data-tab="amigos" aria-label="Mensajes">
       <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><path d="M16 5a3.5 3.5 0 010 7M18 14.5c2 .7 3.5 2.5 3.5 5.5"/></svg>
-      <span class="tab-l">Social</span>
+      <span class="tab-l">Mensajes</span>
       <span id="badge" class="badge hidden">0</span>
     </button>
     <button class="tab" data-tab="perfil" aria-label="Perfil">
@@ -512,7 +449,6 @@
     <div id="wScroll" class="ov-body">
       <div id="wLoad" class="row2">
         <button id="wRepeat" class="btn sm" type="button">Repetir el último</button>
-        <select id="wRoutineSel" aria-label="Cargar una rutina"></select>
       </div>
       <div class="two">
         <label>Fecha<input type="date" id="wDate"></label>
@@ -556,7 +492,6 @@
       </div>
 
       <button id="wSave" class="btn primary wide" type="button">Guardar</button>
-      <button id="wSaveRoutine" class="btn wide" type="button">Guardar como rutina</button>
       <button id="wDelete" class="btn danger wide hidden" type="button">Borrar entreno</button>
       <div class="rest-spacer"></div>
     </div>
@@ -583,7 +518,6 @@
         <p class="set-grp">Tu app</p>
         <div class="glass set-list">
         <button type="button" class="set-row" data-sp="look"><span class="set-ico" data-tone="a" aria-hidden="true">🎨</span><span class="set-txt"><b>Apariencia e idioma</b><small id="setSubLook"></small></span><span class="set-chev" aria-hidden="true">›</span></button>
-        <button type="button" class="set-row" data-sp="train"><span class="set-ico" data-tone="b" aria-hidden="true">🏋️</span><span class="set-txt"><b>Entrenamiento</b><small id="setSubTrain"></small></span><span class="set-chev" aria-hidden="true">›</span></button>
         <button type="button" class="set-row" data-sp="notes"><span class="set-ico" data-tone="c" aria-hidden="true">🔔</span><span class="set-txt"><b>Avisos y vibración</b><small id="setSubNotes"></small></span><span class="set-chev" aria-hidden="true">›</span></button>
         </div>
         <p class="set-grp">Privacidad y datos</p>
@@ -594,7 +528,6 @@
         <p class="set-grp">Más</p>
         <div class="glass set-list">
         <button type="button" class="set-row" data-sp="help"><span class="set-ico" data-tone="f" aria-hidden="true">🧭</span><span class="set-txt"><b>Ayuda y tutorial</b><small id="setSubHelp">Repaso guiado de la app</small></span><span class="set-chev" aria-hidden="true">›</span></button>
-        <button type="button" class="set-row" data-sp="adv"><span class="set-ico" data-tone="g" aria-hidden="true">🛠</span><span class="set-txt"><b>Avanzado</b><small id="setSubAdv">Servidor y modo prueba</small></span><span class="set-chev" aria-hidden="true">›</span></button>
         </div>
         <div class="glass set-list danger-list">
         <button type="button" class="set-row" data-sp="danger"><span class="set-ico" data-tone="x" aria-hidden="true">⚠️</span><span class="set-txt"><b>Zona de peligro</b><small id="setSubDanger">Borrar datos, amigos o chats</small></span><span class="set-chev" aria-hidden="true">›</span></button>
@@ -633,18 +566,6 @@
           <button data-lang="es">Español</button>
           <button data-lang="en">English</button>
         </div>
-      </div>
-      </div>
-      <div class="set-page hidden" data-page="train" data-title="Entrenamiento">
-      <div class="glass card">
-        <h3>Entrenamiento</h3>
-        <label>Objetivo semanal
-          <select id="goalSel"><option value="1">1 entreno</option><option value="2">2 entrenos</option><option value="3">3 entrenos</option><option value="4">4 entrenos</option><option value="5">5 entrenos</option><option value="6">6 entrenos</option><option value="7">7 entrenos</option></select>
-        </label>
-        <p class="muted small">Los días de descanso cuentan: la racha son semanas que cumplen tu objetivo. Si una semana no sale, la siguiente empieza de cero, sin dramas.</p>
-        <label>Descanso entre series
-          <select id="restSel"><option value="30">30 s</option><option value="60">60 s</option><option value="90">90 s</option><option value="120">2 min</option><option value="180">3 min</option><option value="240">4 min</option></select>
-        </label>
       </div>
       </div>
       <div class="set-page hidden" data-page="notes" data-title="Avisos y vibración">
@@ -712,25 +633,6 @@
         <p class="muted small">GymCrew no sustituye a un profesional de la salud ni da consejos médicos o de dieta. Pensada para mayores de 16 años.</p>
       </div>
       </div>
-      <div class="set-page hidden" data-page="adv" data-title="Avanzado">
-      <div class="glass card" id="srvCard">
-        <h3>Servidor <span id="srvDot" class="srv-dot none" aria-hidden="true"></span></h3>
-        <p id="srvState" class="muted small"></p>
-        <label>Dirección del servidor
-          <input id="srvUrl" type="url" inputmode="url" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="https://tu-servidor.duckdns.org">
-        </label>
-        <button id="srvSave" class="btn wide" type="button">Guardar y conectar</button>
-        <button id="srvNewCode" class="btn danger wide hidden" type="button">Cambiar mi código</button>
-        <p class="muted small">Déjalo vacío si abres la app desde tu propio servidor.</p>
-      </div>
-      <details class="glass card fold-card" id="simCard">
-        <summary>Modo prueba <span class="muted small">para probar sin servidor</span></summary>
-        <p class="muted small">Simula a otras personas para probar chats, avisos y solicitudes sin servidor.</p>
-        <button id="btnSim" class="btn wide">Simular un mensaje de un amigo</button>
-        <button id="btnSimReq" class="btn wide">Simular solicitud de amistad recibida</button>
-        <button id="btnSimAccept" class="btn wide">Simular que aceptan mi solicitud</button>
-      </details>
-      </div>
     </div>
   </div>
 
@@ -750,13 +652,6 @@
     <button id="exCustomAdd" class="btn wide" type="button">Crear y añadir</button>
   </div>
 
-  <div id="sheetRoutine" class="sheet glass">
-    <div class="grab"></div>
-    <h2>Guardar como rutina</h2>
-    <label>Nombre de la rutina<input type="text" id="rName" maxlength="30" placeholder="Ej. Pecho y tríceps"></label>
-    <button id="rSave" class="btn primary wide" type="button">Guardar rutina</button>
-  </div>
-
   <div id="sheetExD" class="sheet glass">
     <div class="grab"></div>
     <h2 id="exdName">Ejercicio</h2>
@@ -770,7 +665,6 @@
     <div class="grab"></div>
     <h2>Crear</h2>
     <div class="nw-grid">
-      <button id="nwQuick" class="nw-card" data-tone="a" style="--i:0" type="button"><span class="nw-ico">⚡</span><b>Registro rápido</b><small>Un toque, lo de hoy</small></button>
       <button id="nwWorkout" class="nw-card" data-tone="b" style="--i:1" type="button"><span class="nw-ico">🏋️</span><b>Entreno completo</b><small>Series, kilos y récords</small></button>
       <button id="nwPost" class="nw-card" data-tone="c" style="--i:2" type="button"><span class="nw-ico">✍️</span><b>Publicación</b><small>Texto, fotos o vídeo</small></button>
       <button id="nwStory" class="nw-card" data-tone="d" style="--i:3" type="button"><span class="nw-ico">⭕</span><b>Historia</b><small>Dura 24 horas</small></button>

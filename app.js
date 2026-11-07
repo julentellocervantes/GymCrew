@@ -146,7 +146,7 @@ function defaults() {
     friends: [], groups: [], names: {},
     requests: { incoming: [], outgoing: [] },
     achievements: {},
-    ui: { fold: {}, tab: '', home: 'feed', ff: '', feedTab: 'foryou', tp: '', fl: 'friends', seg: 'friends', pf: 'posts', hseg: 'today', filter: '', draft: null, lastRoutine: '', quickType: 'fuerza' },
+    ui: { fold: {}, tab: '', home: 'feed', ff: '', feedTab: 'foryou', tp: '', fl: 'friends', seg: 'chats', pf: 'posts', hseg: 'today', filter: '', draft: null, lastRoutine: '', quickType: 'fuerza' },
     settings: { noteToast: true, browserNotif: false, theme: 'auto', lang: 'es', haptics: true, goal: 3, rest: 90, lock: { on: false, h: '', s: '', after: 0 } }
   };
 }
@@ -173,8 +173,8 @@ function load(src) {
     ui: {
       pf: ['posts', 'replies', 'photos'].includes(ui.pf) ? ui.pf : 'posts',
       home: ui.home === 'day' ? 'day' : 'feed', fl: ['friends', 'following', 'followers'].includes(ui.fl) ? ui.fl : 'friends', ff: ['f', 'g', 'p'].includes(ui.ff) ? ui.ff : '',
-      fold: Object.assign({}, ui.fold), tab: str(ui.tab, 12), seg: ['friends', 'chats', 'groups'].includes(ui.seg) ? ui.seg : 'friends',
-      hseg: ['today', 'hist', 'routines', 'progress'].includes(ui.hseg) ? ui.hseg : 'today', feedTab: ui.feedTab === 'following' ? 'following' : 'foryou', tp: TOPIC_IDS.includes(ui.tp) ? ui.tp : '', filter: TYPE_IDS.includes(ui.filter) ? ui.filter : '',
+      fold: Object.assign({}, ui.fold), tab: str(ui.tab, 12), seg: ['friends', 'chats', 'groups'].includes(ui.seg) ? ui.seg : 'chats',
+      hseg: ['today', 'hist'].includes(ui.hseg) ? ui.hseg : 'today', feedTab: ui.feedTab === 'following' ? 'following' : 'foryou', tp: TOPIC_IDS.includes(ui.tp) ? ui.tp : '', filter: TYPE_IDS.includes(ui.filter) ? ui.filter : '',
       draft: ui.draft && typeof ui.draft === 'object' && normWorkout(ui.draft) ? Object.assign(normWorkout(ui.draft), { at: Number(ui.draft.at) || 0 }) : null,
       lastRoutine: str(ui.lastRoutine, 40), quickType: TYPE_IDS.includes(ui.quickType) ? ui.quickType : 'fuerza'
     },
@@ -719,13 +719,11 @@ function sparkle(host, n, gold) {
 /* ---------- Tutorial guiado (primera vez) ---------- */
 const TOUR = [
   { t: '¡Bienvenido a GymCrew! 💪', d: 'Un repaso rápido. Tus entrenos se guardan solo en tu móvil. Compartir con amigos o con tu gimnasio es siempre opcional y lo decides en cada entreno. Para mayores de 16 años.', tab: 'inicio' },
-  { sel: '#todayCard', tab: 'historial', hs: 'today', t: 'Hoy ☀️', d: 'Apunta un entreno en un toque (tipo y cómo te sentiste) o empieza tu siguiente rutina.' },
-  { sel: '#weekCard', tab: 'historial', hs: 'today', t: 'Tu semana 📅', d: 'Tu objetivo semanal es flexible: los días de descanso cuentan. Si una semana no sale, la siguiente empieza de cero, sin dramas.' },
-  { sel: '#fab', tab: 'inicio', t: 'Registro completo ➕', d: 'Ejercicios, series, peso, repeticiones y RPE. Con temporizador de descanso, rutinas y récords automáticos.' },
-  { sel: '#hsegBar', tab: 'historial', hs: 'today', t: 'Entrenos 🏋️', d: 'Hoy, historial, rutinas y progreso por ejercicio, con tu volumen semanal por grupo muscular.' },
-  { sel: '.tab[data-tab="amigos"]', tab: 'amigos', t: 'Social 👥', d: 'Añade amigos con su código o crea un grupo de tu gimnasio con otro código. Nada se comparte si tú no quieres. Puedes bloquear, reportar y salir cuando quieras.' },
-  { sel: '.tab[data-tab="perfil"]', tab: 'perfil', t: 'Perfil 🙂', d: 'Tu foto, tu código de amigo y tus logros con marcos.' },
-  { sel: '#openSettings', tab: 'inicio', t: 'Ajustes ⚙️', d: 'Tema, idioma, objetivo semanal, descanso, PIN opcional y copia de seguridad. GymCrew no sustituye a un profesional de la salud ni da consejos médicos ni de dieta.' },
+  { sel: '.tab[data-tab="historial"]', tab: 'historial', hs: 'today', t: 'Entrenar 🏋️', d: 'Apunta tu entreno con ejercicios, series y kilos. Los récords se detectan solos y el historial queda en el calendario.' },
+  { sel: '#fab', tab: 'inicio', t: 'Crear ➕', d: 'Apunta un entreno, escribe una publicación o sube una historia de 24 h. Tú decides quién lo ve.' },
+  { sel: '.tab[data-tab="amigos"]', tab: 'amigos', t: 'Mensajes 💬', d: 'Chats, grupos de tu gimnasio y búsqueda de personas por @usuario. Puedes bloquear, reportar y salir cuando quieras.' },
+  { sel: '.tab[data-tab="perfil"]', tab: 'perfil', t: 'Perfil 🙂', d: 'Tu banner, tus publicaciones y tu progreso: racha y récords.' },
+  { sel: '#openSettings', tab: 'inicio', t: 'Ajustes ⚙️', d: 'Tema, idioma, privacidad y copia de seguridad. GymCrew no sustituye a un profesional de la salud ni da consejos médicos ni de dieta.' },
   { t: '¡Todo listo! 🎉', d: 'Cuando quieras, pulsa ＋ y apunta tu primer entreno.', last: true }
 ];
 
@@ -892,33 +890,8 @@ function weekVolume(start) {
 }
 
 /* ---------- Logros y marcos ---------- */
-const FRAME_NAME = { mint: 'Menta', flame: 'Llama', fire: 'Fuego', gold: 'Oro', ocean: 'Océano', aurora: 'Aurora', rose: 'Rosa', violet: 'Violeta', crystal: 'Cristal', sunset: 'Atardecer' };
-const ACH = [
-  { id: 'primer-entreno', icon: '🌱', title: 'Primer entreno', desc: 'Apunta tu primer entreno', goal: 1, frame: 'mint', prog: () => state.workouts.length },
-  { id: 'entrenos-10', icon: '📈', title: 'Constante', desc: 'Apunta 10 entrenos', goal: 10, frame: 'ocean', prog: () => state.workouts.length },
-  { id: 'entrenos-50', icon: '🏆', title: 'Veterano', desc: 'Apunta 50 entrenos', goal: 50, frame: 'aurora', prog: () => state.workouts.length },
-  { id: 'semana-1', icon: '📅', title: 'Semana cumplida', desc: 'Cumple tu objetivo semanal una vez', goal: 1, frame: 'flame', prog: () => streakInfo().best },
-  { id: 'semanas-4', icon: '🔥', title: 'Un mes en forma', desc: 'Cumple tu objetivo 4 semanas seguidas', goal: 4, frame: 'fire', prog: () => streakInfo().best },
-  { id: 'semanas-12', icon: '👑', title: 'Hábito de hierro', desc: 'Cumple tu objetivo 12 semanas seguidas', goal: 12, frame: 'gold', prog: () => streakInfo().best },
-  { id: 'primer-pr', icon: '🏅', title: 'Récord personal', desc: 'Bate tu primer récord', goal: 1, frame: 'sunset', prog: () => allPrs() },
-  { id: 'prs-10', icon: '💥', title: 'Rompe-marcas', desc: 'Bate 10 récords', goal: 10, frame: 'crystal', prog: () => allPrs() },
-  { id: 'variado', icon: '🎽', title: 'Variado', desc: 'Prueba 3 tipos de entreno distintos', goal: 3, frame: 'violet', prog: () => new Set(state.workouts.map(w => w.type)).size },
-  { id: 'compartir', icon: '📣', title: 'Con compañía', desc: 'Comparte un entreno', goal: 1, frame: 'rose', prog: () => state.workouts.filter(w => w.sh && (w.sh.f || w.sh.g.length)).length },
-  { id: 'amigo-1', icon: '🤝', title: 'Primer amigo', desc: 'Añade un amigo con su código', goal: 1, frame: 'rose', prog: () => state.friends.length },
-  { id: 'grupo-1', icon: '🏟️', title: 'En mi gimnasio', desc: 'Crea o únete a un grupo de gimnasio', goal: 1, frame: 'violet', prog: () => state.groups.filter(g => g.gym).length },
-  { id: 'foto', icon: '📸', title: 'Cara visible', desc: 'Pon una foto de perfil', goal: 1, frame: 'crystal', prog: () => (state.me.photo ? 1 : 0) }
-];
-
-function checkAchievements(silent) {
-  const fresh = [];
-  for (const a of ACH) {
-    if (!state.achievements[a.id] && a.prog() >= a.goal) { state.achievements[a.id] = Date.now(); fresh.push(a); }
-  }
-  if (!fresh.length) return;
-  if (!state.me.frame) state.me.frame = fresh[0].frame;
-  save();
-  if (!silent) toast(`🏅 Logro desbloqueado: ${fresh.map(a => a.title).join(', ')}. ¡Marco nuevo!`);
-}
+const FRAME_NAME = {};
+const checkAchievements = () => {};
 
 /* ---------- Avatar propio con marco ---------- */
 function mountAva(host, size) {
@@ -1032,7 +1005,6 @@ function renderProfile(animate) {
   paintProfileNet();
   renderProfileActivity();
   $('#photoDel').disabled = !state.me.photo;
-  renderFrames();
   const st = streakInfo();
   $('#profStats').innerHTML = '';
   [[state.workouts.length, 'Entrenos'], [st.cur, 'Semanas en racha'], [allPrs(), 'Récords']].forEach(([n, l]) => {
@@ -1040,19 +1012,6 @@ function renderProfile(animate) {
     b.append(el('b', '', String(n)), el('span', '', l));
     $('#profStats').appendChild(b);
   });
-  const done = ACH.filter(a => state.achievements[a.id]);
-  const todo = ACH.filter(a => !state.achievements[a.id]);
-  $('#achDoneLbl').textContent = `Logros completados · ${done.length}`;
-  $('#achTodoLbl').textContent = `Por completar · ${todo.length}`;
-  $('#achDoneTitle').classList.toggle('hidden', !done.length);
-  $('#achDoneBody').classList.toggle('hidden', !done.length);
-  $('#achTodoTitle').classList.toggle('hidden', !todo.length);
-  $('#achTodoBody').classList.toggle('hidden', !todo.length);
-  const fills = [];
-  const fill = (ul, list, isDone) => { ul.innerHTML = ''; list.forEach(a => ul.appendChild(achRow(a, isDone, animate, fills))); };
-  fill($('#achDone'), done, true);
-  fill($('#achTodo'), todo, false);
-  if (animate) requestAnimationFrame(() => requestAnimationFrame(() => fills.forEach(f => { f.style.width = f.dataset.w; })));
 }
 
 /* Tu actividad en el perfil: publicaciones, respuestas y fotos */
@@ -1101,47 +1060,11 @@ function renderProfileActivity() {
   }
 }
 
-function achRow(a, isDone, animate, fills) {
-  const cur = Math.min(a.prog(), a.goal);
-  const pct = Math.round((cur / a.goal) * 100) + '%';
-  const li = el('li', 'glass row static ach' + (isDone ? ' done' : ''));
-  const main = el('div', 'main');
-  const track = el('div', 'track');
-  const fill = el('div', 'fill');
-  fill.dataset.w = pct;
-  fill.style.width = animate ? '0%' : pct;
-  if (animate) fills.push(fill);
-  track.appendChild(fill);
-  main.append(el('strong', '', a.title), el('small', '', a.desc), el('small', 'reward', `Marco: ${FRAME_NAME[a.frame]}`), track);
-  const side = el('div', 'side');
-  if (isDone) { const ck = el('span', 'check'); ck.innerHTML = ICON.check; side.appendChild(ck); } else side.appendChild(el('span', '', `${cur}/${a.goal}`));
-  li.append(el('span', 'ach-ico', a.icon), main, side);
-  return li;
-}
-
-// Marcos disponibles: los que has desbloqueado con logros
-function renderFrames() {
-  const box = $('#frameGrid');
-  box.innerHTML = '';
-  const owned = ACH.filter(a => state.achievements[a.id]).map(a => a.frame).filter((f, i, x) => x.indexOf(f) === i);
-  [''].concat(owned).forEach(f => {
-    const b = el('button', 'frame-pick' + (state.me.frame === f ? ' on' : ''));
-    b.type = 'button';
-    b.setAttribute('aria-pressed', String(state.me.frame === f));
-    b.setAttribute('aria-label', f ? FRAME_NAME[f] : 'Sin marco');
-    const a = mountAva(b, 52);
-    updateAva(a, { name: state.me.name, photo: state.me.photo, frame: f });
-    b.appendChild(el('small', '', f ? FRAME_NAME[f] : 'Sin marco'));
-    b.addEventListener('click', () => { state.me.frame = f; save(); renderAll(); });
-    box.appendChild(b);
-  });
-  $('#frameHint').classList.toggle('hidden', owned.length > 0);
-}
 
 /* ---------- Navegación con transiciones ---------- */
 const GROUP = { inicio: 'inicio', historial: 'historial', amigos: 'amigos', perfil: 'perfil' };
 const ORDER = ['inicio', 'historial', 'amigos', 'perfil'];
-const TITLES = { inicio: 'Inicio', historial: 'Entrenos', amigos: 'Social', perfil: 'Perfil' };
+const TITLES = { inicio: 'Inicio', historial: 'Entrenar', amigos: 'Mensajes', perfil: 'Perfil' };
 let currentTab = 'inicio';
 let pendingSwitch = null;
 
@@ -1225,14 +1148,6 @@ function renderAll() {
 /* ---------- Inicio: Hoy, semana, récords, amigos ---------- */
 const typeChip = (t, on) => { const b = el('button', 'chip' + (on ? ' on' : '')); b.type = 'button'; b.dataset.type = t.id; b.setAttribute('aria-pressed', String(!!on)); b.append(el('span', '', t.e), el('span', '', ' ' + t.n)); return b; };
 
-// Siguiente rutina sugerida: la que sigue a la última usada (sin obligación: es solo una idea)
-function suggestedRoutine() {
-  const rs = state.routines;
-  if (!rs.length) return null;
-  const i = rs.findIndex(r => r.id === state.ui.lastRoutine);
-  return rs[(i + 1) % rs.length];
-}
-
 function renderHome() {
   const s = computeStats(), st = streakInfo();
   const today0 = ymd(new Date());
@@ -1242,15 +1157,10 @@ function renderHome() {
 
   // Hoy
   const did = state.workouts.filter(w => w.date === today0);
-  const r = suggestedRoutine();
-  $('#todayTitle').textContent = did.length ? '✅ Hoy ya entrenaste' : r ? `Hoy toca: ${r.name}` : 'Hoy';
-  $('#todaySub').textContent = did.length ? `${did.length} entreno${did.length > 1 ? 's' : ''} · ${did.reduce((a, w) => a + w.dur, 0) || '—'} min. Si quieres, apunta otro.` : r ? 'Es solo una sugerencia: entrena lo que te apetezca.' : 'Apunta un entreno en un toque o empieza uno completo.';
-  const qt = $('#quickType');
-  qt.innerHTML = '';
-  TYPES.forEach(t => qt.appendChild(typeChip(t, state.ui.quickType === t.id)));
+  $('#todayTitle').textContent = did.length ? '✅ Hoy ya entrenaste' : 'Hoy';
+  $('#todaySub').textContent = did.length ? `${did.length} entreno${did.length > 1 ? 's' : ''} · ${did.reduce((a, w) => a + w.dur, 0) || '—'} min. Si quieres, apunta otro.` : 'Apunta tu entreno y, si quieres, compártelo.';
   const go = $('#todayGo');
-  go.textContent = r ? `Empezar ${r.name}` : 'Entreno completo';
-  go.dataset.rid = r ? r.id : '';
+  go.textContent = 'Apuntar entreno';
   $('#repeatLast').classList.toggle('hidden', !state.workouts.length);
 
   // Semana en curso
@@ -1329,17 +1239,6 @@ function deleteWorkout(w, li) {
 }
 
 // Registro de un toque: tipo + sensación. Es privado; compartirlo se decide en el registro completo.
-function quickLog(feel) {
-  const n = new Date();
-  const w = normWorkout({ id: uid(), date: ymd(n), time: `${pad(n.getHours())}:${pad(n.getMinutes())}`, dur: 0, type: state.ui.quickType, feel, ex: [] });
-  state.workouts.push(w);
-  save();
-  buzz(14);
-  renderAll();
-  todayBurst();
-  toast(`${typeOf(w.type).e} Entreno guardado ${FEELS[feel]}`, { label: 'Editar', fn: () => openWorkout(w) });
-}
-
 function repeatLast() {
   const l = sortedW().pop();
   if (!l) return;
@@ -1362,7 +1261,7 @@ function renderBars(container, values, labels) {
   });
 }
 
-const HSEGS = ['today', 'hist', 'routines', 'progress'];
+const HSEGS = ['today', 'hist'];
 function setHseg(v) {
   state.ui.hseg = v;
   save();
@@ -1374,7 +1273,7 @@ function renderEntrenos() {
   $('#hsegBar').dataset.idx = HSEGS.indexOf(v);
   $$('#hsegBar button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.hseg === v)));
   HSEGS.forEach(p => $('#hpane-' + p).classList.toggle('hidden', p !== v));
-  if (v === 'today') renderHome(); else if (v === 'hist') renderHist(); else if (v === 'routines') renderRoutines(); else renderProgress();
+  if (v === 'hist') renderHist(); else renderHome();
 }
 
 function renderHist() {
@@ -1421,67 +1320,6 @@ function changeMonth(n) {
   renderHist();
 }
 
-function renderRoutines() {
-  const ul = $('#routineList');
-  ul.innerHTML = '';
-  if (!state.routines.length) ul.appendChild(emptyState('📋', 'Sin rutinas todavía', 'Apunta un entreno con ejercicios y pulsa "Guardar como rutina" para repetirlo cuando quieras.'));
-  state.routines.forEach(r => {
-    const li = el('li', 'glass row');
-    const main = el('div', 'main');
-    const names = r.ex.map(k => exName(k)).join(', ');
-    main.append(ut(el('strong', '', `${typeOf(r.type).e} ${r.name}`)), ut(el('small', '', `${r.ex.length} ejercicio${r.ex.length === 1 ? '' : 's'}${names ? ' · ' + names : ''}`)));
-    const go = el('button', 'btn primary sm', 'Empezar');
-    go.type = 'button';
-    go.addEventListener('click', () => openWorkout(null, { routine: r }));
-    const del = el('button', 'icon-btn plain');
-    del.type = 'button';
-    del.setAttribute('aria-label', 'Borrar rutina');
-    del.innerHTML = ICON.x;
-    del.addEventListener('click', () => {
-      state.routines = state.routines.filter(x => x.id !== r.id);
-      save(); renderAll();
-      toast('Rutina borrada', { label: 'Deshacer', fn: () => { state.routines.push(r); save(); renderAll(); } });
-    });
-    li.append(main, go, del);
-    ul.appendChild(li);
-  });
-}
-
-function renderProgress() {
-  const s = computeStats(), w0 = wkStart(today());
-  renderBars($('#chart'), s.weeks, s.weeks.map((_, i) => (i === 7 ? T('Esta') : `-${7 - i}`)));
-  const vol = weekVolume(w0);
-  const box = $('#volBars');
-  box.innerHTML = '';
-  const max = Math.max(1, ...MUSCLES.map(m => vol[m.id].sets));
-  MUSCLES.forEach(m => {
-    const row = el('div', 'vrow');
-    const tr = el('div', 'track');
-    const fl = el('div', 'fill');
-    fl.style.width = Math.round((vol[m.id].sets / max) * 100) + '%';
-    tr.appendChild(fl);
-    row.append(el('span', 'vl', T(m.n)), tr, el('span', 'vn', `${vol[m.id].sets} ${T('series')}${vol[m.id].kg ? ' · ' + fmtKg(vol[m.id].kg) + ' kg' : ''}`));
-    box.appendChild(row);
-  });
-  $('#volEmpty').classList.toggle('hidden', MUSCLES.some(m => vol[m.id].sets));
-  $('#totalCount').textContent = s.total;
-  $('#monthCount').textContent = s.month;
-  $('#prTotal').textContent = allPrs();
-  $('#bestWeeks').textContent = streakInfo().best;
-  const ids = [...new Set(sortedW().reverse().flatMap(w => w.ex.filter(e => doneSets(e).length).map(e => e.k)))];
-  const ul = $('#exProgList');
-  ul.innerHTML = '';
-  if (!ids.length) ul.appendChild(emptyState('📈', 'Tu progreso aparecerá aquí', 'Apunta ejercicios con series, repeticiones y peso para ver su evolución.'));
-  ids.slice(0, 30).forEach(k => {
-    const h = exHistory(k), last = h[h.length - 1];
-    const li = el('li', 'glass row');
-    const main = el('div', 'main');
-    main.append(ut(el('strong', '', exName(k))), el('small', '', last.maxW ? `1RM est. ${fmtKg(last.rm)} kg · ${h.length} ${T('sesiones')}` : `${last.reps} reps · ${h.length} ${T('sesiones')}`));
-    li.append(main, el('div', 'side', '›'));
-    li.addEventListener('click', () => openExDetail(k));
-    ul.appendChild(li);
-  });
-}
 
 function openExDetail(k) {
   const h = exHistory(k);
@@ -1585,15 +1423,9 @@ function paintWorkout() {
     mu.appendChild(b);
   });
   $$('#wFeel input').forEach(i => { i.checked = Number(i.value) === ed.feel; });
-  const rs = $('#wRoutineSel');
-  rs.innerHTML = '';
-  rs.appendChild(Object.assign(el('option', '', T('Rutinas…')), { value: '' }));
-  state.routines.forEach(r => rs.appendChild(Object.assign(el('option', '', r.name), { value: r.id })));
-  $('#wLoad').classList.toggle('hidden', !!ed.id || (!state.routines.length && !state.workouts.length));
-  $('#wRoutineSel').classList.toggle('hidden', !state.routines.length);
+  $('#wLoad').classList.toggle('hidden', !!ed.id || !state.workouts.length);
   $('#wRepeat').classList.toggle('hidden', !state.workouts.length);
   $('#wDelete').classList.toggle('hidden', !ed.id);
-  $('#wSaveRoutine').classList.toggle('hidden', !ed.ex.length);
   paintExercises();
   paintShare();
   restPaint();
@@ -1779,25 +1611,6 @@ function saveWorkout() {
   toast(w.pr.length ? `🏅 ${T('¡Récord!')} ${prText(w.pr[0])}` : `${typeOf(w.type).e} ${T('Entreno guardado')}`);
 }
 
-function saveAsRoutine() {
-  readEditor();
-  const keys = ed.ex.map(e => e.k);
-  if (!keys.length) return;
-  $('#rName').value = '';
-  $('#rName').dataset.keys = JSON.stringify(keys);
-  openSheet('sheetRoutine');
-  setTimeout(() => $('#rName').focus(), 300);
-}
-function confirmRoutine() {
-  const name = $('#rName').value.trim().slice(0, 30);
-  if (!name) { toast('Ponle un nombre a la rutina'); return; }
-  if (state.routines.length >= 40) { toast('Has llegado al máximo de rutinas'); return; }
-  state.routines.push({ id: uid(), name, type: ed ? ed.type : 'fuerza', ex: JSON.parse($('#rName').dataset.keys || '[]') });
-  save();
-  closeSheets();
-  renderAll();
-  toast('Rutina guardada');
-}
 
 /* ---------- Social: datos ---------- */
 let openGroupId = null;
@@ -1845,7 +1658,7 @@ function updateBadge() {
 }
 
 /* ---------- Social: pestañas ---------- */
-const SEGS = ['friends', 'chats', 'groups'];
+const SEGS = ['chats', 'groups', 'friends'];
 function setSeg(s) {
   if (state.ui.seg === s) return;
   state.ui.seg = s;
@@ -2205,7 +2018,6 @@ function bindTimeline() {
   $('#rsNoteToast').addEventListener('change', e => { state.settings.noteToast = e.target.checked; save(); });
   // «＋»: elegir qué crear
   $('#fab').addEventListener('click', () => openSheet('sheetNew'));
-  $('#nwQuick').addEventListener('click', () => { closeSheets(); showTab('historial'); setHseg('today'); });
   $('#nwWorkout').addEventListener('click', () => { closeSheets(); openWorkout(null); });
   $('#nwPost').addEventListener('click', () => { closeSheets(); openPost('pub'); });
   $('#nwStory').addEventListener('click', () => { closeSheets(); openPost('story'); });
@@ -3117,7 +2929,7 @@ function paintPeople() {
   if (need && document.activeElement !== $('#hdlInput') && !$('#hdlInput').value) $('#hdlInput').value = state.me.handle;
   $('#srchInput').disabled = !srvOn();
   const q = $('#srchInput').value.trim().replace(/^@/, '');
-  $('#srchMsg').textContent = !srvOn() ? T('Conecta con el servidor (Ajustes → Avanzado) para buscar personas.') : q.length >= 2 && !found.length && !srchTimer ? T('Nadie con ese usuario. Prueba con otro.') : '';
+  $('#srchMsg').textContent = !srvOn() ? T('Sin conexión: no se puede buscar personas ahora.') : q.length >= 2 && !found.length && !srchTimer ? T('Nadie con ese usuario. Prueba con otro.') : '';
 }
 function renderSearch() {
   const ul = $('#srchList');
@@ -3636,21 +3448,7 @@ function onSrvMsg(m) {
 
 /* --- Estado de la conexión (Ajustes) --- */
 let srvRegen = 0;
-function srvStatusUI() {
-  const st = Srv.status;
-  const txt = {
-    none: 'Sin servidor: la app funciona solo en este móvil (modo prueba).',
-    connecting: 'Conectando con el servidor…',
-    online: 'Conectado ✅ Tu código es ' + state.me.code,
-    offline: 'Sin conexión. Reintentando…',
-    error: Srv.why === 'taken' ? 'Este código ya lo usa otro dispositivo. Pulsa "Cambiar mi código".' : 'No se pudo entrar en el servidor.'
-  }[st] || '';
-  $('#srvState').textContent = txt;
-  $('#srvDot').className = 'srv-dot ' + st;
-  $('#srvNewCode').classList.toggle('hidden', !(st === 'error' && Srv.why === 'taken'));
-  $('#simCard').classList.toggle('hidden', Srv.enabled);
-  if (document.activeElement !== $('#srvUrl')) $('#srvUrl').value = Srv.url;
-}
+function srvStatusUI() { /* sin ajustes de servidor: la conexión es automática */ }
 function onSrvStatus(st, why) {
   // Código repetido y todavía sin amigos en el servidor: se estrena otro sin avisar
   if (st === 'error' && why === 'taken' && !state.account && !state.friends.some(f => f.srv) && srvRegen++ < 5) {
@@ -3664,15 +3462,6 @@ function onSrvStatus(st, why) {
   if (st === 'online') renderSocial();
 }
 function bindSrv() {
-  $('#srvSave').addEventListener('click', async () => { await Srv.setUrl($('#srvUrl').value); srvStatusUI(); });
-  $('#srvNewCode').addEventListener('click', () => {
-    if (!confirm(T('Tu código cambiará y tus amigos del servidor tendrán que volver a añadirte. ¿Continuar?'))) return;
-    state.me.code = genCode();
-    state.friends = state.friends.filter(f => !f.srv);
-    save();
-    renderAll();
-    Srv.identify({ code: state.me.code, name: state.me.name }, true);
-  });
   Srv.onmsg = onSrvMsg;
   Srv.onstatus = onSrvStatus;
   Srv.start({ code: state.me.code, name: state.me.name }).then(() => { srvStatusUI(); paintLoginSkip(); });
@@ -3735,8 +3524,6 @@ function paintSettingsHub() {
   $('#setAccSub').textContent = a ? [state.me.handle ? '@' + state.me.handle : '', a.email].filter(Boolean).join(' · ') : T('Crear cuenta o entrar');
   const th = { auto: 'Automático', day: 'Día', night: 'Noche' }[state.settings.theme] || 'Automático';
   $('#setSubLook').textContent = `${T('Tema')} ${T(th).toLowerCase()} · ${state.settings.lang === 'en' ? 'English' : 'Español'}`;
-  const rest = state.settings.rest >= 120 ? `${state.settings.rest / 60} min` : `${state.settings.rest} s`;
-  $('#setSubTrain').textContent = `${T('Objetivo')} ${state.settings.goal}/${T('sem')} · ${T('descanso')} ${rest}`;
   $('#setSubNotes').textContent = `${T('Actividad')}: ${T(state.settings.noteToast !== false ? 'sí' : 'no')} · ${T('vibración')}: ${T(state.settings.haptics !== false ? 'sí' : 'no')}`;
   $('#setSubPriv').textContent = `${T('PIN')}: ${T(state.settings.lock.on ? 'activado' : 'desactivado')} · ${state.blocked.length} ${T(state.blocked.length === 1 ? 'bloqueado' : 'bloqueados')}`;
 }
@@ -3811,11 +3598,7 @@ function bindAlive() {
     requestAnimationFrame(() => { root.style.setProperty('--sy', Math.min(window.scrollY, 1400)); ticking = false; });
   }, { passive: true });
   // Los emojis del registro rápido «saludan» una vez al entrar a Inicio
-  const hello = () => { if (reduceMotion()) return; $$('#quickFeel button').forEach((b, i) => { b.style.setProperty('--i', i); replay(b, 'wave'); }); };
-  const tab = document.querySelector('.tab[data-tab="inicio"]');
-  if (tab) tab.addEventListener('click', () => setTimeout(hello, 380));
-  setTimeout(hello, 900);
-}
+  }
 function todayBurst() {
   const h = $('#todayBurst'); if (!h) return;
   h.className = 'pl-burst'; sparkle(h, 16, false);
@@ -3950,8 +3733,6 @@ function registerSW() {
 }
 
 function paintGoalSettings() {
-  $('#goalSel').value = String(state.settings.goal);
-  $('#restSel').value = String(state.settings.rest);
   paintBlocked();
 }
 
@@ -4003,9 +3784,7 @@ function bind() {
   bindViewport();
 
   // Inicio
-  $('#quickType').addEventListener('click', e => { const b = e.target.closest('[data-type]'); if (b) { state.ui.quickType = b.dataset.type; save(); renderHome(); } });
-  $$('#quickFeel [data-qf]').forEach(b => b.addEventListener('click', () => quickLog(Number(b.dataset.qf))));
-  $('#todayGo').addEventListener('click', e => { const r = state.routines.find(x => x.id === e.currentTarget.dataset.rid); openWorkout(null, r ? { routine: r } : {}); });
+  $('#todayGo').addEventListener('click', () => openWorkout(null, {}));
   $('#repeatLast').addEventListener('click', repeatLast);
 
   // Entrenos
@@ -4019,13 +3798,7 @@ function bind() {
   $('#wAddEx').addEventListener('click', openExPicker);
   $('#exSearch').addEventListener('input', paintExPicker);
   $('#exCustomAdd').addEventListener('click', addCustomExercise);
-  $('#wSaveRoutine').addEventListener('click', saveAsRoutine);
-  $('#rSave').addEventListener('click', confirmRoutine);
   $('#wRepeat').addEventListener('click', () => { const l = sortedW().pop(); if (l && ed) { ed.type = l.type; ed.muscles = [...l.muscles]; ed.ex = cloneEx(l.ex); paintWorkout(); saveDraft(); toast('Cargado tu último entreno'); } });
-  $('#wRoutineSel').addEventListener('change', e => {
-    const r = state.routines.find(x => x.id === e.target.value);
-    if (r && ed) { ed.type = r.type; ed.ex = r.ex.map(k => ({ k, sets: lastSetsFor(k).slice(0, 3).map(s => ({ r: s.r, w: s.w })) })); state.ui.lastRoutine = r.id; save(); paintWorkout(); saveDraft(); }
-  });
   $('#wDelete').addEventListener('click', () => { const w = state.workouts.find(x => x.id === ed.id); if (w && confirm(T('¿Borrar este entreno?'))) { closeWorkout(false); deleteWorkout(w); } });
   $('#restStart').addEventListener('click', () => { const run = rest.end > Date.now(); if (run) { rest.end += 30000; rest.total += 30; restPaint(); } else restStart(state.settings.rest); });
   $('#restStop').addEventListener('click', () => restStop());
@@ -4116,11 +3889,6 @@ function bind() {
     save(); updateNotifBtn();
     if (p === 'granted') toast('Avisos activados');
   });
-  $('#goalSel').addEventListener('change', e => { state.settings.goal = Number(e.target.value); save(); renderAll(); });
-  $('#restSel').addEventListener('change', e => { state.settings.rest = Number(e.target.value); save(); restPaint(); });
-  $('#btnSim').addEventListener('click', simulate);
-  $('#btnSimReq').addEventListener('click', simulateRequest);
-  $('#btnSimAccept').addEventListener('click', simulateAccept);
   $$('.fold').forEach(b => b.addEventListener('click', () => toggleFold(b)));
   bindTour();
   $$('[data-theme-opt]').forEach(b => b.addEventListener('click', () => setTheme(b.dataset.themeOpt)));
