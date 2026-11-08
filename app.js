@@ -1126,7 +1126,7 @@ function showTab(name) {
   to.classList.add('active', 'entering', inCls);
   const done = () => { from.classList.remove('active', 'leaving', outCls); to.classList.remove('entering', inCls); };
   pendingSwitch = { done, t: setTimeout(() => { done(); pendingSwitch = null; }, 700) };
-  currentTab = name;
+  currentTab = name; document.documentElement.dataset.tab = name;
   if (state.ui.tab !== name) { state.ui.tab = name; save(); }
   $$('.tab').forEach(b => b.classList.toggle('active', b.dataset.tab === GROUP[name]));
   $('#viewTitle').textContent = T(TITLES[name]);
