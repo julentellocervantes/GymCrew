@@ -241,6 +241,7 @@
               <input id="srchInput" type="search" maxlength="21" autocapitalize="none" autocomplete="off" spellcheck="false" placeholder="Buscar por @usuario" aria-label="Buscar personas por nombre de usuario">
             </div>
             <p id="srchMsg" class="small code-msg"></p>
+            <button id="openInvite" class="btn wide" type="button">Invitar a mis amigos</button>
             <ul id="srchList" class="rows tight"></ul>
             <div id="reqInBox">
               <p class="label">Solicitudes para seguirte</p>
@@ -650,6 +651,11 @@
         <h3>Normas de la comunidad</h3>
         <p class="muted small">Respeta a los demás: nada de acoso, odio, spam ni contenido sexual. No compartas datos privados de otras personas ni consejos médicos o de dieta. Puedes reportar o bloquear desde el menú ⋯ de cada publicación, historia o comentario. Cuando varias personas reportan algo, se oculta solo; si reportan mucho a una cuenta, deja de poder publicar en público unos días.</p>
         <p class="muted small">GymCrew no sustituye a un profesional de la salud ni da consejos médicos o de dieta. Pensada para mayores de 16 años.</p>
+        <h3>Privacidad y tus datos</h3>
+        <p class="muted small"><b>Qué guardamos:</b> tu correo (solo para entrar y recuperar la cuenta), tu @usuario, nombre, foto, tus amigos, mensajes pendientes de entregar y lo que publiques. Tus entrenos, tu banner y tus ajustes se quedan en tu móvil; solo se comparte un entreno si lo publicas tú.</p>
+        <p class="muted small"><b>Quién lo ve:</b> las publicaciones públicas las ve cualquiera; las de amigos, solo tus amigos. Nunca vendemos datos ni enseñamos publicidad.</p>
+        <p class="muted small"><b>Tus derechos:</b> puedes descargar una copia (Ajustes → Copias y exportación) y borrar tu cuenta y todo lo que publicaste desde Ajustes → Zona de peligro. Se elimina del servidor al momento.</p>
+        <p class="muted small">Proyecto personal de aprendizaje, sin garantía de disponibilidad. Los servidores están en la Unión Europea o en proveedores con cláusulas de protección de datos (sin verificar la región exacta).</p>
       </div>
       </div>
     </div>
@@ -771,6 +777,18 @@
     <p id="modText" class="muted small hidden"></p>
     <button id="modReport" class="btn wide" type="button">Reportar</button>
     <button id="modBlock" class="btn danger wide" type="button">Bloquear</button>
+  </div>
+
+  <div id="sheetInvite" class="sheet glass">
+    <div class="grab"></div>
+    <h2>Invita a tus amigos</h2>
+    <p class="muted small">Escanea el código o comparte el enlace. Se instala como app desde el navegador y no hace falta tienda.</p>
+    <img class="inv-qr" src="invite-qr.svg" width="200" height="200" alt="Código QR para abrir GymCrew">
+    <p id="invUrl" class="inv-url"></p>
+    <div class="row2">
+      <button id="invCopy" class="btn" type="button">Copiar enlace</button>
+      <button id="invShare" class="btn primary" type="button">Compartir</button>
+    </div>
   </div>
 
   <div id="sheetGroup" class="sheet glass">

@@ -1803,6 +1803,26 @@ function renderGSearch() {
   if (!tps.length && !ppl.length && !posts.length) out.appendChild(emptyState('🔎', 'Sin resultados', gsTopic ? 'Aún no hay publicaciones con este tema.' : 'Prueba con otra palabra o con un @usuario.'));
 }
 
+/* ---------- Invitar ---------- */
+const INVITE_URL = 'https://gymcrew.onrender.com';
+function inviteText() {
+  const h = state.me.handle ? ` Sígueme: @${state.me.handle}.` : '';
+  return `${T('Entrena conmigo en GymCrew, la red social del gimnasio.')}${h}`;
+}
+function openInvite() {
+  $('#invUrl').textContent = INVITE_URL;
+  $('#invShare').classList.toggle('hidden', !navigator.share);
+  openSheet('sheetInvite');
+}
+async function copyInvite() {
+  const txt = `${inviteText()} ${INVITE_URL}`;
+  try { await navigator.clipboard.writeText(txt); toast('Enlace copiado'); }
+  catch { toast('No se pudo copiar: selecciona el enlace a mano'); }
+}
+async function shareInvite() {
+  try { await navigator.share({ title: 'GymCrew', text: inviteText(), url: INVITE_URL }); } catch { /* cancelado */ }
+}
+
 function feedSummary(w) {
   const t = typeOf(w.ty), bits = [];
   if (w.dur) bits.push(`${w.dur} min`);
@@ -2075,6 +2095,9 @@ function closeNotes(restore = true) {
 function bindTimeline() {
   $$('#feedTabs button').forEach(b => b.addEventListener('click', () => { state.ui.feedTab = b.dataset.ft; save(); renderFeed(); }));
   $('#openSearch').addEventListener('click', openGSearch);
+  $('#openInvite').addEventListener('click', openInvite);
+  $('#invCopy').addEventListener('click', copyInvite);
+  $('#invShare').addEventListener('click', shareInvite);
   $('#gsBack').addEventListener('click', closeGSearch);
   $('#gsInput').addEventListener('input', onGSInput);
   $('#newPill').addEventListener('click', () => { window.scrollTo({ top: 0, behavior: reduceMotion() ? 'auto' : 'smooth' }); $('#newPill').classList.add('hidden'); });

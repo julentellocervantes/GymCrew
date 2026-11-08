@@ -6,6 +6,11 @@
 
   // Frases completas (se buscan tal cual)
   const EX = {
+    "Invitar a mis amigos": "Invite my friends", "Invita a tus amigos": "Invite your friends", "Copiar enlace": "Copy link", "Compartir": "Share",
+    "Escanea el código o comparte el enlace. Se instala como app desde el navegador y no hace falta tienda.": "Scan the code or share the link. It installs as an app from the browser, no store needed.",
+    "Entrena conmigo en GymCrew, la red social del gimnasio.": "Train with me on GymCrew, the gym social network.",
+    "Enlace copiado": "Link copied", "No se pudo copiar: selecciona el enlace a mano": "Couldn't copy: select the link by hand",
+    "Privacidad y tus datos": "Privacy and your data",
     "Usar mi foto": "Use my photo", "Quitar foto": "Remove photo", "Banner actualizado": "Banner updated", "Foto quitada": "Photo removed",
     "Buscar": "Search", "Buscar en GymCrew": "Search GymCrew", "Temas recomendados": "Recommended topics",
     "Busca por texto, ejercicio, tema o @usuario.": "Search by text, exercise, topic or @username.", "Temas": "Topics", "Personas": "People", "Publicaciones": "Posts",

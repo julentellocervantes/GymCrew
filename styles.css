@@ -2485,3 +2485,7 @@ html.rm .gi, html.rm .btn.primary::after, html.rm .btn.main::after { animation: 
 .feed-type .gi { background: var(--accent); -webkit-background-clip: border-box; background-clip: border-box; }
 .gi { -webkit-background-clip: border-box; background-clip: border-box; }
 .em-ico .gi { width: 2.6rem; height: 2.6rem; background-color: var(--accent); }
+
+/* Invitar */
+.inv-qr { display: block; margin: 10px auto; width: 200px; height: 200px; border-radius: 16px; border: 6px solid #fff; box-shadow: 0 2px 0 var(--edge), 0 14px 26px -16px var(--shadow); }
+.inv-url { text-align: center; font-weight: 800; letter-spacing: .02em; margin: 6px 0 12px; user-select: all; }
