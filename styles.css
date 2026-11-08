@@ -2457,3 +2457,31 @@ h1#viewTitle, h1 {
 #gsOut { display: flex; flex-direction: column; gap: 6px; }
 .pf-banner { background-size: cover; }
 #gsTopics { flex-wrap: wrap; overflow: visible; }
+
+/* ===== Iconos propios y efectos ===== */
+.gi { transition: transform .35s var(--spring), filter .3s; }
+.tw-act .gi, .tab .gi, .chip .gi { width: 1.2em; height: 1.2em; }
+.tw-ico .gi { width: 1.3em; height: 1.3em; }
+.tw-act.like.on .gi[data-g="heart"] { filter: drop-shadow(0 0 8px rgba(224, 36, 94, .6)); animation: heartBeat .6s var(--spring); }
+@keyframes heartBeat { 0% { transform: scale(.6); } 40% { transform: scale(1.4); } 70% { transform: scale(.92); } 100% { transform: scale(1); } }
+.streak-pill .gi[data-g="flame"], .f .gi[data-g="flame"] { animation: flicker 1.6s ease-in-out infinite; transform-origin: 50% 90%; }
+@keyframes flicker { 0%, 100% { transform: scale(1) rotate(-2deg); } 35% { transform: scale(1.1, 1.18) rotate(3deg); } 65% { transform: scale(.96, 1.05) rotate(-3deg); } }
+.gi[data-g="medal"], .gi[data-g="trophy"] { animation: glint 3.2s ease-in-out infinite; }
+@keyframes glint { 0%, 70%, 100% { filter: none; transform: none; } 82% { filter: brightness(1.35) drop-shadow(0 0 6px rgba(255, 210, 80, .8)); transform: rotate(-8deg) scale(1.1); } }
+.tab[aria-selected="true"] .gi, .tab.on .gi { animation: iconLift .5s var(--spring); }
+@keyframes iconLift { 0% { transform: translateY(4px) scale(.85); } 55% { transform: translateY(-4px) scale(1.15); } 100% { transform: none; } }
+.fly .gi { width: 1em; height: 1em; }
+/* brillo que cruza los botones principales de vez en cuando */
+.btn.primary, .btn.main { position: relative; overflow: hidden; }
+.btn.primary::after, .btn.main::after {
+  content: ""; position: absolute; top: 0; bottom: 0; width: 38%; left: -60%; transform: skewX(-20deg); pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .38), transparent); animation: sheen 5.5s ease-in-out infinite;
+}
+@keyframes sheen { 0%, 62% { left: -60%; } 90%, 100% { left: 140%; } }
+/* disco que gira en el botón crear */
+#fab:active .gi, #fab:active svg { transform: rotate(90deg) scale(1.1); }
+@media (prefers-reduced-motion: reduce) { .gi, .btn.primary::after, .btn.main::after { animation: none !important; } }
+html.rm .gi, html.rm .btn.primary::after, html.rm .btn.main::after { animation: none !important; }
+.feed-type .gi { background: var(--accent); -webkit-background-clip: border-box; background-clip: border-box; }
+.gi { -webkit-background-clip: border-box; background-clip: border-box; }
+.em-ico .gi { width: 2.6rem; height: 2.6rem; background-color: var(--accent); }

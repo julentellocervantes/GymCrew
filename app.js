@@ -1624,6 +1624,7 @@ function saveWorkout() {
   buzz(14);
   renderAll();
   todayBurst();
+  if (w.pr.length && window.fxBurst) window.fxBurst(innerWidth / 2, innerHeight * 0.4, '🏅', 16);
   toast(w.pr.length ? `🏅 ${T('¡Récord!')} ${prText(w.pr[0])}` : `${typeOf(w.type).e} ${T('Entreno guardado')}`);
 }
 
