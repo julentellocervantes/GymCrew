@@ -2489,3 +2489,42 @@ html.rm .gi, html.rm .btn.primary::after, html.rm .btn.main::after { animation: 
 /* Invitar */
 .inv-qr { display: block; margin: 10px auto; width: 200px; height: 200px; border-radius: 16px; border: 6px solid #fff; box-shadow: 0 2px 0 var(--edge), 0 14px 26px -16px var(--shadow); }
 .inv-url { text-align: center; font-weight: 800; letter-spacing: .02em; margin: 6px 0 12px; user-select: all; }
+
+/* ===== Minimalista =====
+   Menos ruido: fondo en calma, sin texturas, cintas ni destellos; títulos y botones en caja normal;
+   color solo donde informa (acento verde, rojo en peligro). Mantiene el cristal, día/noche y la barra inferior. */
+body::before { display: none; }
+.bg .blob, .bg > * { opacity: .28 !important; filter: blur(70px) saturate(.7); }
+h1#viewTitle, h1 { font-style: normal; text-transform: none; font-weight: 800; letter-spacing: -.01em; font-size: 1.9rem; background: none; padding-bottom: 0; }
+.sec, h2.sec { text-transform: none; letter-spacing: 0; font-size: .85rem; font-weight: 700; }
+.sec::after { display: none; }
+.card h3, .week-top h3, .login-card h3 { text-transform: none; letter-spacing: 0; font-size: .95rem; font-weight: 700; color: var(--text); }
+.tab-l { text-transform: none; letter-spacing: 0; font-weight: 700; font-size: .66rem; }
+.seg button { text-transform: none; letter-spacing: 0; font-size: .88rem; font-weight: 700; }
+.seg3 button { letter-spacing: 0; font-size: .85rem; }
+.btn.primary, .btn.main { text-transform: none; letter-spacing: 0; box-shadow: 0 8px 18px -10px color-mix(in srgb, var(--accent) 70%, transparent); }
+.btn.primary:active, .btn.main:active { transform: scale(.97); box-shadow: none; }
+.btn.primary::after, .btn.main::after { display: none; }
+.glass { box-shadow: 0 10px 24px -20px var(--shadow), inset 0 1px 0 var(--hi); }
+.tabbar { box-shadow: 0 14px 28px -18px var(--shadow); }
+#todayCard::before, #weekCard::before { display: none; }
+#todayCard, #weekCard { padding-top: inherit; }
+.pstat, .grid3 > div { border-bottom: 0; }
+.num, .grid3 b, .week-top b, .pstat b { font-style: normal; font-weight: 800; }
+.pstat span, .grid3 span { text-transform: none; letter-spacing: 0; font-size: .74rem; }
+.streak-pill { font-style: normal; font-weight: 800; letter-spacing: 0; }
+.set-grp { text-transform: none; letter-spacing: 0; font-size: .8rem; font-weight: 700; }
+.set-ico, .set-ico[data-tone] { background: var(--fill); color: var(--text); }
+.set-ico[data-tone="x"] { color: var(--danger, #e0452f); }
+.pf-banner::after { display: none; }
+.gi[data-g="medal"], .gi[data-g="trophy"], .streak-pill .gi[data-g="flame"], .f .gi[data-g="flame"] { animation: none; }
+#hello { display: none; }
+.hello-row { min-height: 0; }
+.track, .fill { border-radius: 99px; }
+.track { background: var(--fill2); height: 8px; }
+.fill { background: var(--accent) !important; }
+#weekCard .track { display: none; }
+#weekCard p.muted.small:last-child { display: none; }
+#profStreak { display: none; }
+#prCard .sec .gi { display: none; }
+.empty .btn { margin-top: 10px; }
