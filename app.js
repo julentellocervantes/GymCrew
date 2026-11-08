@@ -1824,6 +1824,58 @@ async function shareInvite() {
   try { await navigator.share({ title: 'GymCrew', text: inviteText(), url: INVITE_URL }); } catch { /* cancelado */ }
 }
 
+/* ---------- Tarjeta «Mi semana» para compartir fuera de la app ---------- */
+function weekCardCanvas() {
+  const st = streakInfo(), W = 1080, H = 1350, c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  const g = c.getContext('2d'), night = true;
+  const FONT = '"Avenir Next Condensed","Roboto Condensed","Arial Narrow",system-ui,sans-serif';
+  g.fillStyle = '#070b0a'; g.fillRect(0, 0, W, H);
+  const grd = g.createRadialGradient(W * 0.8, H * 0.1, 40, W * 0.8, H * 0.1, 900);
+  grd.addColorStop(0, 'rgba(62,224,168,.28)'); grd.addColorStop(1, 'rgba(62,224,168,0)');
+  g.fillStyle = grd; g.fillRect(0, 0, W, H);
+  // disco de fondo
+  g.strokeStyle = 'rgba(62,224,168,.14)'; g.lineWidth = 26;
+  [420, 330, 240].forEach(r => { g.beginPath(); g.arc(W / 2, 560, r, 0, Math.PI * 2); g.stroke(); });
+  g.textAlign = 'center'; g.fillStyle = '#9fb3ac'; g.font = `700 44px ${FONT}`;
+  g.fillText(T('MI SEMANA').toUpperCase(), W / 2, 150);
+  g.fillStyle = '#f2fbf7'; g.font = `900 400px ${FONT}`;
+  g.fillText(String(st.n), W / 2, 640);
+  g.fillStyle = '#3ee0a8'; g.font = `800 64px ${FONT}`;
+  g.fillText(T(st.n === 1 ? 'entreno' : 'entrenos'), W / 2, 730);
+  // días
+  const w0 = wkStart(today()), size = 96, gap = 24, x0 = (W - (7 * size + 6 * gap)) / 2;
+  for (let i = 0; i < 7; i++) {
+    const on = st.days.has(ymd(addDays(w0, i))), x = x0 + i * (size + gap), y = 830;
+    g.fillStyle = on ? '#3ee0a8' : 'rgba(255,255,255,.08)';
+    g.beginPath(); g.roundRect(x, y, size, size, 24); g.fill();
+    g.fillStyle = on ? '#04120c' : '#6f847d'; g.font = `800 44px ${FONT}`;
+    g.fillText(DIAS[i], x + size / 2, y + 66);
+  }
+  const prs = recentPrs(7).length;
+  g.fillStyle = '#d7e6e0'; g.font = `700 52px ${FONT}`;
+  const bits = [];
+  if (prs) bits.push(`${prs} ${T(prs === 1 ? 'récord' : 'récords')}`);
+  if (st.cur) bits.push(`${st.cur} ${T(st.cur === 1 ? 'semana de racha' : 'semanas de racha')}`);
+  if (bits.length) g.fillText(bits.join('  ·  '), W / 2, 1050);
+  g.fillStyle = '#f2fbf7'; g.font = `900 64px ${FONT}`;
+  g.fillText('GymCrew', W / 2, 1210);
+  g.fillStyle = '#9fb3ac'; g.font = `600 40px ${FONT}`;
+  g.fillText(`${state.me.handle ? '@' + state.me.handle + '  ·  ' : ''}gymcrew.onrender.com`, W / 2, 1270);
+  return c;
+}
+async function shareWeek() {
+  let blob;
+  try { blob = await new Promise(r => weekCardCanvas().toBlob(r, 'image/png')); } catch { blob = null; }
+  if (!blob) { toast('No se pudo crear la imagen'); return; }
+  const file = new File([blob], 'mi-semana-gymcrew.png', { type: 'image/png' });
+  try {
+    if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], text: `${T('Mi semana en GymCrew')} · ${INVITE_URL}` }); return; }
+  } catch (e) { if (e && e.name === 'AbortError') return; }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = file.name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000); toast('Imagen guardada');
+}
+
 function feedSummary(w) {
   const t = typeOf(w.ty), bits = [];
   if (w.dur) bits.push(`${w.dur} min`);
@@ -2097,6 +2149,7 @@ function bindTimeline() {
   $$('#feedTabs button').forEach(b => b.addEventListener('click', () => { state.ui.feedTab = b.dataset.ft; save(); renderFeed(); }));
   $('#openSearch').addEventListener('click', openGSearch);
   $('#openInvite').addEventListener('click', openInvite);
+  $('#shareWeek').addEventListener('click', shareWeek);
   $('#invCopy').addEventListener('click', copyInvite);
   $('#invShare').addEventListener('click', shareInvite);
   $('#gsBack').addEventListener('click', closeGSearch);

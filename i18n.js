@@ -6,6 +6,8 @@
 
   // Frases completas (se buscan tal cual)
   const EX = {
+    "Compartir mi semana": "Share my week", "MI SEMANA": "MY WEEK", "Mi semana en GymCrew": "My week on GymCrew", "No se pudo crear la imagen": "Couldn't create the image", "Imagen guardada": "Image saved",
+    "semana de racha": "week streak", "semanas de racha": "week streak",
     "Invitar a mis amigos": "Invite my friends", "Invita a tus amigos": "Invite your friends", "Copiar enlace": "Copy link", "Compartir": "Share",
     "Escanea el código o comparte el enlace. Se instala como app desde el navegador y no hace falta tienda.": "Scan the code or share the link. It installs as an app from the browser, no store needed.",
     "Entrena conmigo en GymCrew, la red social del gimnasio.": "Train with me on GymCrew, the gym social network.",
