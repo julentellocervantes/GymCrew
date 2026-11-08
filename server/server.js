@@ -967,6 +967,33 @@ function onMedia(req, res, url, headers) {
 
 /* ---------- HTTP + enrutado de WebSocket ---------- */
 const MIME = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.webmanifest': 'application/manifest+json' };
+// Ficheros de la app: en memoria, comprimidos con gzip y con ETag (304 si no cambió). Sin dependencias: zlib viene con Node.
+const zlib = require('zlib');
+const staticCache = new Map();
+const COMPRESSIBLE = new Set(['.html', '.css', '.js', '.json', '.svg', '.webmanifest']);
+function serveStatic(req, res, name, ext, headers) {
+  const file = path.join(STATIC_DIR, name);
+  fs.stat(file, (e1, st) => {
+    if (e1 || !st.isFile()) { res.writeHead(404, headers); return res.end('No encontrado'); }
+    const hit = staticCache.get(name);
+    const send = ent => {
+      const h = Object.assign({ 'Content-Type': MIME[ext], 'Cache-Control': 'no-cache', ETag: ent.etag, Vary: 'Accept-Encoding' }, headers);
+      if (req.headers['if-none-match'] === ent.etag) { res.writeHead(304, h); return res.end(); }
+      const gz = ent.gz && /\bgzip\b/.test(req.headers['accept-encoding'] || '');
+      if (gz) h['Content-Encoding'] = 'gzip';
+      const body = gz ? ent.gz : ent.buf;
+      h['Content-Length'] = body.length;
+      res.writeHead(200, h); res.end(body);
+    };
+    if (hit && hit.mtime === st.mtimeMs) return send(hit);
+    fs.readFile(file, (err, buf) => {
+      if (err) { res.writeHead(404, headers); return res.end('No encontrado'); }
+      const ent = { mtime: st.mtimeMs, buf, etag: '"' + crypto.createHash('sha1').update(buf).digest('hex').slice(0, 20) + '"', gz: COMPRESSIBLE.has(ext) && buf.length > 512 ? zlib.gzipSync(buf, { level: 9 }) : null };
+      staticCache.set(name, ent); send(ent);
+    });
+  });
+}
+
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, 'http://x');
   const headers = { 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer' };
@@ -982,11 +1009,7 @@ const server = http.createServer((req, res) => {
   // Solo ficheros sueltos de la carpeta de la app, nunca subcarpetas (server/, data/...)
   const iconOk = /^icons\/[a-z0-9-]{1,40}\.png$/.test(name);   // única subcarpeta pública: los iconos
   if (!iconOk && (name.includes('/') || name.includes('\\') || name.startsWith('.') || !MIME[ext] || name === 'package.json')) { res.writeHead(404, headers); return res.end('No encontrado'); }
-  fs.readFile(path.join(STATIC_DIR, name), (err, buf) => {
-    if (err) { res.writeHead(404, headers); return res.end('No encontrado'); }
-    res.writeHead(200, Object.assign({ 'Content-Type': MIME[ext], 'Cache-Control': 'no-cache' }, headers));
-    res.end(buf);
-  });
+  serveStatic(req, res, name, ext, headers);
 });
 
 const wss = new WebSocketServer({ noServer: true, maxPayload: 16 * 1024 });

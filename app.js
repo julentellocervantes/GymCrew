@@ -237,9 +237,10 @@ function paintAvatar(node, name) {
   node.style.background = `linear-gradient(135deg, hsl(${h} 85% 62%), hsl(${(h + 35) % 360} 80% 48%))`;
 }
 
-function emptyState(icon, title, text) {
+function emptyState(icon, title, text, act) {
   const li = el('li', 'glass empty');
   li.append(el('span', 'em-ico', icon), el('strong', '', title), el('span', '', text));
+  if (act) { const b = el('button', 'btn primary sm', act.label); b.type = 'button'; b.addEventListener('click', act.fn); li.appendChild(b); }
   return li;
 }
 function el(tag, cls, text) {
@@ -1111,7 +1112,7 @@ function playEnter(view, fromClass) {
 }
 
 function showTab(name) {
-  if (name === currentTab) return;
+  if (name === currentTab) { if (name === 'inicio') { window.scrollTo({ top: 0, behavior: 'smooth' }); pullPub(true); } return; }
   settleSwitch();
   const from = $('#view-' + currentTab);
   const to = $('#view-' + name);
@@ -2469,7 +2470,7 @@ function renderFeed() {
   const ul = $('#feedList');
   ul.innerHTML = '';
   const list = homeFeed().slice(0, 40);
-  if (!list.length) ul.appendChild(fy ? emptyState('🌍', 'Aún no hay publicaciones públicas', 'Cuando alguien publique en público, saldrá aquí. Tú también puedes ser el primero.') : emptyState('👥', 'Aquí verás a tu gente', 'Publicaciones e historias de tus amigos, tus grupos y la gente que sigues. Búscalos en Social.'));
+  if (!list.length) ul.appendChild(fy ? emptyState('🌍', 'Aún no hay publicaciones públicas', 'Cuando alguien publique en público, saldrá aquí. Tú también puedes ser el primero.', { label: 'Publicar mi entreno', fn: () => openSheet('sheetNew') }) : emptyState('👥', 'Aquí verás a tu gente', 'Publicaciones e historias de tus amigos, tus grupos y la gente que sigues. Búscalos en Mensajes.', { label: 'Invitar a mis amigos', fn: openInvite }));
   list.forEach(p => ul.appendChild(feedCard(p)));
   setStagger(ul);
   if ($('#gsearch').classList.contains('open')) renderGSearch();
@@ -2933,7 +2934,7 @@ function renderChatList() {
   const ul = $('#chatList');
   ul.innerHTML = '';
   if (!state.groups.length) {
-    ul.appendChild(emptyState('💬', 'Aquí aparecerán tus chats', 'Aún no tienes chats. Añade amigos con su código o únete a un grupo de gimnasio y escríbeles.'));
+    ul.appendChild(emptyState('💬', 'Aquí aparecerán tus chats', 'Aún no tienes chats. Sigue a alguien por su @usuario o únete a un grupo de gimnasio y escríbele.', { label: 'Invitar a mis amigos', fn: openInvite }));
     return;
   }
   const gs = [...state.groups].sort((a, b) => ((lastMsg(b) || {}).ts || b.created) - ((lastMsg(a) || {}).ts || a.created));
