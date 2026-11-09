@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#fff6e9" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#1f1a2b" media="(prefers-color-scheme: dark)" />
+  <title>Entrenador de cartas</title>
+  <meta name="description" content="Aprende blackjack, póker y mus con ejercicios cortos, como en Duolingo." />
+  <!-- App instalable -->
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icons/icono.svg" type="image/svg+xml" />
+  <link rel="icon" href="icons/icono-48.png" sizes="48x48" type="image/png" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Cartas" />
+  <!-- Tipografía redondeada (opcional: sin internet se usa la del sistema) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap" />
+  <link rel="stylesheet" href="css/estilos.css" />
+</head>
+<body>
+  <div class="decor" aria-hidden="true"><span style="--x:6%;--y:10%;--t:44px;--d:9s">♠</span><span class="r" style="--x:82%;--y:6%;--t:38px;--d:11s">♥</span><span class="r" style="--x:70%;--y:38%;--t:56px;--d:13s">♦</span><span style="--x:12%;--y:40%;--t:60px;--d:12s">♣</span><span class="r" style="--x:44%;--y:22%;--t:30px;--d:10s">♥</span><span style="--x:88%;--y:62%;--t:48px;--d:14s">♠</span><span style="--x:30%;--y:72%;--t:40px;--d:9s">♣</span><span class="r" style="--x:58%;--y:84%;--t:52px;--d:12s">♦</span><span style="--x:4%;--y:88%;--t:36px;--d:11s">♠</span><span class="r" style="--x:90%;--y:88%;--t:34px;--d:10s">♥</span><span style="--x:50%;--y:52%;--t:28px;--d:13s">♣</span><span class="r" style="--x:20%;--y:18%;--t:26px;--d:8s">♦</span></div>
+  <div id="app"></div>
+  <noscript>Esta aplicación necesita JavaScript activado.</noscript>
+
+  <!-- 1) Datos: cursos.js crea la lista y cada juego añade el suyo -->
+  <script src="data/cursos.js"></script>
+  <script src="data/blackjack.js"></script>
+  <script src="data/poker.js"></script>
+  <script src="data/mus.js"></script>
+  <!-- Niveles adicionales: se añaden a los cursos de arriba -->
+  <script src="data/blackjack-extra.js"></script>
+  <script src="data/poker-extra.js"></script>
+  <script src="data/mus-extra.js"></script>
+
+  <!-- 2) La mascota y la lógica -->
+  <script src="js/mascota.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
