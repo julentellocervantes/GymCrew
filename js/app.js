@@ -11,17 +11,55 @@ const raiz = document.getElementById('app');
 const pad = (n) => String(n).padStart(2, '0');
 const fechaLocal = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const hoy = () => fechaLocal(new Date());
-const ayer = () => fechaLocal(new Date(Date.now() - 24 * 60 * 60 * 1000));
+// Días de calendario entre dos fechas "AAAA-MM-DD" (a mediodía, para que el cambio de hora no cuente)
+const diasEntre = (a, b) => Math.round((new Date(b + 'T12:00:00') - new Date(a + 'T12:00:00')) / 86400000);
 
 // ---------- progreso guardado en el navegador (localStorage) ----------
-const progresoNuevo = () => ({ xp: 0, racha: 0, ultimoDia: null, completadas: {}, logros: {}, repasos: 0, perfectos: 0 });
+// Los campos nuevos son opcionales: un progreso guardado con una versión anterior se completa con estos valores.
+const progresoNuevo = () => ({
+  xp: 0, racha: 0, ultimoDia: null, completadas: {}, logros: {}, repasos: 0, perfectos: 0,
+  meta: 20,                       // XP que quieres ganar cada día
+  xpHoy: { dia: null, xp: 0 },    // XP ganado en el día indicado
+  congeladores: 0,                // protegen la racha si fallas un día (máx. 2)
+  srs: {},                        // repetición espaciada: id del ejercicio -> { caja, prox, fallos }
+  conteo: { sesiones: 0, mejor: 0 }, // entrenador de conteo
+  ajustes: { letra: 'normal', calma: false },
+});
+
+// Comprueba que un progreso (guardado o importado) tiene la forma esperada y rellena lo que falte
+function normalizarProgreso(datos) {
+  if (!datos || typeof datos !== 'object' || Array.isArray(datos)) return null;
+  const base = progresoNuevo();
+  const p = Object.assign(base, datos);
+  const num = (v, d) => (Number.isFinite(v) && v >= 0 ? Math.floor(v) : d);
+  const obj = (v, d) => (v && typeof v === 'object' && !Array.isArray(v) ? v : d);
+  p.xp = num(p.xp, 0);
+  p.racha = num(p.racha, 0);
+  p.repasos = num(p.repasos, 0);
+  p.perfectos = num(p.perfectos, 0);
+  p.meta = [10, 20, 30, 50].includes(p.meta) ? p.meta : 20;
+  p.congeladores = Math.min(2, num(p.congeladores, 0));
+  p.ultimoDia = typeof p.ultimoDia === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(p.ultimoDia) ? p.ultimoDia : null;
+  p.completadas = obj(p.completadas, {});
+  p.logros = obj(p.logros, {});
+  p.srs = obj(p.srs, {});
+  p.xpHoy = Object.assign({ dia: null, xp: 0 }, obj(p.xpHoy, {}));
+  p.conteo = Object.assign({ sesiones: 0, mejor: 0 }, obj(p.conteo, {}));
+  p.ajustes = Object.assign({ letra: 'normal', calma: false }, obj(p.ajustes, {}));
+  return p;
+}
+
+let almacenamientoFallo = false; // true si el navegador no deja guardar (modo privado, almacenamiento lleno...)
 
 function cargarProgreso() {
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) return Object.assign(progresoNuevo(), JSON.parse(raw));
+    if (raw) {
+      const p = normalizarProgreso(JSON.parse(raw));
+      if (p) return p;
+    }
   } catch (e) {
-    // si el navegador bloquea el almacenamiento, se sigue sin guardar
+    almacenamientoFallo = true; // si el navegador bloquea el almacenamiento, se sigue sin guardar
   }
   return progresoNuevo();
 }
@@ -29,19 +67,73 @@ function cargarProgreso() {
 function guardarProgreso() {
   try {
     localStorage.setItem(KEY, JSON.stringify(progreso));
-  } catch (e) {}
+    almacenamientoFallo = false;
+  } catch (e) {
+    almacenamientoFallo = true;
+  }
 }
 
 let progreso = cargarProgreso();
 
 // La racha solo "vive" si la última lección fue hoy o ayer
-const rachaVigente = () =>
-  progreso.ultimoDia === hoy() || progreso.ultimoDia === ayer() ? progreso.racha : 0;
+// (o anteayer, si tienes un congelador de racha para cubrir el día que falló)
+function rachaVigente() {
+  if (!progreso.ultimoDia) return 0;
+  const d = diasEntre(progreso.ultimoDia, hoy());
+  return d <= 1 || (d === 2 && progreso.congeladores > 0) ? progreso.racha : 0;
+}
+const xpDeHoy = () => (progreso.xpHoy && progreso.xpHoy.dia === hoy() ? progreso.xpHoy.xp : 0);
+
+// Apunta actividad del día: XP, racha, congeladores y meta diaria. Lo usan las lecciones y el entrenador de conteo.
+function registrarActividad(xp) {
+  const dia = hoy();
+  const res = { metaCumplida: false, congeladorUsado: false, congeladorGanado: false };
+  if (progreso.ultimoDia !== dia) {
+    const d = progreso.ultimoDia ? diasEntre(progreso.ultimoDia, dia) : 99;
+    if (d === 1) progreso.racha += 1;
+    else if (d === 2 && progreso.congeladores > 0) {
+      progreso.congeladores -= 1;
+      progreso.racha += 1;
+      res.congeladorUsado = true;
+    } else progreso.racha = 1;
+    if (progreso.racha % 7 === 0 && progreso.congeladores < 2) {
+      progreso.congeladores += 1;
+      res.congeladorGanado = true;
+    }
+  }
+  progreso.ultimoDia = dia;
+  const antes = xpDeHoy();
+  progreso.xpHoy = { dia, xp: antes + xp };
+  progreso.xp += xp;
+  res.metaCumplida = antes < progreso.meta && antes + xp >= progreso.meta;
+  return res;
+}
+
+// ---------- repetición espaciada (cajas de Leitner) ----------
+// Cada ejercicio que respondes se apunta: si aciertas sube de caja y tarda más en volver; si fallas, vuelve hoy.
+const INTERVALOS_DIAS = [0, 1, 2, 4, 8, 16];
+function registrarRespuesta(id, acierto) {
+  const s = progreso.srs[id] || { caja: 0, prox: hoy(), fallos: 0 };
+  if (acierto) s.caja = Math.min(INTERVALOS_DIAS.length - 1, s.caja + 1);
+  else {
+    s.caja = 0;
+    s.fallos += 1;
+  }
+  s.prox = fechaLocal(new Date(Date.now() + INTERVALOS_DIAS[s.caja] * 86400000));
+  progreso.srs[id] = s;
+}
 
 // ---------- datos de los cursos ----------
 const niveles = (curso) => curso.unidades.flatMap((u) => u.lecciones);
 const hechosDe = (curso) => niveles(curso).filter((l) => progreso.completadas[l.id]).length;
 const siguienteNivel = (curso) => niveles(curso).find((l) => !progreso.completadas[l.id]) || null;
+// id de ejercicio -> el ejercicio y su curso (para armar repasos que mezclan juegos)
+const INDICE_EJERCICIOS = {};
+CURSOS.forEach((c) => niveles(c).forEach((l) => l.ejercicios.forEach((e) => (INDICE_EJERCICIOS[e.id] = { ejercicio: e, curso: c }))));
+const listaSrs = (filtro) =>
+  Object.keys(progreso.srs).filter((id) => INDICE_EJERCICIOS[id] && filtro(progreso.srs[id]));
+const pendientesHoy = () => listaSrs((s) => s.prox <= hoy());
+const misErrores = () => listaSrs((s) => s.fallos > 0 && s.caja <= 1);
 const elegirAlAzar = (lista) => lista[Math.floor(Math.random() * lista.length)];
 function barajar(lista) {
   const a = lista.slice();
@@ -58,6 +150,13 @@ function barajar(lista) {
 const esCifra = (t) => /^[≈+\-−]?\s?\d[\d.,]*\s?%?$/.test(String(t).trim());
 const valorCifra = (t) => parseFloat(String(t).replace(/\.(?=\d{3})/g, '').replace(',', '.').replace('−', '-').replace(/[^\d.+-]/g, ''));
 function preparar(e) {
+  if (e.tipo === 'ordenar') {
+    // "mezcla" es el orden en que se muestran las fichas (nunca ya resuelto)
+    let mezcla;
+    do mezcla = barajar(e.elementos.map((_, i) => i));
+    while (mezcla.every((v, i) => v === i));
+    return Object.assign({}, e, { opciones: [], correcta: 0, mezcla });
+  }
   if (e.tipo === 'accion' || e.opciones.length < 2) return e;
   const correcta = e.opciones[e.correcta];
   const opciones = e.opciones.every(esCifra)
@@ -93,6 +192,7 @@ const LOGROS = [
   { id: 'constante', icono: '🔥', titulo: 'Constante', desc: 'Consigue una racha de 3 días', cumple: () => rachaVigente() >= 3 },
   { id: 'explorador', icono: '🧭', titulo: 'Explorador', desc: 'Completa un nivel de cada juego', cumple: (p) => CURSOS.every((c) => niveles(c).some((l) => p.completadas[l.id])) },
   { id: 'repasador', icono: '🔁', titulo: 'Repasador', desc: 'Haz tu primer repaso rápido', cumple: (p) => (p.repasos || 0) >= 1 },
+  { id: 'contador', icono: '⏱️', titulo: 'Contador', desc: 'Acierta la cuenta en el entrenador de conteo', cumple: (p) => (p.conteo && p.conteo.mejor) > 0 },
   { id: 'cien-xp', icono: '⭐', titulo: '100 XP', desc: 'Llega a 100 puntos de experiencia', cumple: (p) => p.xp >= 100 },
 ].concat(
   CURSOS.map((c) => ({
@@ -135,7 +235,8 @@ function el(etiqueta, props = {}, ...hijos) {
 // ---------- movimiento ----------
 // Quien tiene activado "reducir movimiento" en su sistema no ve animaciones (el CSS también lo respeta)
 const sinMovimiento = () =>
-  typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  !!(progreso.ajustes && progreso.ajustes.calma) ||
+  (typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 
 // Espera a que el navegador haya pintado el estado inicial para que la transición se vea
 const alSiguienteFotograma = (f) =>
@@ -200,7 +301,7 @@ function chispas(x, y, cantidad = 10) {
 // Onda al tocar botones, opciones y tarjetas
 document.addEventListener('pointerdown', (e) => {
   if (sinMovimiento() || !e.target.closest) return;
-  const b = e.target.closest('.boton, .opcion, .juego, .rango, .repaso, .instalar');
+  const b = e.target.closest('.boton, .opcion, .juego, .rango, .repaso, .instalar, .ficha');
   if (!b) return;
   const r = b.getBoundingClientRect();
   const onda = el('span', { class: 'onda', style: `left:${e.clientX - r.left}px;top:${e.clientY - r.top}px` });
@@ -234,6 +335,12 @@ function pintar(entrada, ...nodos) {
   // Se descartan los null: replaceChildren los escribiría como el texto "null"
   raiz.replaceChildren(...nodos.filter(Boolean));
   if (typeof window.scrollTo === 'function') window.scrollTo(0, entrada === 'sin' ? y : 0);
+  // Foco para teclado y lectores de pantalla: al responder pasa a "Continuar"; en una pantalla nueva, a su contenido
+  const destino = entrada === 'sin' ? raiz.querySelector('.feedback .boton') : raiz.querySelector('main');
+  if (destino && destino.focus) {
+    if (destino.tagName === 'MAIN') destino.setAttribute('tabindex', '-1');
+    destino.focus({ preventScroll: true });
+  }
 }
 
 // Atajos de teclado de la pantalla actual (1-4 para elegir, Enter para continuar)
@@ -269,11 +376,19 @@ function naiFila(estado, texto, tamano = '', reaccion = false) {
 
 // ---------- cartas ----------
 // n: posición de la carta en la mesa, para repartirlas una a una
+// "K♠" -> "rey de picas" (para lectores de pantalla)
+const PALOS = { '♠': 'picas', '♥': 'corazones', '♦': 'diamantes', '♣': 'tréboles' };
+const FIGURAS = { A: 'as', J: 'jota', Q: 'reina', K: 'rey' };
+function nombreCarta(texto) {
+  const m = /^(10|[2-9AJQK])([♠♥♦♣])$/.exec(texto);
+  return m ? `${FIGURAS[m[1]] || m[1]} de ${PALOS[m[2]]}` : texto;
+}
 function carta(valor, n = 0) {
   const texto = String(valor);
   const roja = /[♥♦]/.test(texto);
   const larga = texto.length > 3;
-  return el('div', { class: 'carta' + (roja ? ' roja' : '') + (larga ? ' larga' : ''), style: `--c:${n}` }, texto);
+  const nombre = nombreCarta(texto);
+  return el('div', { class: 'carta' + (roja ? ' roja' : '') + (larga ? ' larga' : ''), style: `--c:${n}`, role: 'img', 'aria-label': nombre }, texto);
 }
 
 function situacion(ejercicio) {
@@ -383,6 +498,43 @@ function mostrarInicio(entrada = 'fundido') {
     el('span', { class: 'rango-logros' }, '🏅', el('small', {}, `${LOGROS.filter((l) => progreso.logros[l.id]).length}/${LOGROS.length}`))
   );
 
+  // Meta diaria: anillo con el XP de hoy, y congeladores de racha
+  const hecho = xpDeHoy();
+  const pctMeta = Math.min(1, hecho / progreso.meta);
+  const cumplida = hecho >= progreso.meta;
+  const tarjetaMeta = el(
+    'div',
+    { class: 'meta' + (cumplida ? ' cumplida' : '') },
+    el(
+      'div',
+      { class: 'anillo', role: 'img', 'aria-label': `Meta diaria: ${hecho} de ${progreso.meta} XP`, style: `--p:${Math.round(pctMeta * 100)}` },
+      el('span', {}, cumplida ? '✓' : '🎯')
+    ),
+    el(
+      'span',
+      { class: 'juego-texto' },
+      el('strong', {}, cumplida ? '¡Meta de hoy cumplida!' : 'Meta de hoy'),
+      el('span', { class: 'juego-niveles' }, `${Math.min(hecho, 9999)} / ${progreso.meta} XP` + (progreso.congeladores ? ` · 🧊 ×${progreso.congeladores}` : ''))
+    ),
+    el('button', { class: 'ajustes-btn', type: 'button', 'aria-label': 'Ajustes', onclick: () => mostrarAjustes() }, '⚙️')
+  );
+
+  // Repaso inteligente: lo que toca repasar hoy y tus fallos
+  const nPend = pendientesHoy().length;
+  const nErr = misErrores().length;
+  const filaRepaso = (clase, icono, titulo, desc, alPulsar) =>
+    el(
+      'button',
+      { class: 'repaso fijo ' + clase, type: 'button', style: '--acento:#7a5af8', onclick: alPulsar },
+      el('span', { class: 'repaso-icono' }, icono),
+      el('span', { class: 'juego-texto' }, el('strong', {}, titulo), el('span', { class: 'juego-desc' }, desc)),
+      el('span', { class: 'flecha', 'aria-hidden': 'true' }, '›')
+    );
+  const repasos = [
+    nPend ? filaRepaso('', '🧠', 'Repaso del día', `${nPend} ${nPend === 1 ? 'pregunta toca' : 'preguntas tocan'} repasarse hoy`, () => iniciarRepasoGlobal('pendientes')) : null,
+    nErr ? filaRepaso('', '🩹', 'Mis errores', `${nErr} ${nErr === 1 ? 'pregunta' : 'preguntas'} que fallaste y aún no dominas`, () => iniciarRepasoGlobal('errores')) : null,
+  ];
+
   const tarjetas = CURSOS.map((curso, i) => {
     const total = niveles(curso).length;
     const hechos = hechosDe(curso);
@@ -409,21 +561,20 @@ function mostrarInicio(entrada = 'fundido') {
       'main',
       { class: 'contenido' },
       fila,
+      almacenamientoFallo
+        ? el('p', { class: 'alerta', role: 'alert' }, 'Tu navegador no deja guardar el progreso (¿modo privado?). Puedes seguir, pero al cerrar se perderá.')
+        : null,
+      tarjetaMeta,
       tarjetaRango,
+      repasos,
       el('h1', {}, 'Elige un juego'),
       tarjetas,
+      filaRepaso('conteo', '⏱️', 'Entrena el conteo', 'Cartas a toda velocidad con el sistema Hi-Lo', () => mostrarConteo()),
       puedeInstalar() ? crearBotonInstalar() : null,
-      el('p', { class: 'aviso' }, 'Contenido educativo. Sin dinero real. Solo para mayores de 18 años.'),
-      el('button', { class: 'enlace', type: 'button', onclick: reiniciarProgreso }, 'Reiniciar progreso')
+      el('p', { class: 'aviso' }, 'Contenido educativo. Sin dinero real. Solo para mayores de 18 años. Si el juego te preocupa, mira «Ayuda» en Ajustes.'),
+      el('button', { class: 'enlace', type: 'button', onclick: () => mostrarAjustes() }, 'Ajustes, copia de seguridad y ayuda')
     )
   );
-}
-
-function reiniciarProgreso() {
-  if (!confirm('¿Borrar tu XP, tu racha y todos los niveles completados?')) return;
-  progreso = progresoNuevo();
-  guardarProgreso();
-  mostrarInicio('fundido');
 }
 
 // ============================================================
@@ -644,12 +795,20 @@ function mostrarLeccion(curso, leccion) {
   let elegida = null;
   let anchoPrevio = 0; // para que la barra de progreso avance suave en vez de saltar
   const fallados = {};
+  const vistos = {}; // para apuntar en la repetición espaciada solo el primer intento de cada ejercicio
+  let orden = []; // ejercicios "ordenar": posiciones de las fichas ya colocadas
+  const salir = () => (curso.global ? mostrarInicio('atras') : mostrarMapa(curso, 'atras'));
 
   function elegir(i) {
     if (elegida !== null) return;
     const ejercicio = cola[idx];
     elegida = i;
     if (i !== ejercicio.correcta) fallados[ejercicio.id] = true;
+    if (!vistos[ejercicio.id]) {
+      vistos[ejercicio.id] = true;
+      registrarRespuesta(ejercicio.id, i === ejercicio.correcta);
+      guardarProgreso();
+    }
     dibujar('sin'); // misma pregunta: solo aparece la explicación, no se re-anima la pantalla
     if (i === ejercicio.correcta) {
       const tecla = raiz.querySelector('.opcion.bien .tecla');
@@ -673,6 +832,7 @@ function mostrarLeccion(curso, leccion) {
     }
     idx += 1;
     elegida = null;
+    orden = [];
     dibujar('ejercicio');
   }
 
@@ -685,6 +845,45 @@ function mostrarLeccion(curso, leccion) {
     const estadoNai = !respondido ? 'pensando' : acierto ? 'feliz' : 'triste';
     const { fila, parrafo } = naiFila(estadoNai, ejercicio.pregunta, 'pequena', respondido);
     parrafo.className = 'pregunta';
+
+    // Ejercicio de ordenar: pulsa las fichas en orden; pulsa una colocada para quitarla
+    let tablero = null;
+    if (ejercicio.tipo === 'ordenar') {
+      const n = ejercicio.elementos.length;
+      const correcto = orden.length === n && orden.every((v, k) => v === k);
+      const ficha = (pos, texto, colocada, k) =>
+        el(
+          'button',
+          {
+            class: 'ficha' + (colocada ? ' colocada' : '') + (respondido ? (correcto ? ' bien' : ' mal') : ''),
+            type: 'button',
+            disabled: respondido ? '' : null,
+            'aria-label': colocada ? `Quitar ${texto}, puesto ${k + 1}` : `Colocar ${texto}`,
+            onclick: () => {
+              if (respondido) return;
+              orden = colocada ? orden.filter((v) => v !== pos) : orden.concat([pos]);
+              dibujar('sin');
+              const f = raiz.querySelector('.ordenar .boton, .ordenar-banco .ficha, .ordenar-lista .ficha');
+              if (f) f.focus({ preventScroll: true });
+            },
+          },
+          colocada ? el('span', { class: 'ficha-n' }, String(k + 1)) : null,
+          texto
+        );
+      const colocadas = orden.map((pos, k) => ficha(pos, ejercicio.elementos[pos], true, k));
+      const banco = ejercicio.mezcla.filter((pos) => !orden.includes(pos)).map((pos) => ficha(pos, ejercicio.elementos[pos], false, 0));
+      tablero = el(
+        'div',
+        { class: 'ordenar' },
+        el('p', { class: 'ordenar-etiqueta' }, 'Tu orden'),
+        el('div', { class: 'ordenar-lista' }, colocadas.length ? colocadas : el('span', { class: 'ordenar-vacio' }, 'Pulsa las fichas en el orden correcto')),
+        banco.length ? el('p', { class: 'ordenar-etiqueta' }, 'Fichas') : null,
+        el('div', { class: 'ordenar-banco' }, banco),
+        !respondido && orden.length === n
+          ? el('button', { class: 'boton', type: 'button', onclick: () => elegir(correcto ? 0 : -1) }, 'Comprobar')
+          : null
+      );
+    }
 
     const opciones = ejercicio.opciones.map((texto, i) => {
       let clase = 'opcion';
@@ -701,7 +900,7 @@ function mostrarLeccion(curso, leccion) {
     const feedback = respondido
       ? el(
           'div',
-          { class: 'feedback ' + (acierto ? 'bien' : 'mal') },
+          { class: 'feedback ' + (acierto ? 'bien' : 'mal'), role: 'status', 'aria-live': 'polite' },
           el(
             'h3',
             {},
@@ -709,7 +908,9 @@ function mostrarLeccion(curso, leccion) {
               ? elegirAlAzar(['¡Genial!', '¡Eso es!', '¡Muy bien!', '¡Correcto!'])
               : elegirAlAzar(['¡Casi!', 'Ups, esa no era.', 'No pasa nada.'])
           ),
-          acierto ? null : el('p', { class: 'correcta' }, `Respuesta correcta: ${ejercicio.opciones[ejercicio.correcta]}`),
+          acierto
+            ? null
+            : el('p', { class: 'correcta' }, `Respuesta correcta: ${ejercicio.tipo === 'ordenar' ? ejercicio.elementos.join(' → ') : ejercicio.opciones[ejercicio.correcta]}`),
           el('p', {}, ejercicio.explicacion),
           el('button', { class: 'boton', type: 'button', onclick: continuar }, 'Continuar')
         )
@@ -726,10 +927,14 @@ function mostrarLeccion(curso, leccion) {
       el(
         'header',
         { class: 'cabecera-leccion' },
-        el('button', { class: 'cerrar', type: 'button', 'aria-label': 'Salir al mapa', onclick: () => mostrarMapa(curso, 'atras') }, '✕'),
-        el('div', { class: 'barra', style: `--acento:${curso.color}` }, relleno)
+        el('button', { class: 'cerrar', type: 'button', 'aria-label': 'Salir de la lección', onclick: salir }, '✕'),
+        el(
+          'div',
+          { class: 'barra', style: `--acento:${curso.color}`, role: 'progressbar', 'aria-label': 'Progreso de la lección', 'aria-valuemin': '0', 'aria-valuemax': '100', 'aria-valuenow': String(Math.round(objetivo * 100)) },
+          relleno
+        )
       ),
-      el('main', { class: 'contenido' }, fila, situacion(ejercicio), opciones),
+      el('main', { class: 'contenido' }, fila, situacion(ejercicio), tablero, opciones),
       feedback
     );
 
@@ -742,6 +947,9 @@ function mostrarLeccion(curso, leccion) {
       } else if (respondido && e.key === 'Enter') {
         e.preventDefault();
         continuar();
+      } else if (!respondido && ejercicio.tipo === 'ordenar' && e.key === 'Enter' && orden.length === ejercicio.elementos.length) {
+        e.preventDefault();
+        elegir(orden.every((v, k) => v === k) ? 0 : -1);
       }
     };
   }
@@ -755,15 +963,10 @@ function mostrarLeccion(curso, leccion) {
 function finalizarLeccion(curso, leccion, precision) {
   const rangoAntes = rangoDe(progreso.xp).indice;
   const yaHecha = !!progreso.completadas[leccion.id];
-  const dia = hoy();
-  if (progreso.ultimoDia !== dia) {
-    progreso.racha = progreso.ultimoDia === ayer() ? progreso.racha + 1 : 1;
-  }
-  progreso.ultimoDia = dia;
 
   // Un repaso da XP según tus aciertos y no marca niveles como hechos
   const xp = leccion.repaso ? Math.round((leccion.xp * precision) / 100) : leccion.xp;
-  progreso.xp += xp;
+  const actividad = registrarActividad(xp);
   if (leccion.repaso) progreso.repasos = (progreso.repasos || 0) + 1;
   else progreso.completadas[leccion.id] = true;
   if (precision === 100 && !leccion.repaso) progreso.perfectos = (progreso.perfectos || 0) + 1;
@@ -778,6 +981,7 @@ function finalizarLeccion(curso, leccion, precision) {
     desbloqueado: nuevoNivel ? siguiente : null,
     cursoCompleto: nuevoNivel && !siguiente,
     logros,
+    actividad,
     rangoNuevo: nuevoRango.indice > rangoAntes ? nuevoRango.actual : null,
   });
 }
@@ -785,7 +989,7 @@ function finalizarLeccion(curso, leccion, precision) {
 function mostrarResultado(curso, leccion, precision, extra) {
   // Al volver al mapa se animan el nivel que acabas de completar y el que se desbloquea
   const volver = () =>
-    mostrarMapa(curso, 'atras', leccion.repaso ? [] : [leccion.id].concat(extra.desbloqueado ? [extra.desbloqueado.id] : []));
+    curso.global ? mostrarInicio('atras') : mostrarMapa(curso, 'atras', leccion.repaso ? [] : [leccion.id].concat(extra.desbloqueado ? [extra.desbloqueado.id] : []));
   alTeclear = (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
@@ -811,6 +1015,10 @@ function mostrarResultado(curso, leccion, precision, extra) {
   let orden = 4;
   const notas = [];
   if (rachaVigente() > 0) notas.push(linea(orden++, 'resultado-dato', `🔥 Racha: ${rachaVigente()} ${rachaVigente() === 1 ? 'día' : 'días'}`));
+  const act = extra.actividad || {};
+  if (act.metaCumplida) notas.push(linea(orden++, 'resultado-nuevo', '🎯 ¡Meta diaria cumplida!'));
+  if (act.congeladorUsado) notas.push(linea(orden++, 'resultado-dato', '🧊 Un congelador ha salvado tu racha'));
+  if (act.congeladorGanado) notas.push(linea(orden++, 'resultado-nuevo', '🧊 ¡Has ganado un congelador de racha!'));
   if (extra.rangoNuevo) notas.push(linea(orden++, 'resultado-nuevo', `${extra.rangoNuevo.icono} ¡Nuevo rango: ${extra.rangoNuevo.nombre}!`));
   if (extra.desbloqueado) notas.push(linea(orden++, 'resultado-nuevo', `Has desbloqueado «${extra.desbloqueado.titulo}»`));
   if (extra.cursoCompleto) notas.push(linea(orden++, 'resultado-nuevo', `¡Has completado el curso de ${curso.nombre}!`));
@@ -840,13 +1048,3 @@ function mostrarResultado(curso, leccion, precision, extra) {
   contar(prec, precision, (v) => `Precisión: ${v}%`, 550);
 }
 
-mostrarInicio('fundido');
-
-// Sin conexión: el service worker guarda la app. En tu ordenador (localhost) no se activa para que
-// los cambios que haces se vean siempre; para probarlo allí abre la página con ?pwa en la dirección.
-if ('serviceWorker' in navigator) {
-  const enLocal = ['localhost', '127.0.0.1'].includes(location.hostname);
-  if (!enLocal || location.search.includes('pwa')) {
-    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
-  }
-}

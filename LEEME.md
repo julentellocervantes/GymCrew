@@ -28,17 +28,41 @@ Los niveles se desbloquean en orden. Puedes repetir cualquiera que ya hayas comp
 ## Extras
 
 - **Repaso rápido** (en cada mapa, cuando ya has completado algún nivel): 8 preguntas al azar de lo que ya has hecho. Da XP según tus aciertos, pero no desbloquea niveles.
-- **Rangos** según tu XP (Novato, Aprendiz, Jugador, Tahúr, Maestro, Leyenda) y **9 logros**. Se ven pulsando la tarjeta de rango del inicio.
+- **Rangos** según tu XP (Novato, Aprendiz, Jugador, Tahúr, Maestro, Leyenda) y **10 logros**. Se ven pulsando la tarjeta de rango del inicio.
+- **Meta diaria** (10, 20, 30 o 50 XP, la eliges en Ajustes) con un anillo en el inicio. Cada 7 días de racha ganas un **congelador** 🧊 (máximo 2) que salva la racha si te saltas un día.
+- **Repetición espaciada**: cada pregunta que respondes se apunta. Si aciertas, tarda más en volver (1, 2, 4, 8 y 16 días); si fallas, vuelve hoy. En el inicio aparecen **Repaso del día** y **Mis errores**, que mezclan preguntas de todos los juegos.
+- **Ejercicios de ordenar** (colocar fichas en el orden correcto), como los pasos de una mano o el ranking de manos.
+- **Entrena el conteo**: cartas una a una a la velocidad que elijas (2 s, 1,2 s o 0,7 s) y al final dices la cuenta Hi-Lo. Se guarda tu récord en cartas por minuto.
+- **Ajustes**: meta diaria, letra grande, menos movimiento, **copia de seguridad** (descargar y restaurar un archivo .json) y enlace de ayuda por si el juego con dinero te preocupa.
+- **Accesibilidad**: las cartas tienen nombre para lectores de pantalla (p. ej. «rey de picas»), la barra de progreso y el feedback se anuncian, y el foco pasa a «Continuar» al responder.
+
+## Instalarla como app (PWA)
+
+Si la web está publicada (https), el navegador te ofrece **instalarla** en el móvil o el ordenador: aparece un botón «Instala la app» en el inicio. En iPhone: Compartir → «Añadir a pantalla de inicio». Una vez instalada **funciona sin conexión**.
+
+- `manifest.webmanifest`, `icons/` y `sw.js` hacen que sea instalable. Con conexión siempre carga la versión más nueva; sin conexión usa la guardada.
+- En tu ordenador (`localhost`, Live Server) el modo sin conexión **no se activa**, para que veas siempre tus cambios. Para probarlo, abre `http://127.0.0.1:5500/index.html?pwa`.
+- Si añades archivos nuevos (por ejemplo `data/otro.js`), añádelos también a la lista `ARCHIVOS` de `sw.js`.
+- Las opciones de respuesta se mezclan en cada pregunta (las jugadas de blackjack mantienen su orden).
 
 ## Estructura de carpetas
 
 - `index.html`: la página. Aquí se enlazan los archivos de datos.
 - `css/estilos.css`: el diseño.
-- `js/app.js`: la lógica (pantallas, mapa, ejercicios, XP y racha).
+- `js/app.js`: la lógica principal (pantallas, mapa, ejercicios, XP, racha, meta diaria y repetición espaciada).
+- `js/extras.js`: repaso del día, ajustes, copia de seguridad y entrenador de conteo.
+- `js/inicio.js`: arranque de la app (se carga el último).
+- `tests/`: pruebas automáticas (ver abajo).
 - `js/mascota.js`: el dibujo de Nai y sus estados de ánimo (`normal`, `feliz`, `pensando`, `triste`, `celebrando`).
 - `data/cursos.js`: crea la lista de juegos. El orden en que se enlazan los archivos en `index.html` es el orden del inicio.
 - `data/blackjack.js`, `data/poker.js`, `data/mus.js`: un archivo por juego, con sus unidades, niveles y ejercicios.
 - `data/*-extra.js`: niveles adicionales que se añaden a cada curso (mismo formato). Puedes seguir ampliando ahí.
+- `data/ordenar-extra.js`: ejercicios de ordenar. Cada uno lleva `elementos` ya en el orden correcto (la app los mezcla).
+
+## Pruebas
+
+- `node tests/validar.js`: comprueba la estructura de todos los datos y recalcula con código independiente las respuestas de estrategia básica, Hi-Lo, cuenta verdadera, mus y póker. No necesita instalar nada. Ejecútalo cada vez que añadas ejercicios.
+- `node tests/navegador.js`: abre la app en un navegador real (Playwright) y prueba pantallas, repetición espaciada, rachas, ajustes, copia de seguridad y conteo. Necesita `npm i playwright` y la carpeta servida, por ejemplo con `python3 -m http.server 8123`.
 
 ## Cómo añadir ejercicios o niveles
 
@@ -66,7 +90,9 @@ Cuidado con las comas entre elementos y con las comillas.
 - El XP, la racha y los niveles completados se guardan en tu navegador (localStorage). Si cambias de navegador o de dirección, empiezas de cero.
 - Si fallas un ejercicio, vuelve al final de la lección hasta que lo aciertes.
 - Teclado: `1`, `2`, `3`… eligen respuesta y `Enter` continúa.
-- El enlace «Reiniciar progreso» del inicio lo borra todo.
+- Ajustes → «Descargar copia» guarda tu progreso en un archivo; «Restaurar copia» lo recupera (útil si cambias de móvil o borras los datos del navegador).
+- Ajustes → «Reiniciar progreso» lo borra todo (los ajustes de letra y movimiento se conservan).
+- Si el navegador no deja guardar (modo privado), el inicio lo avisa.
 
 ## Animaciones
 
