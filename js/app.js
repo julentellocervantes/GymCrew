@@ -157,12 +157,29 @@ function preparar(e) {
     while (mezcla.every((v, i) => v === i));
     return Object.assign({}, e, { opciones: [], correcta: 0, mezcla });
   }
+  // Ejercicios interactivos: no usan "opciones"; la app comprueba la respuesta y llama a elegir(0) si es correcta
+  if (e.tipo === 'seleccionar' || e.tipo === 'numero') return Object.assign({}, e, { opciones: [], correcta: 0 });
+  if (e.tipo === 'emparejar') {
+    let mezcla; // orden en que se muestra la columna de la derecha (nunca ya resuelto)
+    do mezcla = barajar(e.pares.map((_, i) => i));
+    while (mezcla.every((v, i) => v === i));
+    return Object.assign({}, e, { opciones: [], correcta: 0, mezcla });
+  }
   if (e.tipo === 'accion' || e.opciones.length < 2) return e;
   const correcta = e.opciones[e.correcta];
   const opciones = e.opciones.every(esCifra)
     ? e.opciones.slice().sort((a, b) => (valorCifra(a) - valorCifra(b)) * (Math.random() < 0.5 ? 1 : -1))
     : barajar(e.opciones);
   return Object.assign({}, e, { opciones, correcta: opciones.indexOf(correcta) });
+}
+
+// Texto de la respuesta correcta que se enseña al fallar
+function respuestaTexto(e) {
+  if (e.tipo === 'ordenar') return e.elementos.join(' → ');
+  if (e.tipo === 'seleccionar') return e.correctas.map((i) => e.cartas[i]).join(', ');
+  if (e.tipo === 'numero') return String(e.respuesta) + (e.unidad ? ' ' + e.unidad : '');
+  if (e.tipo === 'emparejar') return e.pares.map((p) => `${p[0]} = ${p[1]}`).join(' · ');
+  return e.opciones[e.correcta];
 }
 
 // ---------- rangos (según tu XP) ----------
@@ -797,6 +814,10 @@ function mostrarLeccion(curso, leccion) {
   const fallados = {};
   const vistos = {}; // para apuntar en la repetición espaciada solo el primer intento de cada ejercicio
   let orden = []; // ejercicios "ordenar": posiciones de las fichas ya colocadas
+  let marcadas = []; // ejercicios "seleccionar": cartas tocadas
+  let valorNum = ''; // ejercicios "numero": lo que escribiste
+  let par = { izq: null, unidos: [], fallos: 0, error: null }; // ejercicios "emparejar"
+  let comprobar = null; // acción del botón «Comprobar» de la pantalla actual
   const salir = () => (curso.global ? mostrarInicio('atras') : mostrarMapa(curso, 'atras'));
 
   function elegir(i) {
@@ -833,6 +854,9 @@ function mostrarLeccion(curso, leccion) {
     idx += 1;
     elegida = null;
     orden = [];
+    marcadas = [];
+    valorNum = '';
+    par = { izq: null, unidos: [], fallos: 0, error: null };
     dibujar('ejercicio');
   }
 
@@ -885,6 +909,131 @@ function mostrarLeccion(curso, leccion) {
       );
     }
 
+    comprobar = null;
+    if (ejercicio.tipo === 'ordenar' && !respondido) comprobar = () => orden.length === ejercicio.elementos.length && elegir(orden.every((v, k) => v === k) ? 0 : -1);
+
+    // Tocar las cartas que cumplen algo
+    if (ejercicio.tipo === 'seleccionar') {
+      const buenas = ejercicio.correctas;
+      const igual = marcadas.length === buenas.length && marcadas.every((i) => buenas.includes(i));
+      if (!respondido) comprobar = () => marcadas.length && elegir(igual ? 0 : -1);
+      tablero = el(
+        'div',
+        { class: 'seleccion' },
+        el('div', { class: 'seleccion-cartas' },
+          ejercicio.cartas.map((c, i) => {
+            const on = marcadas.includes(i);
+            let clase = 'carta-pick' + (on ? ' on' : '');
+            if (respondido) clase += on && buenas.includes(i) ? ' bien' : on ? ' mal' : buenas.includes(i) ? ' falta' : '';
+            return el(
+              'button',
+              {
+                class: clase,
+                type: 'button',
+                disabled: respondido ? '' : null,
+                'aria-pressed': String(on),
+                'aria-label': nombreCarta(c) + (on ? ', marcada' : ''),
+                onclick: () => {
+                  marcadas = on ? marcadas.filter((v) => v !== i) : marcadas.concat([i]);
+                  dibujar('sin');
+                  const b = raiz.querySelectorAll('.carta-pick')[i];
+                  if (b) b.focus({ preventScroll: true });
+                },
+              },
+              carta(c, i)
+            );
+          })
+        ),
+        respondido ? null : el('button', { class: 'boton', type: 'button', disabled: marcadas.length ? null : '', onclick: comprobar }, 'Comprobar')
+      );
+    }
+
+    // Escribir una cifra
+    if (ejercicio.tipo === 'numero') {
+      const entrada = el('input', {
+        class: 'numero-entrada' + (respondido ? (acierto ? ' bien' : ' mal') : ''),
+        type: 'number',
+        step: '1',
+        autocomplete: 'off',
+        'aria-label': 'Tu respuesta',
+        value: respondido ? String(valorNum) : null,
+        disabled: respondido ? '' : null,
+      });
+      if (!respondido) {
+        comprobar = () => {
+          const t = entrada.value.trim().replace(',', '.');
+          if (t === '' || Number.isNaN(Number(t))) return;
+          valorNum = Number(t);
+          elegir(valorNum === ejercicio.respuesta ? 0 : -1);
+        };
+        entrada.addEventListener('keydown', (ev) => {
+          if (ev.key === 'Enter') {
+            ev.preventDefault();
+            ev.stopPropagation(); // si no, el atajo global leería el mismo Enter como «Continuar»
+            comprobar();
+          }
+        });
+      }
+      tablero = el(
+        'div',
+        { class: 'numero' },
+        el('div', { class: 'numero-fila' }, entrada, ejercicio.unidad ? el('span', { class: 'numero-unidad' }, ejercicio.unidad) : null),
+        respondido ? null : el('button', { class: 'boton', type: 'button', onclick: comprobar }, 'Comprobar')
+      );
+    }
+
+    // Unir cada término con su significado
+    if (ejercicio.tipo === 'emparejar') {
+      const n = ejercicio.pares.length;
+      const dueno = ejercicio; // para ignorar temporizadores de un ejercicio que ya pasó
+      const unidoK = (campo, v) => par.unidos.findIndex((u) => u[campo] === v);
+      const lado = (texto, campo, v) => {
+        const k = unidoK(campo, v);
+        const errorAqui = par.error && par.error[campo] === v;
+        return el(
+          'button',
+          {
+            class: 'par' + (campo === 'i' && par.izq === v ? ' sel' : '') + (k >= 0 ? ' unido' : '') + (errorAqui ? ' mal' : ''),
+            type: 'button',
+            style: k >= 0 ? `--k:${k}` : null,
+            disabled: k >= 0 || respondido ? '' : null,
+            'aria-pressed': campo === 'i' ? String(par.izq === v) : null,
+            onclick: () => {
+              if (campo === 'i') par.izq = par.izq === v ? null : v;
+              else if (par.izq !== null) {
+                if (par.izq === v) {
+                  par.unidos.push({ i: v, j: v });
+                  par.izq = null;
+                  if (par.unidos.length === n) setTimeout(() => cola[idx] === dueno && elegida === null && elegir(par.fallos === 0 ? 0 : -1), 450);
+                } else {
+                  par.fallos += 1;
+                  par.error = { i: par.izq, j: v };
+                  par.izq = null;
+                  setTimeout(() => {
+                    par.error = null;
+                    if (cola[idx] === dueno && elegida === null) dibujar('sin');
+                  }, 550);
+                }
+              } else return;
+              dibujar('sin');
+              const f = raiz.querySelector('.par.sel, .parejas-col:first-child .par:not(:disabled)');
+              if (f) f.focus({ preventScroll: true });
+            },
+          },
+          texto
+        );
+      };
+      tablero = el(
+        'div',
+        { class: 'parejas-caja' },
+        el('p', { class: 'ordenar-etiqueta' }, 'Toca un término y después su significado'),
+        el('div', { class: 'parejas' },
+          el('div', { class: 'parejas-col' }, ejercicio.pares.map((p, i) => lado(p[0], 'i', i))),
+          el('div', { class: 'parejas-col' }, ejercicio.mezcla.map((j) => lado(ejercicio.pares[j][1], 'j', j)))
+        )
+      );
+    }
+
     const opciones = ejercicio.opciones.map((texto, i) => {
       let clase = 'opcion';
       if (respondido && i === ejercicio.correcta) clase += ' bien';
@@ -910,7 +1059,7 @@ function mostrarLeccion(curso, leccion) {
           ),
           acierto
             ? null
-            : el('p', { class: 'correcta' }, `Respuesta correcta: ${ejercicio.tipo === 'ordenar' ? ejercicio.elementos.join(' → ') : ejercicio.opciones[ejercicio.correcta]}`),
+            : el('p', { class: 'correcta' }, `Respuesta correcta: ${respuestaTexto(ejercicio)}`),
           el('p', {}, ejercicio.explicacion),
           el('button', { class: 'boton', type: 'button', onclick: continuar }, 'Continuar')
         )
@@ -938,6 +1087,10 @@ function mostrarLeccion(curso, leccion) {
       feedback
     );
 
+    if (!respondido && ejercicio.tipo === 'numero') {
+      const entradaNum = raiz.querySelector('.numero-entrada');
+      if (entradaNum) entradaNum.focus({ preventScroll: true });
+    }
     if (cambiaBarra) alSiguienteFotograma(() => (relleno.style.transform = `scaleX(${objetivo})`));
     else relleno.style.transform = `scaleX(${objetivo})`;
 
@@ -947,9 +1100,9 @@ function mostrarLeccion(curso, leccion) {
       } else if (respondido && e.key === 'Enter') {
         e.preventDefault();
         continuar();
-      } else if (!respondido && ejercicio.tipo === 'ordenar' && e.key === 'Enter' && orden.length === ejercicio.elementos.length) {
+      } else if (!respondido && comprobar && e.key === 'Enter') {
         e.preventDefault();
-        elegir(orden.every((v, k) => v === k) ? 0 : -1);
+        comprobar();
       }
     };
   }

@@ -34,6 +34,19 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
       const orden = acertar ? ej.elementos : ej.elementos.slice().reverse();
       for (const t of orden) await page.locator('.ordenar-banco .ficha', { hasText: new RegExp('^\\s*' + t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*$') }).click();
       await page.getByRole('button', { name: 'Comprobar' }).click();
+    } else if (ej.tipo === 'seleccionar') {
+      const marcar = acertar ? ej.correctas : [ej.cartas.findIndex((_, i) => !ej.correctas.includes(i))];
+      for (const i of marcar) await page.locator('.carta-pick').nth(i).click();
+      await page.getByRole('button', { name: 'Comprobar' }).click();
+    } else if (ej.tipo === 'numero') {
+      await page.locator('.numero-entrada').fill(String(acertar ? ej.respuesta : ej.respuesta + 1));
+      await page.keyboard.press('Enter');
+    } else if (ej.tipo === 'emparejar') {
+      const izq = (t) => page.locator('.parejas-col').first().locator('.par', { hasText: new RegExp('^' + t + '$') });
+      const der = (t) => page.locator('.parejas-col').nth(1).locator('.par', { hasText: t });
+      if (!acertar) { await izq(ej.pares[0][0]).click(); await der(ej.pares[1][1]).click(); }
+      for (const [a, b2] of ej.pares) { await izq(a).click(); await der(b2).click(); }
+      await page.waitForSelector('.feedback');
     } else {
       const t = await textosOp();
       const buena = ej.opciones[ej.correcta];
@@ -215,6 +228,90 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
   ok((await page.locator('main').innerText()).includes('Bien contado'), 'cuenta correcta detectada (' + esp2 + ')');
   p = await estado();
   ok(p.conteo.mejor === Math.round(60000 / 700) && p.conteo.sesiones === 2 && p.logros.contador, 'récord y logro de contador');
+
+  // 6b) Preguntas interactivas: seleccionar, número y emparejar (bien y mal)
+  const nivelDe = (id) => page.evaluate((i) => { const c = CURSOS.find((c) => c.unidades.some((u) => u.lecciones.some((l) => l.id === i))); return c.id; }, id);
+  async function abrirNivel(id) {
+    // se marcan como hechos los niveles anteriores para llegar al nivel pedido: se salta directo con la API de la app
+    await page.evaluate((i) => { const c = CURSOS.find((c) => c.unidades.some((u) => u.lecciones.some((l) => l.id === i))); mostrarLeccion(c, niveles(c).find((l) => l.id === i)); }, id);
+  }
+  await inicio({ xp: 0 });
+  await abrirNivel('bj-3-1');
+  const vistos = new Set();
+  let fallosSel = 0;
+  while (await hayPregunta()) {
+    const q = await page.locator('.pregunta').first().innerText();
+    const ej = todos.find((e) => e.pregunta === q);
+    if (ej.tipo === 'seleccionar') {
+      ok(await page.getByRole('button', { name: 'Comprobar' }).isDisabled(), 'Comprobar está desactivado sin selección');
+      const cartas = await page.locator('.carta-pick').evaluateAll((els) => els.map((e) => e.querySelector('.carta').textContent));
+      const marcar = (!vistos.has(ej.id)) ? ej.correctas.slice(1).concat([ej.cartas.findIndex((_, i) => !ej.correctas.includes(i))]) : ej.correctas; // la primera vez se falla
+      ok(cartas.join() === ej.cartas.join(), 'las cartas del ejercicio se muestran en su orden');
+      for (const i of marcar) await page.locator('.carta-pick').nth(i).click();
+      await foto('9-seleccionar');
+      await page.getByRole('button', { name: 'Comprobar' }).click();
+      const primera = !vistos.has(ej.id);
+      vistos.add(ej.id);
+      ok((await page.locator('.feedback').innerText()).includes(primera ? 'Respuesta correcta' : '¡'), 'seleccionar: feedback ' + (primera ? 'de fallo' : 'de acierto'));
+      if (primera) { fallosSel++; ok(await page.locator('.carta-pick.mal').count() === 1 && await page.locator('.carta-pick.falta').count() === 1, 'se marcan la carta de más y la que faltaba'); }
+      await page.locator('.feedback .boton').click();
+    } else { await responder(true); await page.locator('.feedback .boton').click(); }
+  }
+  ok(fallosSel === 2, 'los dos ejercicios de seleccionar se fallaron y repitieron: ' + fallosSel);
+  await page.waitForSelector('.resultado-titulo');
+
+  await abrirNivel('bj-3-3');
+  const numeros = [];
+  while (await hayPregunta()) {
+    const q = await page.locator('.pregunta').first().innerText();
+    const ej = todos.find((e) => e.pregunta === q);
+    if (ej.tipo === 'numero') {
+      ok(await page.evaluate(() => document.activeElement.classList.contains('numero-entrada')), 'el cursor está en el campo numérico');
+      const primera = !numeros.includes(ej.id); numeros.push(ej.id);
+      await page.locator('.numero-entrada').fill(String(primera ? ej.respuesta + 1 : ej.respuesta));
+      await page.keyboard.press('Enter'); // se comprueba con Enter
+      ok((await page.locator('.feedback').innerText()).includes(primera ? 'Respuesta correcta: ' + ej.respuesta : 'Genial') || !primera, 'número: feedback');
+      await page.locator('.feedback .boton').click();
+    } else { await responder(true); await page.locator('.feedback .boton').click(); }
+  }
+  ok(numeros.length >= 4, 'los números fallados se repiten: ' + numeros.length);
+  await page.waitForSelector('.resultado-titulo');
+
+  await abrirNivel('pk-4-3');
+  let emparejado = false;
+  while (await hayPregunta()) {
+    const q = await page.locator('.pregunta').first().innerText();
+    const ej = todos.find((e) => e.pregunta === q);
+    if (ej.tipo === 'emparejar' && !emparejado) {
+      emparejado = true;
+      await foto('10-emparejar');
+      // un error a propósito: la primera izquierda con la derecha de otro par
+      await page.locator('.parejas-col').first().locator('.par').nth(0).click();
+      await page.locator('.parejas-col').nth(1).locator('.par', { hasText: ej.pares[1][1] }).click();
+      ok(await page.locator('.par.mal').count() === 2, 'pareja equivocada marcada');
+      await page.waitForTimeout(700);
+      ok(await page.locator('.par.mal').count() === 0, 'el error desaparece solo');
+      for (let i = 0; i < ej.pares.length; i++) {
+        await page.locator('.parejas-col').first().locator('.par', { hasText: new RegExp('^' + ej.pares[i][0] + '$') }).click();
+        await page.locator('.parejas-col').nth(1).locator('.par', { hasText: ej.pares[i][1] }).click();
+      }
+      ok(await page.locator('.par.unido').count() === ej.pares.length * 2, 'todas las parejas unidas');
+      await page.waitForSelector('.feedback');
+      ok((await page.locator('.feedback').innerText()).includes('Respuesta correcta: Preflop = '), 'con un error se cuenta como fallo');
+      await page.locator('.feedback .boton').click();
+    } else if (ej.tipo === 'emparejar') {
+      for (let i = 0; i < ej.pares.length; i++) {
+        await page.locator('.parejas-col').first().locator('.par', { hasText: new RegExp('^' + ej.pares[i][0] + '$') }).click();
+        await page.locator('.parejas-col').nth(1).locator('.par', { hasText: ej.pares[i][1] }).click();
+      }
+      await page.waitForSelector('.feedback.bien');
+      await page.locator('.feedback .boton').click();
+    } else { await responder(true); await page.locator('.feedback .boton').click(); }
+  }
+  await page.waitForSelector('.resultado-titulo');
+  ok(emparejado, 'se probó emparejar');
+  p = await estado();
+  ok(Object.keys(p.srs).some((k) => k.startsWith('pk-4-3-m1')), 'los ejercicios interactivos entran en la repetición espaciada');
 
   // 7) El almacenamiento bloqueado no rompe la app y avisa
   const p2 = await ctx.newPage();

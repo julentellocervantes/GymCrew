@@ -3,7 +3,7 @@
 const vm = require('vm'), fs = require('fs');
 const D = require('path').join(__dirname, '..', 'data') + '/';
 const ctx = vm.createContext({ console });
-for (const f of ['cursos.js', 'blackjack.js', 'poker.js', 'mus.js', 'blackjack-extra.js', 'poker-extra.js', 'mus-extra.js', 'ordenar-extra.js']) vm.runInContext(fs.readFileSync(D + f, 'utf8'), ctx, { filename: f });
+for (const f of ['cursos.js', 'blackjack.js', 'poker.js', 'mus.js', 'blackjack-extra.js', 'poker-extra.js', 'mus-extra.js', 'ordenar-extra.js', 'interactivos-extra.js']) vm.runInContext(fs.readFileSync(D + f, 'utf8'), ctx, { filename: f });
 const CURSOS = vm.runInContext('CURSOS', ctx);
 
 const errores = [];
@@ -127,6 +127,45 @@ for (const c of CURSOS) {
         nEj++;
         if (ids.has(e.id)) mal(e.id, 'id repetido'); ids.add(e.id);
         if (!e.pregunta || !e.explicacion) mal(e.id, 'falta pregunta o explicación');
+        if (['seleccionar', 'numero', 'emparejar'].includes(e.tipo)) {
+          if (!e.pregunta || !e.explicacion) mal(e.id, e.tipo + ': falta pregunta o explicación');
+          verif[e.tipo] = (verif[e.tipo] || 0) + 1;
+          const rango = (c) => c.replace(/[♠♥♦♣]$/, '');
+          const palo = (c) => c.slice(-1);
+          if (e.tipo === 'emparejar') {
+            if (!Array.isArray(e.pares) || e.pares.length < 3 || e.pares.length > 5) mal(e.id, 'emparejar: de 3 a 5 pares');
+            else if (new Set(e.pares.map((x) => x[0])).size !== e.pares.length || new Set(e.pares.map((x) => x[1])).size !== e.pares.length) mal(e.id, 'emparejar: términos repetidos');
+          } else if (e.tipo === 'seleccionar') {
+            const n = e.cartas.length;
+            if (n < 4 || n > 8 || new Set(e.cartas).size !== n) mal(e.id, 'seleccionar: de 4 a 8 cartas distintas');
+            const ok = e.correctas.length > 0 && e.correctas.length < n && new Set(e.correctas).size === e.correctas.length && e.correctas.every((i) => Number.isInteger(i) && i >= 0 && i < n);
+            if (!ok) mal(e.id, 'seleccionar: índices correctos no válidos');
+            // la selección correcta se recalcula con reglas independientes
+            const idx = (f) => e.cartas.map((c, i) => (f(c, i) ? i : -1)).filter((i) => i >= 0);
+            let esperado = null;
+            if (/SUMAN \+1/.test(e.pregunta)) esperado = idx((c) => hiLo(rango(c)) === 1);
+            else if (/RESTAN 1/.test(e.pregunta)) esperado = idx((c) => hiLo(rango(c)) === -1);
+            else if (/neutras/.test(e.pregunta)) esperado = idx((c) => hiLo(rango(c)) === 0);
+            else if (/valen 10 en el blackjack/.test(e.pregunta)) esperado = idx((c) => valBJ(rango(c)) === 10);
+            else if (/color \(mismo palo\)/.test(e.pregunta)) { const cuenta = {}; e.cartas.forEach((c) => (cuenta[palo(c)] = (cuenta[palo(c)] || 0) + 1)); esperado = idx((c) => cuenta[palo(c)] >= 5); }
+            else if (/trío/.test(e.pregunta)) { const cuenta = {}; e.cartas.forEach((c) => (cuenta[rango(c)] = (cuenta[rango(c)] || 0) + 1)); esperado = idx((c) => cuenta[rango(c)] === 3); }
+            else if (/valen 10 puntos en el mus/.test(e.pregunta)) esperado = idx((c) => valMus(c) === 10);
+            if (!esperado) mal(e.id, 'seleccionar: sin regla de verificación para «' + e.pregunta + '»');
+            else { verif.seleccion = (verif.seleccion || 0) + 1; if (JSON.stringify(esperado) !== JSON.stringify([...e.correctas].sort((a, b) => a - b))) mal(e.id, `seleccionar: se esperaba [${esperado}] y el ejercicio dice [${e.correctas}]`); }
+          } else {
+            if (!Number.isInteger(e.respuesta)) mal(e.id, 'numero: la respuesta debe ser un entero');
+            let esperado = null, m;
+            if (e.secuencia) esperado = e.secuencia.reduce((a, x) => a + hiLo(x), 0);
+            else if (e.situacion && e.situacion.jugador) esperado = totalBJ(e.situacion.jugador).t;
+            else if ((m = e.pregunta.match(/cuenta corriente es ([+-]?\d+) y quedan (\d+) mazos/))) esperado = Number(m[1]) / Number(m[2]);
+            else if ((m = e.pregunta.match(/bote tiene (\d+) fichas.*debes pagar (\d+)/))) esperado = Math.round((100 * m[2]) / (Number(m[1]) + Number(m[2])));
+            else if ((m = e.pregunta.match(/En el (flop|turn) tienes (\d+) outs/))) esperado = Number(m[2]) * (m[1] === 'flop' ? 4 : 2);
+            else if (e.situacion && e.situacion.filas && /mus|puntos/.test(e.pregunta)) esperado = e.situacion.filas[0].cartas.reduce((a, x) => a + valMus(x), 0);
+            if (esperado === null) mal(e.id, 'numero: sin regla de verificación');
+            else { verif.numeroOk = (verif.numeroOk || 0) + 1; if (esperado !== e.respuesta) mal(e.id, `numero: se esperaba ${esperado} y el ejercicio dice ${e.respuesta}`); }
+          }
+          continue;
+        }
         if (e.tipo === 'ordenar') {
           // "elementos" ya viene en el orden correcto: debe tener entre 3 y 6 distintos y una explicación
           if (!Array.isArray(e.elementos) || e.elementos.length < 3 || e.elementos.length > 6) mal(e.id, 'ordenar: debe tener de 3 a 6 elementos');

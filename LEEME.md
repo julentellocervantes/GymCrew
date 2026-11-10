@@ -31,7 +31,7 @@ Los niveles se desbloquean en orden. Puedes repetir cualquiera que ya hayas comp
 - **Rangos** según tu XP (Novato, Aprendiz, Jugador, Tahúr, Maestro, Leyenda) y **10 logros**. Se ven pulsando la tarjeta de rango del inicio.
 - **Meta diaria** (10, 20, 30 o 50 XP, la eliges en Ajustes) con un anillo en el inicio. Cada 7 días de racha ganas un **congelador** 🧊 (máximo 2) que salva la racha si te saltas un día.
 - **Repetición espaciada**: cada pregunta que respondes se apunta. Si aciertas, tarda más en volver (1, 2, 4, 8 y 16 días); si fallas, vuelve hoy. En el inicio aparecen **Repaso del día** y **Mis errores**, que mezclan preguntas de todos los juegos.
-- **Ejercicios de ordenar** (colocar fichas en el orden correcto), como los pasos de una mano o el ranking de manos.
+- **Preguntas interactivas** (no solo tipo test): **ordenar** fichas (pasos de una mano, ranking de manos), **tocar las cartas** que cumplen algo (p. ej. las que suman +1 en el Hi-Lo), **escribir una cifra** (cuenta corriente, total de la mano, outs, pot odds, cuenta verdadera, puntos del mus) y **unir parejas** (término ↔ significado).
 - **Entrena el conteo**: cartas una a una a la velocidad que elijas (2 s, 1,2 s o 0,7 s) y al final dices la cuenta Hi-Lo. Se guarda tu récord en cartas por minuto.
 - **Ajustes**: meta diaria, letra grande, menos movimiento, **copia de seguridad** (descargar y restaurar un archivo .json) y enlace de ayuda por si el juego con dinero te preocupa.
 - **Accesibilidad**: las cartas tienen nombre para lectores de pantalla (p. ej. «rey de picas»), la barra de progreso y el feedback se anuncian, y el foco pasa a «Continuar» al responder.
@@ -58,6 +58,7 @@ Si la web está publicada (https), el navegador te ofrece **instalarla** en el m
 - `data/blackjack.js`, `data/poker.js`, `data/mus.js`: un archivo por juego, con sus unidades, niveles y ejercicios.
 - `data/*-extra.js`: niveles adicionales que se añaden a cada curso (mismo formato). Puedes seguir ampliando ahí.
 - `data/ordenar-extra.js`: ejercicios de ordenar. Cada uno lleva `elementos` ya en el orden correcto (la app los mezcla).
+- `data/interactivos-extra.js`: ejercicios `seleccionar` (`cartas` + `correctas` con las posiciones), `numero` (`respuesta` entera y `unidad` opcional) y `emparejar` (`pares: [[término, significado], ...]`). El validador recalcula la respuesta de casi todos con reglas independientes y te avisa si algo no cuadra.
 
 ## Pruebas
 
