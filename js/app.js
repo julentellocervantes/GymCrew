@@ -23,7 +23,7 @@ const progresoNuevo = () => ({
   congeladores: 0,                // protegen la racha si fallas un día (máx. 2)
   srs: {},                        // repetición espaciada: id del ejercicio -> { caja, prox, fallos }
   conteo: { sesiones: 0, mejor: 0 }, // entrenador de conteo
-  ajustes: { letra: 'normal', calma: false },
+  ajustes: { letra: 'normal', calma: false, sonido: true },
 });
 
 // Comprueba que un progreso (guardado o importado) tiene la forma esperada y rellena lo que falte
@@ -45,7 +45,7 @@ function normalizarProgreso(datos) {
   p.srs = obj(p.srs, {});
   p.xpHoy = Object.assign({ dia: null, xp: 0 }, obj(p.xpHoy, {}));
   p.conteo = Object.assign({ sesiones: 0, mejor: 0 }, obj(p.conteo, {}));
-  p.ajustes = Object.assign({ letra: 'normal', calma: false }, obj(p.ajustes, {}));
+  p.ajustes = Object.assign({ letra: 'normal', calma: false, sonido: true }, obj(p.ajustes, {}));
   return p;
 }
 
@@ -324,6 +324,13 @@ document.addEventListener('pointerdown', (e) => {
   const onda = el('span', { class: 'onda', style: `left:${e.clientX - r.left}px;top:${e.clientY - r.top}px` });
   b.append(onda);
   setTimeout(() => onda.remove(), 750);
+});
+
+// Sonido al pulsar (las opciones de test suenan al acertar o fallar, no al tocarlas)
+document.addEventListener('pointerdown', (e) => {
+  if (!e.target.closest) return;
+  const b = e.target.closest('.boton, .juego, .rango, .repaso, .instalar, .ficha, .par, .seg, .carta-pick, .conteo-paso, .interruptor, .nodo, .cerrar, .volver, .ajustes-btn');
+  if (b && !b.disabled && typeof sonido === 'function') sonido('toque');
 });
 
 // Tocar a Nai: salta y suelta chispas
@@ -825,6 +832,7 @@ function mostrarLeccion(curso, leccion) {
     const ejercicio = cola[idx];
     elegida = i;
     if (i !== ejercicio.correcta) fallados[ejercicio.id] = true;
+    sonido(i === ejercicio.correcta ? 'acierto' : 'error');
     if (!vistos[ejercicio.id]) {
       vistos[ejercicio.id] = true;
       registrarRespuesta(ejercicio.id, i === ejercicio.correcta);
@@ -1002,10 +1010,12 @@ function mostrarLeccion(curso, leccion) {
               if (campo === 'i') par.izq = par.izq === v ? null : v;
               else if (par.izq !== null) {
                 if (par.izq === v) {
+                  sonido('unir');
                   par.unidos.push({ i: v, j: v });
                   par.izq = null;
                   if (par.unidos.length === n) setTimeout(() => cola[idx] === dueno && elegida === null && elegir(par.fallos === 0 ? 0 : -1), 450);
                 } else {
+                  sonido('error');
                   par.fallos += 1;
                   par.error = { i: par.izq, j: v };
                   par.izq = null;
@@ -1197,6 +1207,11 @@ function mostrarResultado(curso, leccion, precision, extra) {
     precision >= 67 || extra.cursoCompleto || extra.rangoNuevo ? confeti(extra.cursoCompleto || extra.rangoNuevo ? 80 : 40) : null
   );
 
+  // Sonidos del resultado: fanfarria, y luego meta, logros y rango si los hay
+  sonido(precision >= 67 || extra.cursoCompleto ? 'nivel' : 'toque');
+  if (act.metaCumplida) sonido('meta', 700);
+  if (extra.logros && extra.logros.length) sonido('logro', act.metaCumplida ? 1300 : 700);
+  if (extra.rangoNuevo) sonido('rango', 1500);
   contar(xp, extra.xp, (v) => `+${v} XP`, 350);
   contar(prec, precision, (v) => `Precisión: ${v}%`, 550);
 }

@@ -117,6 +117,12 @@ function mostrarAjustes(aviso = '') {
           aplicarAjustes();
           recargar();
         }, 'Tamaño de letra'),
+        interruptor('Efectos de sonido', 'Sonidos al acertar, fallar y completar niveles', progreso.ajustes.sonido !== false, (v) => {
+          progreso.ajustes.sonido = v;
+          guardarProgreso();
+          recargar();
+          sonido('acierto'); // si lo acabas de activar, suena una muestra
+        }),
         interruptor('Menos movimiento', 'Quita animaciones, confeti y chispas', !!progreso.ajustes.calma, (v) => {
           progreso.ajustes.calma = v;
           guardarProgreso();
@@ -234,6 +240,7 @@ function correrConteo() {
     if (!zona.isConnected) return; // saliste de la pantalla: se corta el entrenamiento
     if (k >= cartas.length) return preguntarConteo(cartas, total);
     zona.replaceChildren(carta(cartas[k], 0));
+    sonido('carta');
     k += 1;
     contador.textContent = `${k} / ${n}`;
     setTimeout(siguiente, vel);
@@ -281,6 +288,9 @@ function resultadoConteo(cartas, total, dicho) {
   if (acierto) progreso.conteo.mejor = Math.max(progreso.conteo.mejor, Math.round(60000 / confConteo.vel));
   const logros = calcularLogros();
   guardarProgreso();
+  sonido(acierto ? 'nivel' : 'error');
+  if (actividad.metaCumplida) sonido('meta', 700);
+  if (logros.length) sonido('logro', actividad.metaCumplida ? 1300 : 700);
   const nuevoRango = rangoDe(progreso.xp);
 
   const signo = (v) => (v > 0 ? '+' + v : v < 0 ? '−' + Math.abs(v) : '0');

@@ -153,7 +153,7 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
   ok((await estado()).meta === 10, 'meta guardada');
   await page.getByRole('button', { name: 'Letra grande' }).click();
   ok(await page.evaluate(() => document.documentElement.dataset.letra) === 'grande', 'letra grande aplicada');
-  await page.getByRole('switch').click();
+  await page.getByRole('switch', { name: /Menos movimiento/ }).click();
   ok(await page.evaluate(() => document.documentElement.dataset.calma) === 'si', 'menos movimiento aplicado');
   const [descarga] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Descargar copia' }).click()]);
   const copia = JSON.parse(require('fs').readFileSync(await descarga.path(), 'utf8'));
@@ -182,16 +182,16 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
   await page.getByRole('button', { name: /Rápido/ }).click();
   await page.getByRole('button', { name: '10', exact: true }).click();
   await foto('5-conteo-ajustes');
+  const observar = () => page.evaluate(() => {
+    window.__vistas = [];
+    if (window.__obs) return;
+    window.__obs = true;
+    new MutationObserver((muts) => muts.forEach((m) => m.addedNodes.forEach((n) => { if (n.classList && n.classList.contains('carta') && n.closest('.conteo-zona')) window.__vistas.push(n.textContent); }))).observe(document.body, { childList: true, subtree: true });
+  });
+  await observar();
   await page.getByRole('button', { name: 'Empezar' }).click();
-  const vistas = [];
-  const t0 = Date.now();
-  while (Date.now() - t0 < 14000 && !(await page.locator('.conteo-selector').count())) {
-    const c = await page.locator('.conteo-zona .carta').first().textContent().catch(() => null);
-    const n = await page.locator('.conteo-contador').textContent().catch(() => '');
-    if (c && n && vistas.length < parseInt(n)) { vistas.push(c); }
-    await page.waitForTimeout(40);
-  }
-  await page.waitForSelector('.conteo-selector');
+  await page.waitForSelector('.conteo-selector', { timeout: 20000 });
+  const vistas = await page.evaluate(() => window.__vistas);
   ok(vistas.length === 10, 'se enseñaron las 10 cartas, vistas: ' + vistas.length);
   const esperado = vistas.reduce((s, c) => s + hiLo(c), 0);
   const dicho = esperado + 1; // primero se falla a propósito
@@ -211,16 +211,10 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
   await page.waitForTimeout(1500);
   ok(await page.locator('.conteo-selector').count() === 0, 'parar el entrenamiento no deja pantallas fantasma');
   // acierto
+  await observar();
   await page.getByRole('button', { name: 'Empezar' }).click();
-  const vistas2 = [];
-  const t1 = Date.now();
-  while (Date.now() - t1 < 14000 && !(await page.locator('.conteo-selector').count())) {
-    const c = await page.locator('.conteo-zona .carta').first().textContent().catch(() => null);
-    const n = await page.locator('.conteo-contador').textContent().catch(() => '');
-    if (c && n && vistas2.length < parseInt(n)) vistas2.push(c);
-    await page.waitForTimeout(40);
-  }
-  await page.waitForSelector('.conteo-selector');
+  await page.waitForSelector('.conteo-selector', { timeout: 20000 });
+  const vistas2 = await page.evaluate(() => window.__vistas);
   const esp2 = vistas2.reduce((s, c) => s + hiLo(c), 0);
   for (let i = 0; i < Math.abs(esp2); i++) await page.getByRole('button', { name: esp2 > 0 ? 'Sumar uno' : 'Restar uno' }).click();
   await page.getByRole('button', { name: 'Comprobar' }).click();
@@ -312,6 +306,53 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
   ok(emparejado, 'se probó emparejar');
   p = await estado();
   ok(Object.keys(p.srs).some((k) => k.startsWith('pk-4-3-m1')), 'los ejercicios interactivos entran en la repetición espaciada');
+
+  // 6c) Efectos de sonido: cada uno genera audio real, suenan en los momentos correctos y se pueden desactivar
+  const picos = await page.evaluate(async () => {
+    const res = {};
+    for (const n of sonido.nombres) {
+      const c = new OfflineAudioContext(1, 44100 * 2, 44100);
+      sonido.generar(n, c, c.destination);
+      const datos = (await c.startRendering()).getChannelData(0);
+      let pico = 0, ultimo = 0;
+      for (let i = 0; i < datos.length; i++) { const a = Math.abs(datos[i]); if (a > pico) pico = a; if (a > 0.005) ultimo = i; }
+      res[n] = { pico: +pico.toFixed(3), dur: +(ultimo / 44100).toFixed(2) };
+    }
+    return res;
+  });
+  for (const [n, r] of Object.entries(picos)) ok(r.pico > 0.03 && r.pico <= 1 && r.dur > 0.02 && r.dur < 1.8, `el sonido «${n}» genera audio (pico ${r.pico}, dura ${r.dur} s)`);
+  await inicio({ xp: 0 });
+  await page.evaluate(() => (sonido.registro.length = 0));
+  await abrirNivel('bj-1-1');
+  await responder(true);
+  await page.waitForTimeout(100);
+  let reg = await page.evaluate(() => sonido.registro.slice());
+  ok(reg.includes('acierto') && !reg.includes('error'), 'acertar suena a acierto: ' + reg);
+  await page.locator('.feedback .boton').click();
+  await responder(false);
+  reg = await page.evaluate(() => sonido.registro.slice());
+  ok(reg.includes('error'), 'fallar suena a error');
+  await page.locator('.feedback .boton').click();
+  await terminar(true);
+  await page.waitForSelector('.resultado-titulo');
+  reg = await page.evaluate(() => sonido.registro.slice());
+  ok(reg.includes('nivel'), 'terminar un nivel suena a fanfarria');
+  ok(reg.includes('toque'), 'pulsar botones hace un clic');
+  // se puede desactivar y se recuerda
+  await page.reload();
+  await page.locator('.ajustes-btn').click();
+  await page.getByRole('switch', { name: /Efectos de sonido/ }).click();
+  ok((await estado()).ajustes.sonido === false, 'el sonido se desactiva en Ajustes');
+  await page.evaluate(() => (sonido.registro.length = 0));
+  await abrirNivel('bj-1-1');
+  await responder(true);
+  await page.mouse.click(10, 10);
+  ok((await page.evaluate(() => sonido.registro.length)) === 0, 'con el sonido desactivado no suena nada');
+  await page.reload();
+  await page.locator('.ajustes-btn').click();
+  ok(await page.getByRole('switch', { name: /Efectos de sonido/ }).getAttribute('aria-checked') === 'false', 'el ajuste de sonido se recuerda');
+  await page.getByRole('switch', { name: /Efectos de sonido/ }).click();
+  ok((await estado()).ajustes.sonido === true, 'y se puede volver a activar');
 
   // 7) El almacenamiento bloqueado no rompe la app y avisa
   const p2 = await ctx.newPage();

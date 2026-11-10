@@ -33,7 +33,8 @@ Los niveles se desbloquean en orden. Puedes repetir cualquiera que ya hayas comp
 - **Repetición espaciada**: cada pregunta que respondes se apunta. Si aciertas, tarda más en volver (1, 2, 4, 8 y 16 días); si fallas, vuelve hoy. En el inicio aparecen **Repaso del día** y **Mis errores**, que mezclan preguntas de todos los juegos.
 - **Preguntas interactivas** (no solo tipo test): **ordenar** fichas (pasos de una mano, ranking de manos), **tocar las cartas** que cumplen algo (p. ej. las que suman +1 en el Hi-Lo), **escribir una cifra** (cuenta corriente, total de la mano, outs, pot odds, cuenta verdadera, puntos del mus) y **unir parejas** (término ↔ significado).
 - **Entrena el conteo**: cartas una a una a la velocidad que elijas (2 s, 1,2 s o 0,7 s) y al final dices la cuenta Hi-Lo. Se guarda tu récord en cartas por minuto.
-- **Ajustes**: meta diaria, letra grande, menos movimiento, **copia de seguridad** (descargar y restaurar un archivo .json) y enlace de ayuda por si el juego con dinero te preocupa.
+- **Efectos de sonido**: clic al pulsar, acierto, error, pareja unida, carta repartida en el conteo, fanfarria al terminar un nivel y sonidos para meta diaria, logro y nuevo rango. Se generan con Web Audio (no hay archivos de audio, así que funcionan sin conexión) y se desactivan en Ajustes.
+- **Ajustes**: meta diaria, letra grande, menos movimiento, sonido, **copia de seguridad** (descargar y restaurar un archivo .json) y enlace de ayuda por si el juego con dinero te preocupa.
 - **Accesibilidad**: las cartas tienen nombre para lectores de pantalla (p. ej. «rey de picas»), la barra de progreso y el feedback se anuncian, y el foco pasa a «Continuar» al responder.
 
 ## Instalarla como app (PWA)
@@ -50,6 +51,7 @@ Si la web está publicada (https), el navegador te ofrece **instalarla** en el m
 - `index.html`: la página. Aquí se enlazan los archivos de datos.
 - `css/estilos.css`: el diseño.
 - `js/app.js`: la lógica principal (pantallas, mapa, ejercicios, XP, racha, meta diaria y repetición espaciada).
+- `js/sonido.js`: los efectos de sonido (cada uno es una pequeña receta de notas; puedes cambiarlos ahí).
 - `js/extras.js`: repaso del día, ajustes, copia de seguridad y entrenador de conteo.
 - `js/inicio.js`: arranque de la app (se carga el último).
 - `tests/`: pruebas automáticas (ver abajo).
