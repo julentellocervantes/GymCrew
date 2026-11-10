@@ -58,11 +58,13 @@ Si la web está publicada (https), el navegador te ofrece **instalarla** en el m
 - `data/blackjack.js`, `data/poker.js`, `data/mus.js`: un archivo por juego, con sus unidades, niveles y ejercicios.
 - `data/*-extra.js`: niveles adicionales que se añaden a cada curso (mismo formato). Puedes seguir ampliando ahí.
 - `data/ordenar-extra.js`: ejercicios de ordenar. Cada uno lleva `elementos` ya en el orden correcto (la app los mezcla).
+- `data/variedad-extra.js`: más preguntas interactivas para que todos los niveles mezclen tipos. Al cargar, reparte los ejercicios de cada nivel para que no haya bloques del mismo tipo. El campo `chequeo` solo lo usa el validador.
 - `data/interactivos-extra.js`: ejercicios `seleccionar` (`cartas` + `correctas` con las posiciones), `numero` (`respuesta` entera y `unidad` opcional) y `emparejar` (`pares: [[término, significado], ...]`). El validador recalcula la respuesta de casi todos con reglas independientes y te avisa si algo no cuadra.
 
 ## Pruebas
 
 - `node tests/validar.js`: comprueba la estructura de todos los datos y recalcula con código independiente las respuestas de estrategia básica, Hi-Lo, cuenta verdadera, mus y póker. No necesita instalar nada. Ejecútalo cada vez que añadas ejercicios.
+- `node tests/recorrido.js`: juega los 38 niveles respondiendo bien cada pregunta (todos los tipos) y comprueba que cada nivel mezcla al menos 3 tipos. Tarda unos minutos.
 - `node tests/navegador.js`: abre la app en un navegador real (Playwright) y prueba pantallas, repetición espaciada, rachas, ajustes, copia de seguridad y conteo. Necesita `npm i playwright` y la carpeta servida, por ejemplo con `python3 -m http.server 8123`.
 
 ## Cómo añadir ejercicios o niveles

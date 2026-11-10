@@ -3,7 +3,155 @@
 const vm = require('vm'), fs = require('fs');
 const D = require('path').join(__dirname, '..', 'data') + '/';
 const ctx = vm.createContext({ console });
-for (const f of ['cursos.js', 'blackjack.js', 'poker.js', 'mus.js', 'blackjack-extra.js', 'poker-extra.js', 'mus-extra.js', 'ordenar-extra.js', 'interactivos-extra.js']) vm.runInContext(fs.readFileSync(D + f, 'utf8'), ctx, { filename: f });
+
+// ---------- ejercicios interactivos: seleccionar, numero, emparejar y ordenar ----------
+const C = (n, k) => { let r = 1; for (let i = 1; i <= k; i++) r = (r * (n - k + i)) / i; return Math.round(r); };
+// Las respuestas se recalculan aquí con reglas independientes. Lo que solo es una definición
+// (sin forma de calcularlo) se cuenta aparte como "definiciones" para que se vea cuánto es verificable.
+const rangoC = (c) => c.replace(/[♠♥♦♣]$/, '');
+const paloC = (c) => c.slice(-1);
+const VAL_PK = { 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8, 9: 9, 10: 10, J: 11, Q: 12, K: 13, A: 14 };
+function categoriaPoker(cartas) { // cinco cartas "K♠ K♥ ..." -> nombre de la mano
+  const v = cartas.map((c) => VAL_PK[rangoC(c)]).sort((x, y) => x - y);
+  const color = new Set(cartas.map(paloC)).size === 1;
+  const unicos = [...new Set(v)];
+  const escalera = unicos.length === 5 && (v[4] - v[0] === 4 || (v[4] === 14 && v[3] === 5 && v[0] === 2));
+  const cuentas = Object.values(v.reduce((m, x) => ((m[x] = (m[x] || 0) + 1), m), {})).sort((x, y) => y - x).join('');
+  if (escalera && color) return 'Escalera de color';
+  if (cuentas === '41') return 'Póker';
+  if (cuentas === '32') return 'Full';
+  if (color) return 'Color';
+  if (escalera) return 'Escalera';
+  if (cuentas === '311') return 'Trío';
+  if (cuentas === '221') return 'Doble pareja';
+  if (cuentas === '2111') return 'Pareja';
+  return 'Carta alta';
+}
+const hayEscalera = (valores) => { const s = new Set(valores); if (s.has(14)) s.add(1); for (let i = 1; i <= 10; i++) if ([0, 1, 2, 3, 4].every((k) => s.has(i + k))) return true; return false; };
+const numDe = (t) => Number(String(t).replace('−', '-'));
+const DEALERS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'A'];
+
+function verificarInteractivo(e) {
+  const t = e.tipo;
+  if (!e.pregunta || !e.explicacion) mal(e.id, t + ': falta pregunta o explicación');
+  verif[t] = (verif[t] || 0) + 1;
+  const comprobado = () => (verif.calculados = (verif.calculados || 0) + 1);
+  const definicion = () => (verif.definiciones = (verif.definiciones || 0) + 1);
+
+  if (t === 'ordenar') {
+    const n = e.elementos ? e.elementos.length : 0;
+    if (n < 3 || n > 6) mal(e.id, 'ordenar: debe tener de 3 a 6 elementos');
+    else if (new Set(e.elementos).size !== n) mal(e.id, 'ordenar: elementos repetidos');
+    const c = e.chequeo;
+    if (c && c.numeros) {
+      comprobado();
+      if (JSON.stringify(e.elementos.map(numDe)) !== JSON.stringify(c.numeros) || c.numeros.some((x, i) => i && x >= c.numeros[i - 1])) mal(e.id, 'ordenar: los números no van de mayor a menor');
+    } else if (c && c.fracciones) {
+      comprobado();
+      const vals = c.fracciones.map(([a, b]) => a / b);
+      if (!e.elementos.every((x, i) => x === `${c.fracciones[i][0]} a ${c.fracciones[i][1]}`) || vals.some((x, i) => i && x >= vals[i - 1])) mal(e.id, 'ordenar: las fracciones no van de mayor a menor');
+    } else if (c && c.lance) {
+      comprobado();
+      for (let i = 1; i < c.manos.length; i++) if (ganaMus(c.lance, c.manos[i - 1], c.manos[i]) !== 1) mal(e.id, `ordenar: la mano ${i} no gana a la mano ${i + 1} en ${c.lance}`);
+      if (!e.elementos.every((x, i) => x === c.manos[i].join(' · '))) mal(e.id, 'ordenar: el texto no coincide con las manos');
+    } else if (c && c.ordenJuego) {
+      comprobado();
+      const pos = e.elementos.map((x) => ORDEN_JUEGO.indexOf(Number(x)));
+      if (pos.some((x) => x < 0) || pos.some((x, i) => i && x <= pos[i - 1])) mal(e.id, 'ordenar: el orden de los juegos no es el del mus');
+    } else definicion();
+    return;
+  }
+
+  if (t === 'emparejar') {
+    const n = e.pares ? e.pares.length : 0;
+    if (n < 3 || n > 5) return mal(e.id, 'emparejar: de 3 a 5 pares');
+    if (new Set(e.pares.map((x) => x[0])).size !== n || new Set(e.pares.map((x) => x[1])).size !== n) return mal(e.id, 'emparejar: términos repetidos');
+    const c = e.chequeo;
+    if (Array.isArray(c) && c.length === n && c.every((x) => x && x.jugador)) {
+      comprobado();
+      c.forEach((x, i) => { const m = mejorJugada(x.jugador, x.crupier); if (m !== e.pares[i][1]) mal(e.id, `emparejar: «${e.pares[i][0]}» -> la estrategia básica dice ${m}, no ${e.pares[i][1]}`); });
+    } else if (Array.isArray(c) && c.every((x) => typeof x === 'number')) {
+      comprobado();
+      c.forEach((x, i) => { if (Number((e.pares[i][1].match(/\d+/) || [])[0]) !== x) mal(e.id, `emparejar: se esperaba ${x} en «${e.pares[i][0]}»`); });
+      // combinaciones reales con una baraja de 52
+      if (JSON.stringify(c) === '[6,16,4]' && (C(4, 2) !== 6 || 4 * 4 !== 16 || 4 !== 4)) mal(e.id, 'combinaciones mal calculadas');
+    } else if (e.pares.every((x) => /^([2-9]|10|[JQKA])[♠♥♦♣]( |$)/.test(x[0]))) {
+      comprobado();
+      e.pares.forEach((x) => { const cat = categoriaPoker(x[0].split(' ')); if (cat !== x[1]) mal(e.id, `emparejar: «${x[0]}» es ${cat}, no ${x[1]}`); });
+    } else definicion();
+    return;
+  }
+
+  if (t === 'seleccionar') {
+    const n = e.cartas ? e.cartas.length : 0;
+    const conPalo = e.cartas.every((c) => /[♠♥♦♣]$/.test(c));
+    if (n < 4 || n > 8 || (conPalo && new Set(e.cartas).size !== n)) mal(e.id, 'seleccionar: de 4 a 8 cartas (distintas si llevan palo)');
+    const valido = e.correctas.length > 0 && e.correctas.length < n && new Set(e.correctas).size === e.correctas.length && e.correctas.every((i) => Number.isInteger(i) && i >= 0 && i < n);
+    if (!valido) mal(e.id, 'seleccionar: índices correctos no válidos');
+    const idx = (f) => e.cartas.map((c, i) => (f(c, i) ? i : -1)).filter((i) => i >= 0);
+    const cuenta = (f) => e.cartas.reduce((m, c) => ((m[f(c)] = (m[f(c)] || 0) + 1), m), {});
+    const q = e.pregunta;
+    const ch = e.chequeo || {};
+    let esperado = null;
+    if (ch.accion) esperado = idx((c) => mejorJugada(ch.jugador, rangoC(c)) === ch.accion);
+    else if (ch.siempreDividir) esperado = idx((c) => DEALERS.every((d) => mejorJugada([rangoC(c), rangoC(c)], d) === 'Dividir'));
+    else if (ch.descarta) { const k = cuenta((c) => c); esperado = idx((c) => k[c] === 1); }
+    else if (/SUMAN \+1/.test(q)) esperado = idx((c) => hiLo(rangoC(c)) === 1);
+    else if (/RESTAN 1/.test(q)) esperado = idx((c) => hiLo(rangoC(c)) === -1);
+    else if (/neutras/.test(q)) esperado = idx((c) => hiLo(rangoC(c)) === 0);
+    else if (/valen 10 en el blackjack/.test(q)) esperado = idx((c) => valBJ(rangoC(c)) === 10);
+    else if (/te dan color de corazones/.test(q)) esperado = idx((c) => paloC(c) === '♥');
+    else if (/color \(mismo palo\)/.test(q)) { const k = cuenta(paloC); esperado = idx((c) => k[paloC(c)] >= 5); }
+    else if (/trío/.test(q)) { const k = cuenta(rangoC); esperado = idx((c) => k[rangoC(c)] === 3); }
+    else if (/doble pareja/.test(q)) { const k = cuenta(rangoC); esperado = idx((c) => k[rangoC(c)] === 2); }
+    else if (/medias/.test(q)) { const k = cuenta((c) => c); esperado = idx((c) => k[c] === 3); }
+    else if (/valen 10 puntos en el mus/.test(q)) esperado = idx((c) => valMus(c) === 10);
+    else if (/completan la escalera/.test(q) && e.situacion) {
+      const base = e.situacion.filas.flatMap((f) => f.cartas).map((c) => VAL_PK[rangoC(c)]);
+      esperado = idx((c) => hayEscalera(base.concat([VAL_PK[rangoC(c)]])));
+    } else if (/cinco que forman tu mejor mano \(una escalera\)/.test(q)) {
+      const v = e.cartas.map((c) => VAL_PK[rangoC(c)]);
+      let ganadora = null;
+      for (let i = 1; i <= 10 && !ganadora; i++) { const run = [0, 1, 2, 3, 4].map((k) => i + k); if (run.every((r) => v.includes(r === 1 ? 14 : r))) ganadora = run.map((r) => (r === 1 ? 14 : r)); }
+      esperado = ganadora ? idx((c) => ganadora.includes(VAL_PK[rangoC(c)])) : null;
+    }
+    if (!esperado) return mal(e.id, 'seleccionar: sin regla de verificación para «' + q + '»');
+    comprobado();
+    if (JSON.stringify(esperado) !== JSON.stringify([...e.correctas].sort((a, b) => a - b))) mal(e.id, `seleccionar: se esperaba [${esperado}] y el ejercicio dice [${e.correctas}]`);
+    return;
+  }
+
+  // numero
+  if (!Number.isInteger(e.respuesta)) mal(e.id, 'numero: la respuesta debe ser un entero');
+  const q = e.pregunta;
+  let esperado = null, m;
+  if (e.secuencia) esperado = e.secuencia.reduce((a, x) => a + hiLo(x), 0);
+  else if (e.situacion && e.situacion.jugador) esperado = totalBJ(e.situacion.jugador).t;
+  else if ((m = q.match(/cuenta corriente es ([+-]?\d+) y quedan (\d+) mazos/))) esperado = Number(m[1]) / Number(m[2]);
+  else if ((m = q.match(/bote tiene (\d+) fichas.*debes pagar (\d+)/))) esperado = Math.round((100 * m[2]) / (Number(m[1]) + Number(m[2])));
+  else if ((m = q.match(/En el (flop|turn) tienes (\d+) outs/))) esperado = Number(m[2]) * (m[1] === 'flop' ? 4 : 2);
+  else if (e.situacion && e.situacion.filas && /puntos/.test(q)) esperado = e.situacion.filas[0].cartas.reduce((a, x) => a + valMus(x), 0);
+  else if ((m = q.match(/Apuestas (\d+) fichas y doblas/))) esperado = 2 * Number(m[1]);
+  else if ((m = q.match(/Tu apuesta es de (\d+) fichas\. ¿Cuánto es el máximo.*seguro/))) esperado = Number(m[1]) / 2;
+  else if ((m = q.match(/Apuestas (\d+) fichas y te rindes/))) esperado = Number(m[1]) / 2;
+  else if ((m = q.match(/blackjack natural con una apuesta de (\d+) fichas.*paga (\d+) a (\d+)/))) esperado = (Number(m[1]) * Number(m[2])) / Number(m[3]);
+  else if ((m = q.match(/bankroll es de (\d+) € .* el (\d+) %/))) esperado = (Number(m[1]) * Number(m[2])) / 100;
+  else if (/cartas tienes en total/.test(q)) esperado = 2 + 5;
+  else if (/cuántas cuentan para tu mano final/i.test(q)) esperado = 5;
+  else if ((m = q.match(/Tienes (\d+) cartas de un mismo palo.*cuántas quedan en el mazo/i))) esperado = 13 - Number(m[1]);
+  else if (/pareja de reyes/.test(q)) esperado = C(4, 2);
+  else if (/manos distintas de 5 cartas/.test(q)) esperado = C(7, 5);
+  else if (/cuántas cartas tiene la baraja española/i.test(q)) esperado = 4 * 10;
+  else if (/cuántas cartas recibe cada jugador/i.test(q)) esperado = 4;
+  else if (/cuántas cartas puedes cambiar/i.test(q)) esperado = 4;
+  else if ((m = q.match(/lleva (\d+) piedras\. ¿Cuántos amarracos completos/))) esperado = Math.floor(Number(m[1]) / 5);
+  else if ((m = q.match(/llevas (\d+) piedras.*llegar a 40/))) esperado = 40 - Number(m[1]);
+  if (esperado === null) return mal(e.id, 'numero: sin regla de verificación para «' + q + '»');
+  comprobado();
+  if (esperado !== e.respuesta) mal(e.id, `numero: se esperaba ${esperado} y el ejercicio dice ${e.respuesta}`);
+}
+
+for (const f of ['cursos.js', 'blackjack.js', 'poker.js', 'mus.js', 'blackjack-extra.js', 'poker-extra.js', 'mus-extra.js', 'ordenar-extra.js', 'interactivos-extra.js', 'variedad-extra.js']) vm.runInContext(fs.readFileSync(D + f, 'utf8'), ctx, { filename: f });
 const CURSOS = vm.runInContext('CURSOS', ctx);
 
 const errores = [];
@@ -127,51 +275,8 @@ for (const c of CURSOS) {
         nEj++;
         if (ids.has(e.id)) mal(e.id, 'id repetido'); ids.add(e.id);
         if (!e.pregunta || !e.explicacion) mal(e.id, 'falta pregunta o explicación');
-        if (['seleccionar', 'numero', 'emparejar'].includes(e.tipo)) {
-          if (!e.pregunta || !e.explicacion) mal(e.id, e.tipo + ': falta pregunta o explicación');
-          verif[e.tipo] = (verif[e.tipo] || 0) + 1;
-          const rango = (c) => c.replace(/[♠♥♦♣]$/, '');
-          const palo = (c) => c.slice(-1);
-          if (e.tipo === 'emparejar') {
-            if (!Array.isArray(e.pares) || e.pares.length < 3 || e.pares.length > 5) mal(e.id, 'emparejar: de 3 a 5 pares');
-            else if (new Set(e.pares.map((x) => x[0])).size !== e.pares.length || new Set(e.pares.map((x) => x[1])).size !== e.pares.length) mal(e.id, 'emparejar: términos repetidos');
-          } else if (e.tipo === 'seleccionar') {
-            const n = e.cartas.length;
-            if (n < 4 || n > 8 || new Set(e.cartas).size !== n) mal(e.id, 'seleccionar: de 4 a 8 cartas distintas');
-            const ok = e.correctas.length > 0 && e.correctas.length < n && new Set(e.correctas).size === e.correctas.length && e.correctas.every((i) => Number.isInteger(i) && i >= 0 && i < n);
-            if (!ok) mal(e.id, 'seleccionar: índices correctos no válidos');
-            // la selección correcta se recalcula con reglas independientes
-            const idx = (f) => e.cartas.map((c, i) => (f(c, i) ? i : -1)).filter((i) => i >= 0);
-            let esperado = null;
-            if (/SUMAN \+1/.test(e.pregunta)) esperado = idx((c) => hiLo(rango(c)) === 1);
-            else if (/RESTAN 1/.test(e.pregunta)) esperado = idx((c) => hiLo(rango(c)) === -1);
-            else if (/neutras/.test(e.pregunta)) esperado = idx((c) => hiLo(rango(c)) === 0);
-            else if (/valen 10 en el blackjack/.test(e.pregunta)) esperado = idx((c) => valBJ(rango(c)) === 10);
-            else if (/color \(mismo palo\)/.test(e.pregunta)) { const cuenta = {}; e.cartas.forEach((c) => (cuenta[palo(c)] = (cuenta[palo(c)] || 0) + 1)); esperado = idx((c) => cuenta[palo(c)] >= 5); }
-            else if (/trío/.test(e.pregunta)) { const cuenta = {}; e.cartas.forEach((c) => (cuenta[rango(c)] = (cuenta[rango(c)] || 0) + 1)); esperado = idx((c) => cuenta[rango(c)] === 3); }
-            else if (/valen 10 puntos en el mus/.test(e.pregunta)) esperado = idx((c) => valMus(c) === 10);
-            if (!esperado) mal(e.id, 'seleccionar: sin regla de verificación para «' + e.pregunta + '»');
-            else { verif.seleccion = (verif.seleccion || 0) + 1; if (JSON.stringify(esperado) !== JSON.stringify([...e.correctas].sort((a, b) => a - b))) mal(e.id, `seleccionar: se esperaba [${esperado}] y el ejercicio dice [${e.correctas}]`); }
-          } else {
-            if (!Number.isInteger(e.respuesta)) mal(e.id, 'numero: la respuesta debe ser un entero');
-            let esperado = null, m;
-            if (e.secuencia) esperado = e.secuencia.reduce((a, x) => a + hiLo(x), 0);
-            else if (e.situacion && e.situacion.jugador) esperado = totalBJ(e.situacion.jugador).t;
-            else if ((m = e.pregunta.match(/cuenta corriente es ([+-]?\d+) y quedan (\d+) mazos/))) esperado = Number(m[1]) / Number(m[2]);
-            else if ((m = e.pregunta.match(/bote tiene (\d+) fichas.*debes pagar (\d+)/))) esperado = Math.round((100 * m[2]) / (Number(m[1]) + Number(m[2])));
-            else if ((m = e.pregunta.match(/En el (flop|turn) tienes (\d+) outs/))) esperado = Number(m[2]) * (m[1] === 'flop' ? 4 : 2);
-            else if (e.situacion && e.situacion.filas && /mus|puntos/.test(e.pregunta)) esperado = e.situacion.filas[0].cartas.reduce((a, x) => a + valMus(x), 0);
-            if (esperado === null) mal(e.id, 'numero: sin regla de verificación');
-            else { verif.numeroOk = (verif.numeroOk || 0) + 1; if (esperado !== e.respuesta) mal(e.id, `numero: se esperaba ${esperado} y el ejercicio dice ${e.respuesta}`); }
-          }
-          continue;
-        }
-        if (e.tipo === 'ordenar') {
-          // "elementos" ya viene en el orden correcto: debe tener entre 3 y 6 distintos y una explicación
-          if (!Array.isArray(e.elementos) || e.elementos.length < 3 || e.elementos.length > 6) mal(e.id, 'ordenar: debe tener de 3 a 6 elementos');
-          else if (new Set(e.elementos).size !== e.elementos.length) mal(e.id, 'ordenar: elementos repetidos');
-          if (!e.pregunta || !e.explicacion) mal(e.id, 'ordenar: falta pregunta o explicación');
-          verif.ordenar = (verif.ordenar || 0) + 1;
+        if (['seleccionar', 'numero', 'emparejar', 'ordenar'].includes(e.tipo)) {
+          verificarInteractivo(e);
           continue;
         }
         if (!Array.isArray(e.opciones) || e.opciones.length < 2 || e.opciones.length > 5) mal(e.id, 'número de opciones raro');
@@ -244,7 +349,7 @@ for (const c of CURSOS) {
 }
 
 // ---------- comprobaciones numéricas de póker ----------
-const C = (n, k) => { let r = 1; for (let i = 1; i <= k; i++) r = (r * (n - k + i)) / i; return Math.round(r); };
+
 const prob = [
   ['1326 combinaciones', C(52, 2) === 1326],
   ['6 combinaciones de AA', C(4, 2) === 6],
