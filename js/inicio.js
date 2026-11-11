@@ -15,8 +15,22 @@ aplicarAjustes();
   }
 }
 
-if (progreso.bienvenida) mostrarInicio('fundido');
+// Vuelta del correo (enlace de acceso) o del pago de Stripe
+const volvioDelEnlace = capturarEnlace();
+const vuelta = new URLSearchParams(location.search).get('vip');
+if (vuelta) history.replaceState(null, '', location.pathname);
+
+if (progreso.bienvenida || volvioDelEnlace || vuelta) mostrarInicio('fundido');
 else mostrarBienvenida();
+
+if (nubeActiva() && (volvioDelEnlace || vuelta)) {
+  const aviso = vuelta === 'cancelado' ? 'Has cancelado el pago. No se ha cobrado nada.' : vuelta === 'ok' ? '¡Pago recibido! En unos segundos se activa tu VIP.' : 'Sesión iniciada.';
+  mostrarPremium(() => mostrarInicio('atras'), aviso);
+  // el webhook de Stripe tarda un poco: se consulta varias veces
+  if (vuelta === 'ok') [3000, 8000, 15000].forEach((t) => setTimeout(() => sincronizarVip().then((c) => { if (c && document.querySelector('.premium')) mostrarPremium(() => mostrarInicio('atras'), '👑 ¡VIP activado!'); }), t));
+} else if (nubeActiva() && leerSesion()) {
+  sincronizarVip(); // se actualiza en segundo plano
+}
 
 // Sin conexión: el service worker guarda la app. En tu ordenador (localhost) no se activa para que
 // los cambios que haces se vean siempre; para probarlo allí abre la página con ?pwa en la dirección.

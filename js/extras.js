@@ -394,35 +394,67 @@ function activarVip(dias) {
   if (typeof sonido === 'function') sonido('rango');
 }
 
-function mostrarPremium(volver) {
+function mostrarPremium(volver, aviso = '') {
   const salir = typeof volver === 'function' ? volver : () => mostrarInicio('atras');
   alTeclear = (e) => {
     if (e.key === 'Escape') salir();
   };
+  const nube = nubeActiva();
+  const sesion = nube ? leerSesion() : null;
   const vip = esVip();
   const nOro = Object.keys(ORO).length;
+  const dias = PREMIUM.diasPrueba;
   const ventaja = (icono, titulo, desc, i) =>
     el('li', { class: 'bienvenida-item aparece', style: `--i:${i}` }, el('span', { class: 'bienvenida-icono oro', 'aria-hidden': 'true' }, icono), el('span', { class: 'juego-texto' }, el('strong', {}, titulo), el('span', { class: 'juego-desc' }, desc)));
-  const mensaje = el('p', { class: 'ajuste-mensaje', role: 'status', 'aria-live': 'polite' }, '');
+  const mensaje = el('p', { class: 'ajuste-mensaje', role: 'status', 'aria-live': 'polite' }, aviso || window.avisoCuenta || '');
+  window.avisoCuenta = '';
+  const decir = (t) => { mensaje.textContent = t; };
+  const ocupado = (boton, texto, tarea) => {
+    const antes = boton.textContent;
+    boton.disabled = true;
+    boton.textContent = texto;
+    tarea().catch((e) => { decir(e.message); }).finally(() => { boton.disabled = false; boton.textContent = antes; });
+  };
+  const salirDeCuenta = () => el('button', { class: 'enlace', type: 'button', onclick: () => { cerrarSesionVip(); mostrarPremium(volver); } }, `Cerrar sesión${sesion && sesion.email ? ' (' + sesion.email + ')' : ''}`);
 
+  let formulario = null;
   let acciones;
   if (vip) {
     acciones = [
       el('p', { class: 'premium-estado' }, `👑 Eres VIP hasta el ${fechaVip()}`),
       el('button', { class: 'boton', type: 'button', onclick: () => salir() }, 'Ir a la ruta dorada'),
+      nube && sesion ? el('button', { class: 'boton secundario', type: 'button', onclick: (e) => ocupado(e.currentTarget, 'Abriendo…', abrirPortal) }, 'Gestionar o cancelar la suscripción') : null,
       PREMIUM.modoPrueba
         ? el('button', { class: 'enlace', type: 'button', onclick: () => { if (!confirm('¿Quitar el VIP de este dispositivo?')) return; progreso.vip.hasta = 0; guardarProgreso(); mostrarPremium(volver); } }, 'Cancelar VIP (modo de pruebas)')
         : null,
+      nube && sesion ? salirDeCuenta() : null,
     ];
   } else if (PREMIUM.modoPrueba) {
     acciones = [
-      el('button', { class: 'boton oro', type: 'button', onclick: () => { activarVip(PREMIUM.diasPrueba); mostrarPremium(volver); } }, `Probar el VIP ${PREMIUM.diasPrueba} días gratis`),
+      el('button', { class: 'boton oro', type: 'button', onclick: () => { activarVip(dias); mostrarPremium(volver); } }, `Probar el VIP ${dias} días gratis`),
       el('p', { class: 'premium-nota' }, 'Modo de pruebas: todavía no se cobra nada.'),
+    ];
+  } else if (!sesion) {
+    const campo = el('input', { class: 'campo-texto', type: 'email', inputmode: 'email', autocomplete: 'email', placeholder: 'tu@correo.com', 'aria-label': 'Tu correo electrónico' });
+    const enviar = (boton) => {
+      const email = campo.value.trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return decir('Escribe un correo válido.');
+      ocupado(boton, 'Enviando…', async () => {
+        await pedirEnlace(email);
+        decir(`Te hemos enviado un enlace a ${email}. Ábrelo en este mismo dispositivo (mira también en spam).`);
+      });
+    };
+    campo.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.stopPropagation(); enviar(document.getElementById('enviar-enlace')); } });
+    formulario = el('div', { class: 'cuenta-form' }, el('p', { class: 'cuenta-ayuda' }, 'Entra con tu correo para guardar tu VIP en tu cuenta. Te enviamos un enlace, sin contraseñas.'), campo);
+    acciones = [
+      el('button', { class: 'boton oro', id: 'enviar-enlace', type: 'button', onclick: (e) => enviar(e.currentTarget) }, 'Enviarme el enlace'),
+      el('p', { class: 'premium-nota' }, `Después podrás probar ${dias} días gratis.`),
     ];
   } else {
     acciones = [
-      el('button', { class: 'boton oro', type: 'button', onclick: () => { window.open(PREMIUM.enlacePago, '_blank', 'noopener'); } }, `Hazte VIP · ${PREMIUM.precio} ${PREMIUM.periodo}`),
-      el('p', { class: 'premium-nota' }, 'Pago seguro en una pestaña nueva. Puedes cancelar cuando quieras.'),
+      el('button', { class: 'boton oro', type: 'button', onclick: (e) => ocupado(e.currentTarget, 'Abriendo el pago…', empezarPago) }, `Probar ${dias} días gratis`),
+      el('p', { class: 'premium-nota' }, `Se pide la tarjeta, pero no se cobra nada hasta pasados ${dias} días. Después ${PREMIUM.precio} ${PREMIUM.periodo}; cancela cuando quieras.`),
+      salirDeCuenta(),
     ];
   }
 
@@ -435,17 +467,23 @@ function mostrarPremium(volver) {
       el('div', { class: 'corona', 'aria-hidden': 'true' }, '👑'),
       el('h1', { class: 'bienvenida-titulo' }, 'Ruta dorada VIP'),
       el('p', { class: 'bienvenida-sub' }, `Junto a cada nivel aparece su nivel Oro: lo mismo, pero más difícil. Son ${nOro} niveles extra para entrenar de verdad.`),
-      el('ul', { class: 'bienvenida-lista' },
-        ventaja('🏆', `${nOro} niveles Oro`, 'Uno por cada nivel de blackjack, póker y mus.', 0),
-        ventaja('🎯', 'Más difíciles', 'Situaciones nuevas cada vez que avanzas, sin pistas fáciles.', 1),
-        ventaja('⚡', 'El doble de XP', 'Cada nivel Oro da el doble de XP que el normal.', 2),
-        ventaja('📈', 'Para llegar lejos', 'Se abren al completar el nivel normal de al lado.', 3)),
-      el('div', { class: 'premium-precio' }, el('strong', {}, PREMIUM.precio), el('span', {}, ` ${PREMIUM.periodo} · cancela cuando quieras`)),
+      formulario,
       mensaje,
+      vip
+        ? null
+        : el('ul', { class: 'bienvenida-lista' },
+            ventaja('🏆', `${nOro} niveles Oro`, 'Uno por cada nivel de blackjack, póker y mus.', 0),
+            ventaja('🎯', 'Más difíciles', 'Situaciones nuevas cada vez que avanzas, sin pistas fáciles.', 1),
+            ventaja('⚡', 'El doble de XP', 'Cada nivel Oro da el doble de XP que el normal.', 2),
+            ventaja('📈', 'Para llegar lejos', 'Se abren al completar el nivel normal de al lado.', 3)),
+      vip ? null : el('div', { class: 'premium-precio' }, el('strong', {}, PREMIUM.precio), el('span', {}, ` ${PREMIUM.periodo} · cancela cuando quieras`)),
       el('p', { class: 'aviso' }, 'Contenido educativo. Sin dinero real. Solo para mayores de 18 años.')
     ),
     el('div', { class: 'pie' }, acciones)
   );
+
+  // al abrir la pantalla se consulta la nube por si el VIP ha cambiado (pago hecho, cancelado…)
+  if (nube && sesion) sincronizarVip().then((cambio) => { if (cambio && document.querySelector('.premium')) mostrarPremium(volver); });
 }
 
 // ============================================================

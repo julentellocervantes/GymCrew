@@ -12,13 +12,12 @@ const PREMIUM = {
   nombre: 'VIP',
   precio: '4,99 €',
   periodo: 'al mes',
-  // Cuando tengas tu enlace de pago (por ejemplo un Payment Link de Stripe) ponlo aquí entre comillas.
-  // Mientras esté vacío NO se cobra nada y la app funciona en «modo de pruebas».
-  enlacePago: '',
-  // true: el botón activa 30 días de VIP en este dispositivo sin cobrar (para probar).
-  // Ponlo en false cuando conectes el cobro real.
+  // true  = MODO DE PRUEBAS: el botón activa 5 días de VIP en este dispositivo SIN cobrar (demostración).
+  // false = COBRO REAL: entrar con el correo + pago con Stripe (hay que configurar Stripe antes; mira el LEEME).
   modoPrueba: true,
-  diasPrueba: 30,
+  // Proyecto de Supabase que guarda las cuentas y el VIP (la clave «publishable» es pública por diseño).
+  nube: { url: 'https://coqptiznghgxbidhexps.supabase.co', clave: 'sb_publishable_xj7JE8sqhRY5_8h2zz-GDA_Hbakws9m' },
+  diasPrueba: 5,
 };
 
 const ORO = {};

@@ -1164,3 +1164,10 @@ body.con-barra .pie { bottom: calc(var(--alto-barra) + env(safe-area-inset-botto
 .premium-estado { text-align: center; font-weight: 900; margin: 0 0 8px; }
 .premium-nota { text-align: center; font-size: 12px; font-weight: 700; color: var(--texto-suave); margin: 6px 0 0; }
 .ajuste-vip { border-color: #f5b301; }
+
+/* ---------- Cuenta del VIP ---------- */
+.cuenta-form { margin: 0 0 10px; display: grid; gap: 8px; }
+.cuenta-ayuda { margin: 0; font-size: 13px; font-weight: 700; color: var(--texto-suave); text-align: center; }
+.campo-texto { width: 100%; box-sizing: border-box; padding: 12px 14px; font: inherit; font-size: 16px; font-weight: 700; color: var(--texto); background: var(--tarjeta); border: 2px solid var(--borde); border-radius: 14px; }
+.campo-texto:focus { outline: 3px solid color-mix(in srgb, #f5b301 55%, transparent); border-color: #f5b301; }
+.boton:disabled { opacity: 0.7; pointer-events: none; }

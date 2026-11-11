@@ -453,7 +453,7 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
   await page.getByRole('button', { name: /Probar el VIP/ }).click();
   ok((await page.locator('.premium-estado').innerText()).includes('Eres VIP hasta'), 'activar el VIP de prueba');
   const hasta = (await estado()).vip.hasta;
-  ok(hasta > Date.now() + 29 * 86400000 && hasta < Date.now() + 31 * 86400000, 'el VIP dura 30 días');
+  ok(hasta > Date.now() + 4 * 86400000 && hasta < Date.now() + 6 * 86400000, 'la prueba VIP dura 5 días');
   await page.getByRole('button', { name: 'Ir a la ruta dorada' }).click();
   await page.waitForSelector('.nodo');
   ok(await page.locator('.nodo-oro.libre').count() === 1, 'con VIP solo se abre el Oro del nivel ya completado');
@@ -486,6 +486,93 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
   await page.locator('.juego').first().click();
   await page.waitForSelector('.nodo');
   ok(await page.locator('.nodo-oro.libre').count() === 0 && (await page.locator('.nodo-oro').first().getAttribute('aria-label')).includes('solo para VIP'), 'un VIP caducado no abre niveles Oro');
+
+  // 6f) Cuenta y pago del VIP en modo real (Supabase y Stripe simulados)
+  {
+    const SB = 'https://coqptiznghgxbidhexps.supabase.co';
+    const b64 = (o) => Buffer.from(JSON.stringify(o)).toString('base64url');
+    const jwt = `${b64({ alg: 'HS256' })}.${b64({ email: 'ana@test.com', sub: 'u-1' })}.firma`;
+    const peticiones = [];
+    let fila = null, checkout = { status: 200, cuerpo: { url: 'https://checkout.stripe.test/pago' } };
+    await page.route('**/data/premium.js', async (r) => { const resp = await r.fetch(); r.fulfill({ response: resp, body: (await resp.text()).replace('modoPrueba: true', 'modoPrueba: false') }); });
+    await page.route(SB + '/**', async (r) => {
+      const u = r.request().url(), m = r.request().method();
+      peticiones.push({ u, m, h: r.request().headers(), b: r.request().postData() });
+      const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'content-type': 'application/json' };
+      if (m === 'OPTIONS') return r.fulfill({ status: 204, headers: cors });
+      if (u.includes('/auth/v1/otp')) return r.fulfill({ status: 200, headers: cors, body: '{}' });
+      if (u.includes('/rest/v1/entrenador_vip')) return r.fulfill({ status: 200, headers: cors, body: JSON.stringify(fila ? [fila] : []) });
+      if (u.includes('/functions/v1/entrenador-checkout')) return r.fulfill({ status: checkout.status, headers: cors, body: JSON.stringify(checkout.cuerpo) });
+      return r.fulfill({ status: 404, headers: cors, body: '{}' });
+    });
+    await page.route('https://checkout.stripe.test/**', (r) => r.fulfill({ status: 200, contentType: 'text/html', body: '<h1>Pago de prueba</h1>' }));
+
+    await guardar({ bienvenida: true, xp: 40, completadas: { 'bj-1-1': true } });
+    await page.goto('about:blank');
+    await page.goto(URL);
+    await page.locator('.pestana[data-pestana=ajustes]').click();
+    await page.getByRole('button', { name: 'Conocer el VIP' }).click();
+    await page.waitForSelector('.premium');
+    ok(await page.getByRole('button', { name: /Probar el VIP/ }).count() === 0 && await page.locator('input[type=email]').count() === 1, 'en modo real se pide el correo y no hay VIP de pruebas');
+    await page.getByRole('button', { name: 'Enviarme el enlace' }).click();
+    await page.getByRole('button', { name: 'Enviarme el enlace' }).waitFor();
+    ok((await page.locator('.ajuste-mensaje').innerText()).includes('correo válido'), 'un correo inválido no se envía');
+    await page.locator('input[type=email]').fill('ana@test.com');
+    await page.getByRole('button', { name: 'Enviarme el enlace' }).click();
+    await page.waitForFunction(() => document.querySelector('.ajuste-mensaje').textContent.includes('Te hemos enviado'));
+    const otp = peticiones.find((p) => p.u.includes('/auth/v1/otp') && p.m === 'POST');
+    ok(otp && JSON.parse(otp.b).email === 'ana@test.com' && JSON.parse(otp.b).create_user === true && decodeURIComponent(otp.u).includes('redirect_to=' + new globalThis.URL(URL).origin), 'pide el enlace de acceso con la dirección de vuelta de la app');
+    await foto('18-vip-correo');
+
+    // vuelve del correo con la sesión en la dirección
+    await page.goto('about:blank');
+    await page.goto(URL.replace(/index\.html$/, '') + `#access_token=${jwt}&refresh_token=r1&expires_in=3600&token_type=bearer&type=magiclink`);
+    await page.waitForSelector('.premium');
+    const ses = await page.evaluate(() => JSON.parse(localStorage.getItem('vip-sesion-v1')));
+    ok(ses.email === 'ana@test.com' && ses.refresh_token === 'r1', 'guarda la sesión que llega en el enlace del correo');
+    ok(await page.evaluate(() => location.hash) === '', 'limpia la sesión de la dirección');
+    ok((await page.locator('.ajuste-mensaje').innerText()).includes('Sesión iniciada') && await page.getByRole('button', { name: 'Probar 5 días gratis' }).count() === 1, 'con sesión ofrece probar 5 días gratis');
+    ok((await page.locator('.pie').innerText()).includes('no se cobra nada hasta pasados 5 días'), 'explica cuándo se cobra');
+
+    // el pago
+    checkout = { status: 503, cuerpo: { error: 'no_configurado' } };
+    await page.getByRole('button', { name: 'Probar 5 días gratis' }).click();
+    await page.waitForFunction(() => document.querySelector('.ajuste-mensaje').textContent.includes('aún no está disponible'));
+    ok(true, 'si Stripe no está configurado lo explica sin romperse');
+    checkout = { status: 200, cuerpo: { url: 'https://checkout.stripe.test/pago' } };
+    await page.getByRole('button', { name: 'Probar 5 días gratis' }).click();
+    await page.waitForURL('https://checkout.stripe.test/**');
+    const cp = peticiones.filter((p) => p.u.includes('entrenador-checkout') && p.m === 'POST').pop();
+    ok(cp.h.authorization === 'Bearer ' + jwt && !!cp.h.apikey, 'el pago se pide con la sesión del usuario');
+
+    // vuelve de Stripe: el webhook ya ha marcado el VIP
+    fila = { estado: 'trialing', hasta: new Date(Date.now() + 5 * 86400000).toISOString() };
+    await page.goto('about:blank');
+    await page.goto(URL.replace(/index\.html$/, '') + '?vip=ok');
+    await page.waitForSelector('.premium-estado', { timeout: 8000 });
+    ok((await page.locator('.premium-estado').innerText()).includes('Eres VIP hasta') && (await estado()).vip.hasta > Date.now() + 4 * 86400000, 'al volver del pago se activa el VIP guardado en la nube');
+    ok(await page.getByRole('button', { name: /Gestionar o cancelar/ }).count() === 1, 'el VIP puede gestionar o cancelar la suscripción');
+    ok(await page.evaluate(() => location.search) === '', 'limpia ?vip=ok de la dirección');
+    await foto('19-vip-activo');
+
+    // cancelación en Stripe: al abrir la app se quita el VIP
+    fila = { estado: 'canceled', hasta: new Date(Date.now() - 1000).toISOString() };
+    await page.goto('about:blank');
+    await page.goto(URL);
+    await page.waitForFunction(() => progreso.vip.hasta === 0, null, { timeout: 8000 });
+    ok(true, 'una suscripción cancelada quita el VIP al abrir la app');
+    // cerrar sesión
+    await page.locator('.pestana[data-pestana=ajustes]').click();
+    await page.getByRole('button', { name: 'Conocer el VIP' }).click();
+    await page.getByRole('button', { name: /Cerrar sesión/ }).click();
+    await page.waitForSelector('input[type=email]');
+    ok(await page.evaluate(() => localStorage.getItem('vip-sesion-v1')) === null, 'cerrar sesión borra la sesión');
+    await page.unroute('**/data/premium.js');
+    await page.unroute(SB + '/**');
+    await page.unroute('https://checkout.stripe.test/**');
+    await page.goto('about:blank');
+    await page.goto(URL);
+  }
 
   // 7) El almacenamiento bloqueado no rompe la app y avisa
   const p2 = await ctx.newPage();

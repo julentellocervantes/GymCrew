@@ -130,7 +130,25 @@ Cuidado con las comas entre elementos y con las comillas.
 - Junto a cada nivel del mapa hay un **nivel Oro** (👑) más difícil: 38 en total (`data/premium.js`). Dan el doble de XP y se abren al completar el nivel normal de al lado.
 - Solo se pueden jugar con el **VIP** activo. Sin VIP, tocar un nivel Oro abre la pantalla de la membresía.
 - Los ejercicios Oro se **generan con código** (semilla fija por nivel) y la respuesta se calcula al generarlos; `tests/validar.js` los recalcula con código independiente.
-- **Ajustes de la membresía** en `PREMIUM` (arriba de `data/premium.js`): precio, periodo, `enlacePago` y `modoPrueba`.
-  - `modoPrueba: true` (por defecto): el botón activa 30 días de VIP en ese dispositivo **sin cobrar**.
-  - Para cobrar de verdad hace falta un servidor que confirme el pago (por ejemplo Stripe + un webhook) y marque el VIP en la cuenta del usuario. Mientras el VIP se guarde solo en el navegador, quien sepa editar `localStorage` podría activarlo: no lo uses como protección real.
-- `tests/recorrido.js` juega ahora también los 38 niveles Oro.
+- **Ajustes de la membresía** en `PREMIUM` (arriba de `data/premium.js`): precio, periodo, `diasPrueba`, `modoPrueba` y `nube`.
+  - `modoPrueba: true` (por defecto): el botón activa 5 días de VIP en ese dispositivo **sin cobrar** (demostración).
+  - `modoPrueba: false`: **cobro real**. La persona entra con su correo (enlace sin contraseña), paga con Stripe (5 días gratis la primera vez, después 4,99 €/mes) y el VIP se guarda en su cuenta.
+
+### Cobro real: cómo está montado
+
+- **Supabase** (proyecto «Gym social»): tabla `entrenador_vip` (solo lectura para el usuario, la escribe únicamente el webhook) y tres funciones: `entrenador-checkout` (abre el pago), `entrenador-portal` (gestionar/cancelar) y `entrenador-webhook` (recibe los avisos de Stripe y comprueba su firma). El código está en `supabase/functions/`.
+- **App** (`js/cuenta.js`): acceso por correo, sincroniza el VIP al abrir la app y al volver del pago.
+
+### Lo que falta para empezar a cobrar (lo haces tú, una vez)
+
+1. Crea una cuenta en stripe.com y, en **Productos**, un producto «VIP» con precio recurrente de 4,99 € al mes. Copia el **ID del precio** (empieza por `price_`).
+2. En Stripe → Developers → **Webhooks** → añade el endpoint `https://coqptiznghgxbidhexps.supabase.co/functions/v1/entrenador-webhook` con los eventos `checkout.session.completed` y `customer.subscription.created`, `.updated` y `.deleted`. Copia el **signing secret** (`whsec_…`).
+3. En Stripe → Settings → Billing → **Customer portal**: actívalo (para que puedan cancelar).
+4. En Supabase → Edge Functions → **Secrets** añade: `STRIPE_SECRET_KEY` (clave secreta `sk_…`), `STRIPE_PRICE_ID`, `STRIPE_WEBHOOK_SECRET` y `APP_URL` = `https://entrenador-cartas.onrender.com`. (Nunca pongas la clave secreta en el código ni en el chat.)
+5. En Supabase → Authentication → **URL Configuration** → *Redirect URLs*: añade `https://entrenador-cartas.onrender.com/**` (si no, el enlace del correo no vuelve a la app).
+6. Cuando todo lo anterior esté hecho, cambia `modoPrueba: true` por `false` en `data/premium.js`, sube los cambios y prueba con una tarjeta de pruebas de Stripe (4242 4242 4242 4242) en modo test antes de pasar a producción.
+
+**Límites que conviene saber**
+- Los niveles Oro viajan dentro del código de la web, así que alguien con conocimientos podría saltarse el bloqueo. Para protegerlos de verdad habría que servirlos desde el servidor solo a los VIP.
+- El proyecto de Supabase es el mismo que el de «Gym social»: comparten el sistema de cuentas (los usuarios son los mismos) y la plantilla de los correos de acceso.
+- `tests/recorrido.js` juega ahora también los 38 niveles Oro. `tests/webhook.mjs` prueba la firma de Stripe y la lógica del VIP.
