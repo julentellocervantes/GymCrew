@@ -25,6 +25,7 @@ const progresoNuevo = () => ({
   conteo: { sesiones: 0, mejor: 0 }, // entrenador de conteo
   ajustes: { letra: 'normal', calma: false, sonido: true },
   bienvenida: false,              // true cuando ya has visto la pantalla de bienvenida
+  vip: { hasta: 0 },              // membresía VIP: instante (ms) hasta el que está activa
 });
 
 // Comprueba que un progreso (guardado o importado) tiene la forma esperada y rellena lo que falte
@@ -47,6 +48,7 @@ function normalizarProgreso(datos) {
   p.xpHoy = Object.assign({ dia: null, xp: 0 }, obj(p.xpHoy, {}));
   p.conteo = Object.assign({ sesiones: 0, mejor: 0 }, obj(p.conteo, {}));
   p.ajustes = Object.assign({ letra: 'normal', calma: false, sonido: true }, obj(p.ajustes, {}));
+  p.vip = { hasta: p.vip && Number.isFinite(p.vip.hasta) && p.vip.hasta > 0 ? Math.floor(p.vip.hasta) : 0 };
   // quien ya tenía progreso no necesita la bienvenida
   p.bienvenida = p.bienvenida === true || p.xp > 0 || Object.keys(p.completadas).length > 0;
   return p;
@@ -127,6 +129,7 @@ function registrarRespuesta(id, acierto) {
 }
 
 // ---------- datos de los cursos ----------
+const esVip = () => progreso.vip.hasta > Date.now();
 const niveles = (curso) => curso.unidades.flatMap((u) => u.lecciones);
 const hechosDe = (curso) => niveles(curso).filter((l) => progreso.completadas[l.id]).length;
 const siguienteNivel = (curso) => niveles(curso).find((l) => !progreso.completadas[l.id]) || null;
@@ -665,14 +668,49 @@ function mostrarMapa(curso, entrada = 'adelante', recientes = []) {
       hecha ? '✓' : bloqueada ? '🔒' : leccion.icono
     );
 
+    // Ruta dorada: junto a cada nivel hay un nivel Oro (solo VIP), del lado donde hay más sitio
+    const desplazamiento = DESPLAZAMIENTOS[i % DESPLAZAMIENTOS.length];
+    const oro = typeof ORO !== 'undefined' ? ORO[leccion.id] : null;
+    let botonOro = null;
+    if (oro) {
+      const vip = esVip();
+      const oroHecho = !!progreso.completadas[oro.id];
+      const libre = vip && hecha;
+      const sacudir = () => {
+        botonOro.classList.remove('sacudir');
+        void botonOro.offsetWidth;
+        botonOro.classList.add('sacudir');
+        setTimeout(() => botonOro.classList.remove('sacudir'), 500);
+      };
+      botonOro = el(
+        'button',
+        {
+          class: 'nodo-oro' + (desplazamiento > 0 ? ' izq' : '') + (oroHecho ? ' hecho' : libre ? ' libre' : '') + (vip ? '' : ' sin-vip'),
+          type: 'button',
+          title: oro.titulo,
+          'aria-label': `Nivel Oro: ${oro.titulo}` + (oroHecho ? ' (completado)' : !vip ? ' (solo para VIP)' : !hecha ? ' (bloqueado)' : ''),
+          onclick: () => {
+            if (!vip) return mostrarPremium(() => mostrarMapa(curso, 'atras'));
+            if (!hecha) {
+              parrafo.textContent = `El nivel Oro de «${leccion.titulo}» se abre cuando completes el nivel normal.`;
+              return sacudir();
+            }
+            mostrarIntro(curso, oro);
+          },
+        },
+        oroHecho ? '✓' : '👑',
+        !libre && !oroHecho ? el('span', { class: 'candado', 'aria-hidden': 'true' }, '🔒') : null
+      );
+    }
+
     const envoltorio = el(
       'div',
       {
         class: 'nodo-envoltorio' + (reciente ? ' recien' : ''),
-        style: `transform:translateX(${DESPLAZAMIENTOS[i % DESPLAZAMIENTOS.length]}px);--i:${numero++}`,
+        style: `transform:translateX(${desplazamiento}px);--i:${numero++}`,
       },
       esActual ? el('span', { class: 'empezar' }, 'EMPEZAR') : null,
-      boton,
+      el('div', { class: 'nodo-fila' }, boton, botonOro),
       el('span', { class: 'nodo-titulo' }, leccion.titulo)
     );
     if (esActual) nodoActual = envoltorio;
@@ -701,6 +739,15 @@ function mostrarMapa(curso, entrada = 'adelante', recientes = []) {
       { class: 'contenido mapa', style: `--acento:${curso.color}` },
       el('h1', {}, `${curso.icono} ${curso.nombre}`),
       el('p', { class: 'reglas' }, `Reglas del curso: ${curso.reglas}`),
+      typeof ORO !== 'undefined'
+        ? el(
+            'button',
+            { class: 'banner-oro' + (esVip() ? ' activo' : ''), type: 'button', onclick: () => mostrarPremium(() => mostrarMapa(curso, 'atras')) },
+            el('span', { class: 'banner-oro-icono', 'aria-hidden': 'true' }, '👑'),
+            el('span', { class: 'juego-texto' }, el('strong', {}, 'Ruta dorada VIP'), el('span', { class: 'juego-desc' }, esVip() ? 'Activa: junto a cada nivel tienes su nivel Oro, más difícil.' : 'Un nivel Oro más difícil junto a cada nivel. Toca para saber más.')),
+            el('span', { class: 'flecha', 'aria-hidden': 'true' }, '›')
+          )
+        : null,
       fila,
       botonRepaso,
       unidades
@@ -801,8 +848,8 @@ function mostrarIntro(curso, leccion) {
     ),
     el(
       'main',
-      { class: 'contenido centro', style: `--acento:${curso.color}` },
-      el('p', { class: 'etiqueta' }, curso.nombre),
+      { class: 'contenido centro', style: `--acento:${leccion.oro ? '#e8a400' : curso.color}` },
+      el('p', { class: 'etiqueta' }, leccion.oro ? `${curso.nombre} · Nivel Oro` : curso.nombre),
       el('h1', {}, `${leccion.icono} ${leccion.titulo}`),
       fila,
       el('p', { class: 'aviso' }, `${leccion.ejercicios.length} ejercicios · ${leccion.xp} XP`)
@@ -1139,7 +1186,7 @@ function finalizarLeccion(curso, leccion, precision) {
 
   const nuevoRango = rangoDe(progreso.xp);
   const siguiente = siguienteNivel(curso);
-  const nuevoNivel = !leccion.repaso && !yaHecha;
+  const nuevoNivel = !leccion.repaso && !leccion.oro && !yaHecha;
   mostrarResultado(curso, leccion, precision, {
     xp,
     desbloqueado: nuevoNivel ? siguiente : null,
@@ -1193,7 +1240,7 @@ function mostrarResultado(curso, leccion, precision, extra) {
     el(
       'main',
       { class: 'contenido centro', style: `--acento:${curso.color}` },
-      el('h1', { class: 'resultado-titulo' }, leccion.repaso ? '¡Repaso terminado!' : '¡Nivel completado!'),
+      el('h1', { class: 'resultado-titulo' }, leccion.repaso ? '¡Repaso terminado!' : leccion.oro ? '👑 ¡Nivel Oro completado!' : '¡Nivel completado!'),
       el(
         'div',
         { class: 'estrellas', 'aria-hidden': 'true' },

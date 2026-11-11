@@ -12,16 +12,16 @@ const esc = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   page.on('pageerror', (e) => fallos.push(e.message));
   page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) fallos.push(m.text()); });
   await page.goto(URL);
-  const lecciones = await page.evaluate(() => CURSOS.flatMap((c) => niveles(c).map((l) => ({ curso: c.id, id: l.id, n: l.ejercicios.length }))));
-  const todos = await page.evaluate(() => CURSOS.flatMap((c) => niveles(c).flatMap((l) => l.ejercicios)));
+  // los niveles normales y, a continuación, los niveles Oro de la ruta dorada
+  const lecciones = await page.evaluate(() => CURSOS.flatMap((c) => niveles(c).concat(niveles(c).map((l) => ORO[l.id]).filter(Boolean)).map((l) => ({ curso: c.id, id: l.id, n: l.ejercicios.length }))));
   const porTipo = {};
   for (const lec of lecciones) {
-    await page.evaluate(([cid, id]) => { const c = CURSOS.find((x) => x.id === cid); mostrarLeccion(c, niveles(c).find((l) => l.id === id)); }, [lec.curso, lec.id]);
+    await page.evaluate(([cid, id]) => { const c = CURSOS.find((x) => x.id === cid); mostrarLeccion(c, niveles(c).concat(Object.values(ORO)).find((l) => l.id === id)); }, [lec.curso, lec.id]);
     await page.waitForTimeout(150);
     if (await page.getByRole('button', { name: '¡Vamos!' }).count()) await page.getByRole('button', { name: '¡Vamos!' }).click();
     const vistos = [];
     // si todo se responde bien, las preguntas salen en el mismo orden que en los datos
-    const orden = await page.evaluate(([cid, id]) => niveles(CURSOS.find((x) => x.id === cid)).find((l) => l.id === id).ejercicios, [lec.curso, lec.id]);
+    const orden = await page.evaluate(([cid, id]) => niveles(CURSOS.find((x) => x.id === cid)).concat(Object.values(ORO)).find((l) => l.id === id).ejercicios, [lec.curso, lec.id]);
     for (let paso = 0; paso < lec.n + 2; paso++) {
       if (!(await page.locator('.pregunta').count())) break;
       const q = await page.locator('.pregunta').first().innerText();

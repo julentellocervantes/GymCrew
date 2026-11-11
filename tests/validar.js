@@ -58,6 +58,10 @@ function verificarInteractivo(e) {
       comprobado();
       const pos = e.elementos.map((x) => ORDEN_JUEGO.indexOf(Number(x)));
       if (pos.some((x) => x < 0) || pos.some((x, i) => i && x <= pos[i - 1])) mal(e.id, 'ordenar: el orden de los juegos no es el del mus');
+    } else if (c && c.pkOrden) {
+      comprobado();
+      const v = e.elementos.map((x) => valor5(x.split(' ').map(parseCarta)));
+      v.forEach((x, i) => { if (i && cmp(v[i - 1], x) >= 0) mal(e.id, `ordenar: la mano ${i + 1} no es mejor que la ${i}`); });
     } else definicion();
     return;
   }
@@ -75,9 +79,17 @@ function verificarInteractivo(e) {
       c.forEach((x, i) => { if (Number((e.pares[i][1].match(/\d+/) || [])[0]) !== x) mal(e.id, `emparejar: se esperaba ${x} en «${e.pares[i][0]}»`); });
       // combinaciones reales con una baraja de 52
       if (JSON.stringify(c) === '[6,16,4]' && (C(4, 2) !== 6 || 4 * 4 !== 16 || 4 !== 4)) mal(e.id, 'combinaciones mal calculadas');
+    } else if (c && c.musCats) {
+      comprobado();
+      c.musCats.forEach((m, i) => {
+        const k = {}; m.map(rangoMus).forEach((x) => (k[x] = (k[x] || 0) + 1));
+        const n = Object.values(k).sort((p, q) => q - p);
+        const cat = n[0] === 4 || (n[0] === 2 && n[1] === 2) ? 'Duples' : n[0] === 3 ? 'Medias' : n[0] === 2 ? 'Pares' : 'Sin pares';
+        if (e.pares[i][0] !== m.join(' · ') || e.pares[i][1] !== cat) mal(e.id, `emparejar: «${m.join(' · ')}» es ${cat}, no ${e.pares[i][1]}`);
+      });
     } else if (e.pares.every((x) => /^([2-9]|10|[JQKA])[♠♥♦♣]( |$)/.test(x[0]))) {
       comprobado();
-      e.pares.forEach((x) => { const cat = categoriaPoker(x[0].split(' ')); if (cat !== x[1]) mal(e.id, `emparejar: «${x[0]}» es ${cat}, no ${x[1]}`); });
+      e.pares.forEach((x) => { const cat = categoriaPoker(x[0].split(' ')); if (cat !== x[1] && !(cat === 'Full' && x[1] === 'Full house')) mal(e.id, `emparejar: «${x[0]}» es ${cat}, no ${x[1]}`); });
     } else definicion();
     return;
   }
@@ -152,9 +164,12 @@ function verificarInteractivo(e) {
 }
 
 
-for (const f of ['cursos.js', 'blackjack.js', 'poker.js', 'mus.js', 'blackjack-extra.js', 'poker-extra.js', 'mus-extra.js', 'ordenar-extra.js', 'interactivos-extra.js', 'variedad-extra.js', 'ayuda.js']) vm.runInContext(fs.readFileSync(D + f, 'utf8'), ctx, { filename: f });
+for (const f of ['cursos.js', 'blackjack.js', 'poker.js', 'mus.js', 'blackjack-extra.js', 'poker-extra.js', 'mus-extra.js', 'ordenar-extra.js', 'interactivos-extra.js', 'variedad-extra.js', 'ayuda.js', 'premium.js']) vm.runInContext(fs.readFileSync(D + f, 'utf8'), ctx, { filename: f });
 const CURSOS = vm.runInContext('CURSOS', ctx);
 const AYUDA = vm.runInContext('AYUDA', ctx);
+const CURSOS_ORO = vm.runInContext('CURSOS_ORO', ctx);
+const ORO = vm.runInContext('ORO', ctx);
+const PREMIUM = vm.runInContext('PREMIUM', ctx);
 
 
 const errores = [];
@@ -264,7 +279,7 @@ function ganaMus(lance, a, b) { // devuelve 1 (gana a), -1 (gana b), 0 (empate)
 }
 
 // ---------- recorrido ----------
-for (const c of CURSOS) {
+for (const c of CURSOS.concat(CURSOS_ORO)) {
   for (const campo of ['id', 'nombre', 'icono', 'color', 'descripcion', 'reglas']) if (!c[campo]) mal(c.id, `curso sin ${campo}`);
   for (const u of c.unidades) {
     if (!u.titulo || !u.descripcion) mal(u.id, 'unidad sin titulo/descripcion');
@@ -290,6 +305,14 @@ for (const c of CURSOS) {
         if (s) {
           if (s.filas) { if (!s.filas.every((f) => f.etiqueta && Array.isArray(f.cartas) && f.cartas.length)) mal(e.id, 'filas mal formadas'); }
           else if (typeof s.crupier !== 'string' || !Array.isArray(s.jugador)) mal(e.id, 'situacion sin filas necesita jugador (lista) y crupier (texto)');
+        }
+        if (e.chequeo && e.chequeo.decide) {
+          const d = e.chequeo.decide;
+          const eq = d.outs * (d.fase === 'flop' ? 4 : 2), nec = (100 * d.pagar) / (d.bote + d.pagar);
+          verif.decisiones = (verif.decisiones || 0) + 1;
+          if (Math.abs(eq - nec) < 3) mal(e.id, 'decisión demasiado ajustada');
+          if (resp !== (eq > nec ? 'Sí, pagas' : 'No, te retiras')) mal(e.id, `pot odds: necesitas ${nec.toFixed(1)} % y tienes ${eq} %, la respuesta no cuadra`);
+          continue;
         }
         // Blackjack: estrategia básica
         if (c.id === 'blackjack' && e.tipo === 'accion') {
@@ -365,7 +388,18 @@ const prob = [
   ['4 de 13 cartas valen 10 ≈ 31 %; seguro necesita 33 %', 4 / 13 < 1 / 3],
 ];
 for (const [n, ok] of prob) if (!ok) errores.push('cálculo: ' + n);
-console.log(`${CURSOS.length} cursos, ${nNiv} niveles, ${nEj} ejercicios`);
+console.log(`${CURSOS.length} cursos, ${nNiv} niveles (incluye la ruta dorada), ${nEj} ejercicios`);
+// cada nivel normal tiene su nivel Oro y no hay Oros huérfanos
+{
+  const normales = CURSOS.flatMap((c) => c.unidades.flatMap((u) => u.lecciones.map((l) => l.id)));
+  normales.forEach((id) => { if (!ORO[id]) mal(id, 'este nivel no tiene su nivel Oro'); });
+  Object.keys(ORO).forEach((id) => { if (!normales.includes(id)) mal(id, 'nivel Oro sin nivel normal'); });
+  CURSOS_ORO.flatMap((c) => c.unidades[0].lecciones).forEach((l) => {
+    const tipos = new Set(l.ejercicios.map((e) => e.tipo));
+    if (tipos.size < 3) mal(l.id, 'el nivel Oro mezcla menos de 3 tipos de ejercicio');
+  });
+  if (!PREMIUM.precio || typeof PREMIUM.modoPrueba !== 'boolean') mal('premium', 'ajustes de VIP incompletos');
+}
 verificarAyuda();
 console.log('verificados con calculo independiente:', JSON.stringify(verif));
 console.log(CURSOS.map((c) => `  ${c.id}: ${c.unidades.flatMap((u) => u.lecciones).length} niveles`).join('\n'));

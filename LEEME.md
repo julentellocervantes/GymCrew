@@ -124,3 +124,13 @@ Cuidado con las comas entre elementos y con las comillas.
 - **Barra inferior** con tres pestañas: **Juegos** (blackjack, póker y mus, mapas y logros en la misma pestaña), **Útil** y **Ajustes**. Se oculta durante las lecciones y el entrenador de conteo.
 - **Útil** (`js/util.js`, datos en `data/ayuda.js`): calculadoras (cuenta verdadera, outs, pot odds), contador rápido de cartas, tabla de estrategia básica de blackjack, chuleta de conteo, ranking de póker, valores del mus y glosario. La tabla se verifica en `tests/validar.js` contra la lógica de estrategia.
 - `tests/navegador.js` cubre ahora la bienvenida, la barra y las calculadoras (174 comprobaciones).
+
+## Ruta dorada VIP
+
+- Junto a cada nivel del mapa hay un **nivel Oro** (👑) más difícil: 38 en total (`data/premium.js`). Dan el doble de XP y se abren al completar el nivel normal de al lado.
+- Solo se pueden jugar con el **VIP** activo. Sin VIP, tocar un nivel Oro abre la pantalla de la membresía.
+- Los ejercicios Oro se **generan con código** (semilla fija por nivel) y la respuesta se calcula al generarlos; `tests/validar.js` los recalcula con código independiente.
+- **Ajustes de la membresía** en `PREMIUM` (arriba de `data/premium.js`): precio, periodo, `enlacePago` y `modoPrueba`.
+  - `modoPrueba: true` (por defecto): el botón activa 30 días de VIP en ese dispositivo **sin cobrar**.
+  - Para cobrar de verdad hace falta un servidor que confirme el pago (por ejemplo Stripe + un webhook) y marque el VIP en la cuenta del usuario. Mientras el VIP se guarde solo en el navegador, quien sepa editar `localStorage` podría activarlo: no lo uses como protección real.
+- `tests/recorrido.js` juega ahora también los 38 niveles Oro.

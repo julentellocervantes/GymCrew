@@ -2,12 +2,12 @@
 // - Al instalarse guarda todos los archivos de la app.
 // - Después, con conexión siempre usa la versión más nueva (y la guarda); sin conexión usa la guardada.
 //   Así no hace falta cambiar nada cuando editas los archivos.
-const CACHE = 'entrenador-cartas-v8';
+const CACHE = 'entrenador-cartas-v9';
 const ARCHIVOS = [
   './', 'index.html', 'manifest.webmanifest',
   'css/estilos.css', 'js/sonido.js', 'js/app.js', 'js/util.js', 'js/extras.js', 'js/inicio.js', 'js/mascota.js',
   'data/cursos.js', 'data/blackjack.js', 'data/poker.js', 'data/mus.js',
-  'data/blackjack-extra.js', 'data/poker-extra.js', 'data/mus-extra.js', 'data/ordenar-extra.js', 'data/interactivos-extra.js', 'data/variedad-extra.js', 'data/ayuda.js',
+  'data/blackjack-extra.js', 'data/poker-extra.js', 'data/mus-extra.js', 'data/ordenar-extra.js', 'data/interactivos-extra.js', 'data/variedad-extra.js', 'data/ayuda.js', 'data/premium.js',
   'icons/icono.svg', 'icons/icono-192.png', 'icons/icono-512.png', 'icons/icono-maskable-512.png', 'icons/apple-touch-icon.png',
 ];
 const ESPERA_RED = 3000; // si la red tarda más de 3 s, se usa lo guardado

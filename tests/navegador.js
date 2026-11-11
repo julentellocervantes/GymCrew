@@ -435,6 +435,58 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
   await foto('15-util-320');
   await page.setViewportSize({ width: 390, height: 844 });
 
+  // 6e) Ruta dorada VIP
+  await guardar({ bienvenida: true, xp: 40, completadas: { 'bj-1-1': true } });
+  await page.reload();
+  await page.locator('.juego').first().click();
+  await page.waitForSelector('.nodo');
+  ok(await page.locator('.nodo-oro').count() === 16, 'cada nivel de blackjack tiene su nivel Oro al lado');
+  ok((await page.locator('.nodo-oro').first().getAttribute('aria-label')).includes('solo para VIP'), 'sin VIP el nivel Oro avisa de que es solo VIP');
+  await page.locator('.nodo-oro').first().click();
+  await page.waitForSelector('.premium');
+  ok((await page.locator('main').innerText()).includes('38 niveles Oro') && await page.locator('#barra').isHidden(), 'pantalla VIP con 38 niveles Oro y sin barra');
+  await foto('16-vip');
+  await page.locator('.cerrar').click();
+  await page.waitForSelector('.nodo');
+  ok(await page.locator('.premium').count() === 0, 'cerrar la pantalla VIP vuelve al mapa');
+  await page.locator('.banner-oro').click();
+  await page.getByRole('button', { name: /Probar el VIP/ }).click();
+  ok((await page.locator('.premium-estado').innerText()).includes('Eres VIP hasta'), 'activar el VIP de prueba');
+  const hasta = (await estado()).vip.hasta;
+  ok(hasta > Date.now() + 29 * 86400000 && hasta < Date.now() + 31 * 86400000, 'el VIP dura 30 días');
+  await page.getByRole('button', { name: 'Ir a la ruta dorada' }).click();
+  await page.waitForSelector('.nodo');
+  ok(await page.locator('.nodo-oro.libre').count() === 1, 'con VIP solo se abre el Oro del nivel ya completado');
+  await foto('17-mapa-vip');
+  await page.locator('.nodo-oro').nth(1).click();
+  ok((await page.locator('.nai-fila .globo').first().innerText()).includes('se abre cuando completes'), 'el Oro de un nivel sin completar explica por qué está cerrado');
+  await page.locator('.nodo-oro.libre').click();
+  await page.waitForSelector('.etiqueta');
+  ok(/nivel oro/i.test(await page.locator('.etiqueta').innerText()), 'intro del nivel Oro');
+  await page.getByRole('button', { name: '¡Vamos!' }).click();
+  await page.waitForSelector('.pregunta');
+  ok(await page.locator('#barra').isHidden(), 'el nivel Oro se juega a pantalla completa');
+  await page.locator('.cerrar').click();
+  await page.waitForSelector('.nodo');
+  // ningún botón dorado se sale de la pantalla ni a 320 px
+  await page.setViewportSize({ width: 320, height: 640 });
+  await page.waitForTimeout(400);
+  const fuera = await page.evaluate(() => [...document.querySelectorAll('.nodo-oro, .nodo')].filter((b) => { const r = b.getBoundingClientRect(); return r.left < 0 || r.right > innerWidth; }).length);
+  ok(fuera === 0 && await page.evaluate(() => document.documentElement.scrollWidth) <= 320, 'el mapa con ruta dorada cabe en 320 px');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.locator('.pestana[data-pestana=ajustes]').click();
+  ok((await page.locator('.ajuste-vip').innerText()).includes('activo hasta'), 'Ajustes muestra el VIP activo');
+  await page.getByRole('button', { name: 'Ver mi VIP' }).click();
+  await page.getByRole('button', { name: /Cancelar VIP/ }).click();
+  await page.waitForSelector('.boton.oro');
+  ok((await estado()).vip.hasta === 0, 'cancelar el VIP de pruebas');
+  // un VIP caducado vuelve a bloquear
+  await guardar({ bienvenida: true, xp: 40, completadas: { 'bj-1-1': true }, vip: { hasta: Date.now() - 1000 } });
+  await page.reload();
+  await page.locator('.juego').first().click();
+  await page.waitForSelector('.nodo');
+  ok(await page.locator('.nodo-oro.libre').count() === 0 && (await page.locator('.nodo-oro').first().getAttribute('aria-label')).includes('solo para VIP'), 'un VIP caducado no abre niveles Oro');
+
   // 7) El almacenamiento bloqueado no rompe la app y avisa
   const p2 = await ctx.newPage();
   p2.on('pageerror', (e) => fallos.push('p2: ' + e.message));

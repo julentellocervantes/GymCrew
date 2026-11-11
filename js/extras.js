@@ -97,6 +97,13 @@ function mostrarAjustes(aviso = '', animacion = 'fundido') {
       el('h1', {}, '⚙️ Ajustes'),
       el(
         'section',
+        { class: 'ajuste ajuste-vip' },
+        el('h2', {}, '👑 VIP'),
+        el('p', {}, esVip() ? `Tu VIP está activo hasta el ${fechaVip()}.` : `Desbloquea la ruta dorada: un nivel Oro más difícil junto a cada nivel. ${PREMIUM.precio} ${PREMIUM.periodo}.`),
+        el('button', { class: 'boton secundario', type: 'button', onclick: () => mostrarPremium(() => mostrarAjustes('', 'atras')) }, esVip() ? 'Ver mi VIP' : 'Conocer el VIP')
+      ),
+      el(
+        'section',
         { class: 'ajuste' },
         el('h2', {}, '🎯 Meta diaria'),
         el('p', {}, 'Los XP que quieres ganar cada día. Cumplirla no es obligatorio, es solo un empujón.'),
@@ -372,6 +379,72 @@ function mostrarBienvenida(repetida = false) {
     el('div', { class: 'pie' },
       el('button', { class: 'boton', type: 'button', onclick: () => empezar(() => mostrarInicio('adelante')) }, repetida ? 'Volver a los juegos' : 'Empezar'),
       el('button', { class: 'enlace', type: 'button', onclick: () => empezar(() => mostrarUtil('adelante')) }, 'Ya sé jugar: ir a las herramientas'))
+  );
+}
+
+// ============================================================
+// VIP: pantalla de la membresía y ruta dorada
+// ============================================================
+const fechaVip = () => new Date(progreso.vip.hasta).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+
+function activarVip(dias) {
+  const desde = Math.max(Date.now(), progreso.vip.hasta);
+  progreso.vip.hasta = desde + dias * 86400000;
+  guardarProgreso();
+  if (typeof sonido === 'function') sonido('rango');
+}
+
+function mostrarPremium(volver) {
+  const salir = typeof volver === 'function' ? volver : () => mostrarInicio('atras');
+  alTeclear = (e) => {
+    if (e.key === 'Escape') salir();
+  };
+  const vip = esVip();
+  const nOro = Object.keys(ORO).length;
+  const ventaja = (icono, titulo, desc, i) =>
+    el('li', { class: 'bienvenida-item aparece', style: `--i:${i}` }, el('span', { class: 'bienvenida-icono oro', 'aria-hidden': 'true' }, icono), el('span', { class: 'juego-texto' }, el('strong', {}, titulo), el('span', { class: 'juego-desc' }, desc)));
+  const mensaje = el('p', { class: 'ajuste-mensaje', role: 'status', 'aria-live': 'polite' }, '');
+
+  let acciones;
+  if (vip) {
+    acciones = [
+      el('p', { class: 'premium-estado' }, `👑 Eres VIP hasta el ${fechaVip()}`),
+      el('button', { class: 'boton', type: 'button', onclick: () => salir() }, 'Ir a la ruta dorada'),
+      PREMIUM.modoPrueba
+        ? el('button', { class: 'enlace', type: 'button', onclick: () => { if (!confirm('¿Quitar el VIP de este dispositivo?')) return; progreso.vip.hasta = 0; guardarProgreso(); mostrarPremium(volver); } }, 'Cancelar VIP (modo de pruebas)')
+        : null,
+    ];
+  } else if (PREMIUM.modoPrueba) {
+    acciones = [
+      el('button', { class: 'boton oro', type: 'button', onclick: () => { activarVip(PREMIUM.diasPrueba); mostrarPremium(volver); } }, `Probar el VIP ${PREMIUM.diasPrueba} días gratis`),
+      el('p', { class: 'premium-nota' }, 'Modo de pruebas: todavía no se cobra nada.'),
+    ];
+  } else {
+    acciones = [
+      el('button', { class: 'boton oro', type: 'button', onclick: () => { window.open(PREMIUM.enlacePago, '_blank', 'noopener'); } }, `Hazte VIP · ${PREMIUM.precio} ${PREMIUM.periodo}`),
+      el('p', { class: 'premium-nota' }, 'Pago seguro en una pestaña nueva. Puedes cancelar cuando quieras.'),
+    ];
+  }
+
+  pintar(
+    'adelante',
+    el('header', { class: 'cabecera-leccion' }, el('button', { class: 'cerrar', type: 'button', 'aria-label': 'Cerrar', onclick: () => salir() }, '✕')),
+    el(
+      'main',
+      { class: 'contenido bienvenida premium' },
+      el('div', { class: 'corona', 'aria-hidden': 'true' }, '👑'),
+      el('h1', { class: 'bienvenida-titulo' }, 'Ruta dorada VIP'),
+      el('p', { class: 'bienvenida-sub' }, `Junto a cada nivel aparece su nivel Oro: lo mismo, pero más difícil. Son ${nOro} niveles extra para entrenar de verdad.`),
+      el('ul', { class: 'bienvenida-lista' },
+        ventaja('🏆', `${nOro} niveles Oro`, 'Uno por cada nivel de blackjack, póker y mus.', 0),
+        ventaja('🎯', 'Más difíciles', 'Situaciones nuevas cada vez que avanzas, sin pistas fáciles.', 1),
+        ventaja('⚡', 'El doble de XP', 'Cada nivel Oro da el doble de XP que el normal.', 2),
+        ventaja('📈', 'Para llegar lejos', 'Se abren al completar el nivel normal de al lado.', 3)),
+      el('div', { class: 'premium-precio' }, el('strong', {}, PREMIUM.precio), el('span', {}, ` ${PREMIUM.periodo} · cancela cuando quieras`)),
+      mensaje,
+      el('p', { class: 'aviso' }, 'Contenido educativo. Sin dinero real. Solo para mayores de 18 años.')
+    ),
+    el('div', { class: 'pie' }, acciones)
   );
 }
 
