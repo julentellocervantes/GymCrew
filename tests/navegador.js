@@ -147,7 +147,7 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
 
   // 5) Ajustes: meta, letra, movimiento, copia de seguridad
   await inicio({ xp: 120, racha: 2, ultimoDia: dia(0), completadas: { 'bj-1-1': true } });
-  await page.locator('.ajustes-btn').click();
+  await page.locator('.pestana[data-pestana=ajustes]').click();
   await foto('4-ajustes');
   await page.getByRole('button', { name: '10 XP · suave' }).click();
   ok((await estado()).meta === 10, 'meta guardada');
@@ -340,7 +340,7 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
   ok(reg.includes('toque'), 'pulsar botones hace un clic');
   // se puede desactivar y se recuerda
   await page.reload();
-  await page.locator('.ajustes-btn').click();
+  await page.locator('.pestana[data-pestana=ajustes]').click();
   await page.getByRole('switch', { name: /Efectos de sonido/ }).click();
   ok((await estado()).ajustes.sonido === false, 'el sonido se desactiva en Ajustes');
   await page.evaluate(() => (sonido.registro.length = 0));
@@ -349,7 +349,7 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
   await page.mouse.click(10, 10);
   ok((await page.evaluate(() => sonido.registro.length)) === 0, 'con el sonido desactivado no suena nada');
   await page.reload();
-  await page.locator('.ajustes-btn').click();
+  await page.locator('.pestana[data-pestana=ajustes]').click();
   ok(await page.getByRole('switch', { name: /Efectos de sonido/ }).getAttribute('aria-checked') === 'false', 'el ajuste de sonido se recuerda');
   await page.getByRole('switch', { name: /Efectos de sonido/ }).click();
   ok((await estado()).ajustes.sonido === true, 'y se puede volver a activar');

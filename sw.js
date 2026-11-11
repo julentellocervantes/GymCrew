@@ -2,7 +2,7 @@
 // - Al instalarse guarda todos los archivos de la app.
 // - Después, con conexión siempre usa la versión más nueva (y la guarda); sin conexión usa la guardada.
 //   Así no hace falta cambiar nada cuando editas los archivos.
-const CACHE = 'entrenador-cartas-v7';
+const CACHE = 'entrenador-cartas-v8';
 const ARCHIVOS = [
   './', 'index.html', 'manifest.webmanifest',
   'css/estilos.css', 'js/sonido.js', 'js/app.js', 'js/util.js', 'js/extras.js', 'js/inicio.js', 'js/mascota.js',

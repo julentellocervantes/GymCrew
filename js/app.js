@@ -509,7 +509,7 @@ function mostrarInicio(entrada = 'fundido') {
       : rachaVigente() > 1
       ? `¡Ya llevas ${rachaVigente()} días seguidos! ¿Qué juego practicamos hoy?`
       : `${momentoDelDia()}! Qué bien verte por aquí. ¿Qué juego practicamos hoy?`;
-  const { fila } = naiFila('feliz', saludo, 'hero');
+  const { fila } = naiFila('feliz', saludo);
 
   const rg = rangoDe(progreso.xp);
   const tarjetaRango = el(
@@ -521,7 +521,7 @@ function mostrarInicio(entrada = 'fundido') {
       { class: 'juego-texto' },
       el('strong', {}, `Rango: ${rg.actual.nombre}`),
       el('span', { class: 'juego-barra' }, el('span', { class: 'juego-relleno', style: `width:${Math.round(rg.pct * 100)}%` })),
-      el('span', { class: 'juego-niveles' }, rg.siguiente ? `${progreso.xp} / ${rg.siguiente.desde} XP para ser ${rg.siguiente.nombre}` : '¡Has llegado al rango máximo!')
+      el('span', { class: 'juego-niveles' }, rg.siguiente ? `${progreso.xp} / ${rg.siguiente.desde} XP` : '¡Has llegado al rango máximo!')
     ),
     el('span', { class: 'rango-logros' }, '🏅', el('small', {}, `${LOGROS.filter((l) => progreso.logros[l.id]).length}/${LOGROS.length}`))
   );
@@ -544,7 +544,6 @@ function mostrarInicio(entrada = 'fundido') {
       el('strong', {}, cumplida ? '¡Meta de hoy cumplida!' : 'Meta de hoy'),
       el('span', { class: 'juego-niveles' }, `${Math.min(hecho, 9999)} / ${progreso.meta} XP` + (progreso.congeladores ? ` · 🧊 ×${progreso.congeladores}` : ''))
     ),
-    el('button', { class: 'ajustes-btn', type: 'button', 'aria-label': 'Ajustes', onclick: () => mostrarAjustes() }, '⚙️')
   );
 
   // Repaso inteligente: lo que toca repasar hoy y tus fallos
@@ -553,7 +552,7 @@ function mostrarInicio(entrada = 'fundido') {
   const filaRepaso = (clase, icono, titulo, desc, alPulsar) =>
     el(
       'button',
-      { class: 'repaso fijo ' + clase, type: 'button', style: '--acento:#7a5af8', onclick: alPulsar },
+      { class: 'repaso fijo ' + clase + (clase === 'conteo' ? '' : ' mini'), type: 'button', style: '--acento:#7a5af8', onclick: alPulsar },
       el('span', { class: 'repaso-icono' }, icono),
       el('span', { class: 'juego-texto' }, el('strong', {}, titulo), el('span', { class: 'juego-desc' }, desc)),
       el('span', { class: 'flecha', 'aria-hidden': 'true' }, '›')
@@ -592,9 +591,8 @@ function mostrarInicio(entrada = 'fundido') {
       almacenamientoFallo
         ? el('p', { class: 'alerta', role: 'alert' }, 'Tu navegador no deja guardar el progreso (¿modo privado?). Puedes seguir, pero al cerrar se perderá.')
         : null,
-      tarjetaMeta,
-      tarjetaRango,
-      repasos,
+      el('div', { class: 'resumen' }, tarjetaMeta, tarjetaRango),
+      repasos.some(Boolean) ? el('div', { class: 'repasos-mini' }, repasos) : null,
       el('h1', {}, 'Elige un juego'),
       tarjetas,
       filaRepaso('conteo', '⏱️', 'Entrena el conteo', 'Cartas a toda velocidad con el sistema Hi-Lo', () => mostrarConteo()),

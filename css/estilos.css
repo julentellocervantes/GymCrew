@@ -1084,3 +1084,24 @@ body.con-barra .pie { bottom: calc(var(--alto-barra) + env(safe-area-inset-botto
   :root:not([data-theme="light"]) .tabla-simple td.neg { color: #ff8a8a; }
   :root:not([data-theme="light"]) .mano-texto .roja { color: #ff7b7b; }
 }
+
+/* ---------- Inicio compacto: meta, rango y repasos en poco espacio ---------- */
+.resumen { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.resumen .meta, .resumen .rango { margin: 0; padding: 8px 10px; gap: 8px; border-radius: 16px; box-shadow: 0 3px 0 var(--borde); min-width: 0; }
+.resumen .meta.cumplida { box-shadow: 0 3px 0 #58cc02; }
+.resumen .anillo, .resumen .rango-icono { width: 36px; height: 36px; border-radius: 12px; font-size: 19px; }
+.resumen .anillo { border-radius: 50%; }
+.resumen .anillo::before { inset: 5px; }
+.resumen .anillo span { font-size: 14px; }
+.resumen strong { font-size: 14px; line-height: 1.15; }
+.resumen .juego-niveles { font-size: 11px; margin: 0; }
+.resumen .juego-barra { height: 6px; margin: 3px 0; }
+.resumen .rango-logros { display: none; }
+.resumen .meta .juego-texto, .resumen .rango .juego-texto { min-width: 0; }
+.repasos-mini { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 12px; }
+.repaso.mini { margin: 0; padding: 8px 10px; gap: 8px; border-radius: 16px; box-shadow: 0 3px 0 var(--acento); min-width: 0; }
+.repaso.mini .repaso-icono { width: 32px; height: 32px; border-radius: 10px; font-size: 17px; }
+.repaso.mini strong { font-size: 14px; line-height: 1.15; }
+.repaso.mini .juego-desc { font-size: 11px; line-height: 1.25; }
+.repaso.mini .flecha { display: none; }
+.contenido > .nai-fila { margin: 6px 0 12px; }
