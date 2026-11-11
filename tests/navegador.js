@@ -59,7 +59,7 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
     while (await hayPregunta()) { await responder(acertar); await page.locator('.feedback .boton').click(); }
   }
   const estado = () => page.evaluate(() => JSON.parse(localStorage.getItem('progreso-v2')));
-  const inicio = async (p) => { await guardar(p); await page.reload(); };
+  const inicio = async (p) => { await guardar(Object.assign({ bienvenida: true }, p)); await page.reload(); };
 
   // 1) Un guardado antiguo se completa con los campos nuevos y no rompe nada
   await inicio({ xp: 35, racha: 0, ultimoDia: null, completadas: {} });
@@ -170,7 +170,7 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
   await page.reload(); // los ajustes de letra y movimiento se mantienen
   ok(await page.evaluate(() => document.documentElement.dataset.letra) === 'grande', 'la letra grande se recuerda');
   // reiniciar conserva los ajustes de aspecto
-  await page.locator('.enlace', { hasText: 'Ajustes' }).click();
+  await page.locator('.pestana[data-pestana=ajustes]').click();
   await page.getByRole('button', { name: 'Reiniciar progreso' }).click();
   p = await estado();
   ok(p.xp === 0 && p.ajustes.letra === 'grande', 'reiniciar borra el progreso pero no los ajustes de aspecto');
@@ -353,6 +353,87 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
   ok(await page.getByRole('switch', { name: /Efectos de sonido/ }).getAttribute('aria-checked') === 'false', 'el ajuste de sonido se recuerda');
   await page.getByRole('switch', { name: /Efectos de sonido/ }).click();
   ok((await estado()).ajustes.sonido === true, 'y se puede volver a activar');
+
+  // 6d) Bienvenida, barra inferior y pestaña Útil
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+  await page.waitForSelector('.bienvenida');
+  ok((await page.locator('main').innerText()).includes('Bienvenido al Entrenador de cartas'), 'un usuario nuevo ve la bienvenida');
+  ok(await page.locator('#barra').isHidden(), 'la bienvenida no muestra la barra inferior');
+  await foto('11-bienvenida');
+  await page.getByRole('button', { name: 'Empezar' }).click();
+  await page.waitForSelector('.juego');
+  ok((await estado()).bienvenida === true, 'la bienvenida se recuerda');
+  ok(await page.locator('#barra').isVisible(), 'la barra aparece en Juegos');
+  ok(await page.locator('.pestana').count() === 3, 'tres pestañas: Juegos, Útil y Ajustes');
+  ok(await page.locator('.pestana[data-pestana=juegos]').getAttribute('aria-current') === 'page', 'Juegos es la pestaña activa');
+  ok(await page.locator('.juego').count() === 3, 'los tres juegos están en la misma pestaña');
+  await page.reload();
+  ok(await page.locator('.bienvenida').count() === 0, 'la bienvenida no vuelve a salir');
+  await foto('12-juegos-barra');
+  // entrar a un juego mantiene la barra; una lección la oculta
+  await page.locator('.juego').first().click();
+  await page.waitForSelector('.nodo');
+  ok(await page.locator('#barra').isVisible() && await page.locator('.pestana[data-pestana=juegos]').getAttribute('aria-current') === 'page', 'el mapa del juego conserva la barra');
+  await page.locator('.nodo.actual').click({ force: true });
+  await page.getByRole('button', { name: '¡Vamos!' }).click();
+  ok(await page.locator('#barra').isHidden(), 'durante una lección la barra se oculta');
+  await page.locator('.cerrar').click();
+  await page.waitForSelector('.nodo');
+  ok(await page.locator('#barra').isVisible(), 'al salir de la lección vuelve la barra');
+  // pestaña Útil
+  await page.locator('.pestana[data-pestana=util]').click();
+  await page.waitForSelector('.util-bloque');
+  ok(await page.locator('.pestana[data-pestana=util]').getAttribute('aria-current') === 'page', 'Útil queda marcada');
+  ok(await page.locator('.util-bloque').count() === 9, 'Útil tiene 4 calculadoras y 5 chuletas');
+  await page.locator('.util-bloque', { hasText: 'Cuenta verdadera' }).first().locator('summary').click();
+  ok((await page.locator('.resultado-calc').first().innerText()).includes('+3'), 'cuenta verdadera 6 ÷ 2 = +3');
+  await page.getByLabel('Mazos que quedan', { exact: true }).fill('4');
+  ok((await page.locator('.resultado-calc').first().innerText()).includes('+1,5'), 'cuenta verdadera 6 ÷ 4 = +1,5');
+  await page.getByRole('button', { name: 'Sumar a Cuenta corriente' }).click();
+  ok((await page.locator('.resultado-calc').first().innerText()).includes('+1,8'), 'el botón + de la calculadora funciona (7 ÷ 4 = 1,75 -> 1,8)');
+  await page.locator('.util-bloque', { hasText: 'Probabilidad con outs' }).locator('summary').click();
+  const outs = await page.locator('.util-bloque', { hasText: 'Probabilidad con outs' }).locator('.resultado-calc').allInnerTexts();
+  ok(outs[0].includes('≈ 36 % (exacto 35 %)') && outs[1].includes('≈ 18 % (exacto 20 %)'), 'outs: 9 outs = 36 % / 18 % (exacto 35 % y 20 %)');
+  await page.locator('.util-bloque', { hasText: 'Pot odds' }).first().locator('summary').click();
+  ok((await page.locator('.util-bloque', { hasText: 'Pot odds' }).first().locator('.resultado-calc').innerText()).includes('20 %'), 'pot odds 25 sobre 125 = 20 %');
+  await page.locator('.util-bloque', { hasText: 'Contador rápido' }).locator('summary').click();
+  const cont = page.locator('.util-bloque', { hasText: 'Contador rápido' });
+  for (const g of ['2 a 6', '2 a 6', '2 a 6', '7 a 9', '10 a As']) await cont.locator('.contador-boton', { hasText: g }).click();
+  ok((await cont.locator('.contador-gran').innerText()) === '+2' && (await cont.innerText()).includes('5 cartas vistas'), 'el contador rápido suma +3, 0 y −1 = +2');
+  await cont.getByRole('button', { name: 'Deshacer' }).click();
+  ok((await cont.locator('.contador-gran').innerText()) === '+3', 'deshacer quita la última carta');
+  await cont.getByRole('button', { name: 'Reiniciar' }).click();
+  ok((await cont.locator('.contador-gran').innerText()) === '0', 'reiniciar pone la cuenta a 0');
+  await page.locator('.util-bloque', { hasText: 'estrategia básica' }).locator('summary').click();
+  ok(await page.locator('.tabla-bj td').count() === 210, 'la tabla de estrategia tiene 21 filas x 10 columnas');
+  ok(await page.locator('td[aria-label="A,7 contra 9: pedir"]').count() === 1 && await page.locator('td[aria-label="A,A contra 6: dividir"]').count() === 1, 'las celdas se leen con claridad (aria-label)');
+  await foto('13-util');
+  await page.locator('.util-bloque', { hasText: 'Póker: ranking' }).locator('summary').click();
+  ok(await page.locator('.ranking li').count() === 9, 'ranking de póker con 9 manos');
+  await page.locator('.util-bloque', { hasText: 'Mus: valores' }).locator('summary').click();
+  await page.locator('.util-bloque', { hasText: 'Glosario' }).locator('summary').click();
+  ok(await page.locator('.glosario dt').count() === 16, 'glosario con 16 términos');
+  // pestaña Ajustes y volver a ver la bienvenida
+  await page.locator('.pestana[data-pestana=ajustes]').click();
+  await page.waitForSelector('.ajuste');
+  ok(await page.locator('.pestana[data-pestana=ajustes]').getAttribute('aria-current') === 'page' && await page.locator('.volver').count() === 0, 'Ajustes es una pestaña (sin flecha de volver)');
+  await foto('14-ajustes-tab');
+  await page.getByRole('button', { name: 'Ver la bienvenida' }).click();
+  await page.waitForSelector('.bienvenida');
+  await page.getByRole('button', { name: 'Volver a los juegos' }).click();
+  await page.waitForSelector('.juego');
+  // en pantallas pequeñas nada se sale
+  await page.setViewportSize({ width: 320, height: 640 });
+  await page.locator('.pestana[data-pestana=util]').click();
+  await page.locator('.util-bloque', { hasText: 'estrategia básica' }).locator('summary').click();
+  await page.locator('.util-bloque', { hasText: 'Contador rápido' }).locator('summary').click();
+  await page.waitForTimeout(500);
+  ok(await page.evaluate(() => document.documentElement.scrollWidth) <= 320, 'Útil sin scroll horizontal en 320 px');
+  const solapa = await page.evaluate(() => { const b = document.getElementById('barra').getBoundingClientRect(); return b.height; });
+  ok(solapa > 40 && solapa < 90, 'la barra tiene un alto razonable: ' + solapa);
+  await foto('15-util-320');
+  await page.setViewportSize({ width: 390, height: 844 });
 
   // 7) El almacenamiento bloqueado no rompe la app y avisa
   const p2 = await ctx.newPage();

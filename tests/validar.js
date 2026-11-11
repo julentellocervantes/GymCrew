@@ -151,8 +151,11 @@ function verificarInteractivo(e) {
   if (esperado !== e.respuesta) mal(e.id, `numero: se esperaba ${esperado} y el ejercicio dice ${e.respuesta}`);
 }
 
-for (const f of ['cursos.js', 'blackjack.js', 'poker.js', 'mus.js', 'blackjack-extra.js', 'poker-extra.js', 'mus-extra.js', 'ordenar-extra.js', 'interactivos-extra.js', 'variedad-extra.js']) vm.runInContext(fs.readFileSync(D + f, 'utf8'), ctx, { filename: f });
+
+for (const f of ['cursos.js', 'blackjack.js', 'poker.js', 'mus.js', 'blackjack-extra.js', 'poker-extra.js', 'mus-extra.js', 'ordenar-extra.js', 'interactivos-extra.js', 'variedad-extra.js', 'ayuda.js']) vm.runInContext(fs.readFileSync(D + f, 'utf8'), ctx, { filename: f });
 const CURSOS = vm.runInContext('CURSOS', ctx);
+const AYUDA = vm.runInContext('AYUDA', ctx);
+
 
 const errores = [];
 const mal = (id, msg) => errores.push(`${id}: ${msg}`);
@@ -363,7 +366,29 @@ const prob = [
 ];
 for (const [n, ok] of prob) if (!ok) errores.push('cálculo: ' + n);
 console.log(`${CURSOS.length} cursos, ${nNiv} niveles, ${nEj} ejercicios`);
+verificarAyuda();
 console.log('verificados con calculo independiente:', JSON.stringify(verif));
 console.log(CURSOS.map((c) => `  ${c.id}: ${c.unidades.flatMap((u) => u.lecciones).length} niveles`).join('\n'));
+// ---------- pestaña «Útil»: tabla de estrategia, ranking de póker y outs ----------
+function verificarAyuda() {
+  const NOMBRE = { P: 'Pedir', S: 'Plantarte', D: 'Doblar', X: 'Dividir' };
+  let celdas = 0;
+  for (const [grupo, filas] of Object.entries(AYUDA.estrategia)) {
+    for (const f of filas) {
+      if (f.celdas.length !== AYUDA.crupier.length || /[^PSDX]/.test(f.celdas)) { mal('ayuda:' + f.etiqueta, 'fila con códigos o longitud no válidos'); continue; }
+      for (const mano of f.manos) AYUDA.crupier.forEach((c, k) => {
+        celdas++;
+        const esperado = mejorJugada(mano, c);
+        if (esperado !== NOMBRE[f.celdas[k]]) mal('ayuda:' + f.etiqueta, `${grupo} ${mano.join('+')} contra ${c}: la tabla dice ${NOMBRE[f.celdas[k]]} y la estrategia básica ${esperado}`);
+      });
+    }
+  }
+  verif.celdasEstrategia = celdas;
+  AYUDA.poker.forEach((m, i) => { const cat = categoriaPoker(m.ejemplo.split(' ')); if (cat !== m.nombre) mal('ayuda:poker', `«${m.ejemplo}» es ${cat}, no ${m.nombre}`); });
+  verif.rankingPoker = AYUDA.poker.length;
+  // outs: 9 de color, 8 de escalera abierta (2 extremos x 4 cartas), 4 de pulmón, 6 de dos cartas altas, 2 de pareja a trío
+  const esp = { 'Proyecto de color': 13 - 4, 'Escalera abierta': 2 * 4, 'Dos cartas altas sin pareja': 2 * 3, 'Escalera de pulmón (gutshot)': 4, 'Pareja que busca trío': 4 - 2 };
+  AYUDA.outs.forEach(([n, v]) => { if (esp[n] !== v) mal('ayuda:outs', `${n}: ${v} y debería ser ${esp[n]}`); });
+}
 if (errores.length) { console.log('\nERRORES:\n' + errores.map((x) => ' - ' + x).join('\n')); process.exit(1); }
 console.log('\nDATOS OK: estructura, estrategia básica, Hi-Lo, cuenta verdadera, mus (lances), póker (manos y ganador), pot odds, outs y probabilidades');

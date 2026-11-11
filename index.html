@@ -24,6 +24,7 @@
 <body>
   <div class="decor" aria-hidden="true"><span style="--x:6%;--y:10%;--t:44px;--d:9s">♠</span><span class="r" style="--x:82%;--y:6%;--t:38px;--d:11s">♥</span><span class="r" style="--x:70%;--y:38%;--t:56px;--d:13s">♦</span><span style="--x:12%;--y:40%;--t:60px;--d:12s">♣</span><span class="r" style="--x:44%;--y:22%;--t:30px;--d:10s">♥</span><span style="--x:88%;--y:62%;--t:48px;--d:14s">♠</span><span style="--x:30%;--y:72%;--t:40px;--d:9s">♣</span><span class="r" style="--x:58%;--y:84%;--t:52px;--d:12s">♦</span><span style="--x:4%;--y:88%;--t:36px;--d:11s">♠</span><span class="r" style="--x:90%;--y:88%;--t:34px;--d:10s">♥</span><span style="--x:50%;--y:52%;--t:28px;--d:13s">♣</span><span class="r" style="--x:20%;--y:18%;--t:26px;--d:8s">♦</span></div>
   <div id="app"></div>
+  <nav id="barra" class="barra-pestanas" aria-label="Secciones de la app" hidden></nav>
   <noscript>Esta aplicación necesita JavaScript activado.</noscript>
 
   <!-- 1) Datos: cursos.js crea la lista y cada juego añade el suyo -->
@@ -38,11 +39,13 @@
   <script src="data/ordenar-extra.js"></script>
   <script src="data/interactivos-extra.js"></script>
   <script src="data/variedad-extra.js"></script>
+  <script src="data/ayuda.js"></script>
 
   <!-- 2) La mascota y la lógica -->
   <script src="js/mascota.js"></script>
   <script src="js/sonido.js"></script>
   <script src="js/app.js"></script>
+  <script src="js/util.js"></script>
   <script src="js/extras.js"></script>
   <script src="js/inicio.js"></script>
 </body>

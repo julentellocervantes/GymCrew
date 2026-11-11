@@ -24,6 +24,7 @@ const progresoNuevo = () => ({
   srs: {},                        // repetición espaciada: id del ejercicio -> { caja, prox, fallos }
   conteo: { sesiones: 0, mejor: 0 }, // entrenador de conteo
   ajustes: { letra: 'normal', calma: false, sonido: true },
+  bienvenida: false,              // true cuando ya has visto la pantalla de bienvenida
 });
 
 // Comprueba que un progreso (guardado o importado) tiene la forma esperada y rellena lo que falte
@@ -46,6 +47,8 @@ function normalizarProgreso(datos) {
   p.xpHoy = Object.assign({ dia: null, xp: 0 }, obj(p.xpHoy, {}));
   p.conteo = Object.assign({ sesiones: 0, mejor: 0 }, obj(p.conteo, {}));
   p.ajustes = Object.assign({ letra: 'normal', calma: false, sonido: true }, obj(p.ajustes, {}));
+  // quien ya tenía progreso no necesita la bienvenida
+  p.bienvenida = p.bienvenida === true || p.xp > 0 || Object.keys(p.completadas).length > 0;
   return p;
 }
 
@@ -354,6 +357,7 @@ const momentoDelDia = () => {
 //   'adelante' (entra desde la derecha) | 'atras' (desde la izquierda) | 'fundido'
 //   'ejercicio' (solo cambia el contenido) | 'sin' (repintado dentro del mismo ejercicio: no se anima la pantalla)
 function pintar(entrada, ...nodos) {
+  if (typeof barra === 'function') barra(null); // la barra inferior solo se muestra en las pantallas principales
   const y = window.scrollY || 0;
   raiz.dataset.entrada = entrada;
   // Se descartan los null: replaceChildren los escribiría como el texto "null"
@@ -595,8 +599,7 @@ function mostrarInicio(entrada = 'fundido') {
       tarjetas,
       filaRepaso('conteo', '⏱️', 'Entrena el conteo', 'Cartas a toda velocidad con el sistema Hi-Lo', () => mostrarConteo()),
       puedeInstalar() ? crearBotonInstalar() : null,
-      el('p', { class: 'aviso' }, 'Contenido educativo. Sin dinero real. Solo para mayores de 18 años. Si el juego te preocupa, mira «Ayuda» en Ajustes.'),
-      el('button', { class: 'enlace', type: 'button', onclick: () => mostrarAjustes() }, 'Ajustes, copia de seguridad y ayuda')
+      el('p', { class: 'aviso' }, 'Contenido educativo. Sin dinero real. Solo para mayores de 18 años. Si el juego te preocupa, mira «Ayuda» en la pestaña Ajustes.')
     )
   );
 }

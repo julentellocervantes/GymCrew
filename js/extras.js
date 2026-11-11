@@ -48,7 +48,7 @@ function leerCopia(texto) {
   return normalizarProgreso(crudo);
 }
 
-function mostrarAjustes(aviso = '') {
+function mostrarAjustes(aviso = '', animacion = 'fundido') {
   alTeclear = null;
   const mensaje = el('p', { class: 'ajuste-mensaje', role: 'status', 'aria-live': 'polite' }, aviso);
   const avisar = (t) => (mensaje.textContent = t);
@@ -82,19 +82,19 @@ function mostrarAjustes(aviso = '') {
       progreso = p;
       guardarProgreso();
       aplicarAjustes();
-      mostrarAjustes('Copia restaurada.');
+      mostrarAjustes('Copia restaurada.', 'sin');
     };
     lector.onerror = () => avisar('No se ha podido leer el archivo.');
     lector.readAsText(archivo);
   });
 
   pintar(
-    'adelante',
-    el('header', { class: 'cabecera' }, el('button', { class: 'volver', type: 'button', 'aria-label': 'Volver a los juegos', onclick: () => mostrarInicio('atras') }, '←'), marcador()),
+    animacion,
+    el('header', { class: 'cabecera' }, el('span', { class: 'logo' }, el('span', { class: 'logo-palo' }, '♥'), 'Entrenador de cartas'), marcador()),
     el(
       'main',
       { class: 'contenido' },
-      el('h1', {}, 'Ajustes'),
+      el('h1', {}, '⚙️ Ajustes'),
       el(
         'section',
         { class: 'ajuste' },
@@ -149,6 +149,13 @@ function mostrarAjustes(aviso = '') {
         el('p', {}, 'Esta app es para aprender y no mueve dinero. Si el juego con dinero te preocupa a ti o a alguien cercano, hay ayuda gratuita y confidencial:'),
         el('a', { class: 'enlace-ayuda', href: 'https://jugadoresanonimos.org', target: '_blank', rel: 'noopener noreferrer' }, 'Jugadores Anónimos España ↗'),
         el('p', { class: 'ajuste-nota' }, 'También puedes buscar la Federación Española de Jugadores de Azar Rehabilitados (FEJAR) o hablar con tu médico de cabecera. El juego está permitido solo a mayores de 18 años.')
+      ),
+      el(
+        'section',
+        { class: 'ajuste' },
+        el('h2', {}, '👋 Bienvenida'),
+        el('p', {}, 'Vuelve a ver la pantalla de presentación.'),
+        el('button', { class: 'boton secundario', type: 'button', onclick: () => mostrarBienvenida(true) }, 'Ver la bienvenida')
       ),
       el(
         'section',
@@ -328,4 +335,72 @@ function resultadoConteo(cartas, total, dicho) {
     ),
     acierto ? confeti(40) : null
   );
+}
+
+
+// ============================================================
+// BIENVENIDA
+// ============================================================
+function mostrarBienvenida(repetida = false) {
+  const { fila } = naiFila('celebrando', repetida ? '¡Hola otra vez! Esto es lo que puedes hacer aquí.' : '¡Hola! Soy Nai y voy a ser tu entrenador de cartas.', 'hero');
+  const empezar = (destino) => {
+    progreso.bienvenida = true;
+    guardarProgreso();
+    destino();
+  };
+  alTeclear = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      empezar(() => mostrarInicio('adelante'));
+    }
+  };
+  const ventaja = (icono, titulo, desc, i) =>
+    el('li', { class: 'bienvenida-item aparece', style: `--i:${i}` }, el('span', { class: 'bienvenida-icono', 'aria-hidden': 'true' }, icono), el('span', { class: 'juego-texto' }, el('strong', {}, titulo), el('span', { class: 'juego-desc' }, desc)));
+  pintar(
+    'fundido',
+    el('main', { class: 'contenido bienvenida' },
+      fila,
+      almacenamientoFallo ? el('p', { class: 'alerta', role: 'alert' }, 'Tu navegador no deja guardar el progreso (¿modo privado?). Puedes seguir, pero al cerrar se perderá.') : null,
+      el('h1', { class: 'bienvenida-titulo' }, 'Bienvenido al Entrenador de cartas'),
+      el('p', { class: 'bienvenida-sub' }, 'Aprende blackjack, póker y mus practicando situaciones reales, poco a poco y sin dinero.'),
+      el('ul', { class: 'bienvenida-lista' },
+        ventaja('🎮', 'Aprende jugando', 'Niveles cortos con preguntas de todo tipo: test, ordenar, unir, tocar cartas…', 0),
+        ventaja('🔁', 'Repasa lo que fallas', 'La app te vuelve a preguntar justo cuando toca para que no se te olvide.', 1),
+        ventaja('🧰', 'Herramientas a mano', 'Tabla de estrategia, calculadoras y un contador de cartas en la pestaña Útil.', 2),
+        ventaja('⏱️', 'Entrena el conteo', 'Cartas a toda velocidad con el sistema Hi-Lo.', 3)),
+      el('p', { class: 'aviso' }, 'Contenido educativo. Sin dinero real. Solo para mayores de 18 años.')),
+    el('div', { class: 'pie' },
+      el('button', { class: 'boton', type: 'button', onclick: () => empezar(() => mostrarInicio('adelante')) }, repetida ? 'Volver a los juegos' : 'Empezar'),
+      el('button', { class: 'enlace', type: 'button', onclick: () => empezar(() => mostrarUtil('adelante')) }, 'Ya sé jugar: ir a las herramientas'))
+  );
+}
+
+// ============================================================
+// BARRA INFERIOR (Juegos · Útil · Ajustes)
+// ============================================================
+const PESTANAS = [
+  { id: 'juegos', icono: '🃏', texto: 'Juegos', ir: () => mostrarInicio('fundido') },
+  { id: 'util', icono: '🧰', texto: 'Útil', ir: () => mostrarUtil('fundido') },
+  { id: 'ajustes', icono: '⚙️', texto: 'Ajustes', ir: () => mostrarAjustes('', 'fundido') },
+];
+let barraPestana = null;
+function barra(activa) {
+  const nav = document.getElementById('barra');
+  if (!nav) return;
+  barraPestana = activa;
+  document.body.classList.toggle('con-barra', !!activa);
+  nav.hidden = !activa;
+  if (!activa) return;
+  if (!nav.children.length)
+    nav.append(
+      ...PESTANAS.map((t) =>
+        el('button', { class: 'pestana', type: 'button', 'data-pestana': t.id, onclick: () => t.ir() }, el('span', { class: 'pestana-icono', 'aria-hidden': 'true' }, t.icono), el('span', { class: 'pestana-texto' }, t.texto))
+      )
+    );
+  nav.querySelectorAll('.pestana').forEach((b) => {
+    const on = b.dataset.pestana === activa;
+    b.classList.toggle('activa', on);
+    if (on) b.setAttribute('aria-current', 'page');
+    else b.removeAttribute('aria-current');
+  });
 }

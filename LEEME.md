@@ -117,3 +117,10 @@ Cuidado con las comas entre elementos y con las comillas.
 - **Revisa el contenido con alguien que juegue.** Las respuestas del blackjack se han comprobado con una tabla de estrategia básica para 4 a 8 mazos con el crupier plantándose en 17 blando; con otras reglas, algunas jugadas cambian. Las manos del póker, los lances del mus y las probabilidades se comprobaron con cálculos propios, pero los cursos de póker y mus siguen siendo iniciales: el mus tiene variantes según la zona, así que conviene contrastarlo.
 - Mantén el planteamiento educativo: sin dinero real, sin apuestas y con clasificación de edad 18+.
 - Para llevarla a las tiendas de apps más adelante habría que empaquetarla (por ejemplo con Capacitor). Es un paso posterior.
+
+## Bienvenida, barra inferior y pestaña Útil
+
+- **Bienvenida**: la primera vez se muestra una pantalla de presentación (se puede volver a ver desde Ajustes → Bienvenida).
+- **Barra inferior** con tres pestañas: **Juegos** (blackjack, póker y mus, mapas y logros en la misma pestaña), **Útil** y **Ajustes**. Se oculta durante las lecciones y el entrenador de conteo.
+- **Útil** (`js/util.js`, datos en `data/ayuda.js`): calculadoras (cuenta verdadera, outs, pot odds), contador rápido de cartas, tabla de estrategia básica de blackjack, chuleta de conteo, ranking de póker, valores del mus y glosario. La tabla se verifica en `tests/validar.js` contra la lógica de estrategia.
+- `tests/navegador.js` cubre ahora la bienvenida, la barra y las calculadoras (174 comprobaciones).
