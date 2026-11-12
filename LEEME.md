@@ -160,3 +160,13 @@ Cuidado con las comas entre elementos y con las comillas.
 - `tests/validar.js` comprueba el bacarrá con reglas propias de la tercera carta y enumeración exacta de probabilidades (empate ≈ 9,5 %; ventaja de la casa ≈ 1,06 % Banca, ≈ 1,24 % Jugador, ≈ 14 % Empate) y cada jugada de vídeo póker recalculando el valor esperado de las 32 formas de guardar cartas.
 - Aviso: el retorno «≈ 99,5 %» de la 9/6 con juego perfecto es una cifra conocida que NO recalcula el validador. Es contenido educativo, sin dinero real; no es una invitación a apostar.
 - **30 niveles normales por juego** (150 en total, más 150 niveles Oro): `data/ampliacion.js` añade las unidades nuevas (blackjack, póker y mus con generadores; baccarat y vídeo póker con `data/casino.js`). Los niveles «Examen» y «Torneo» usan las situaciones difíciles.
+
+## Tienda, energía, fichas y cofres (`js/tienda.js`)
+
+- La pestaña **Tienda** (antes «VIP») contiene la energía, el pase VIP y los cosméticos.
+- **Energía ⚡**: cada nivel (normal u Oro) gasta 1. Cada día empiezas con 2 y, si bajas de 2, se recupera 1 cada 30 min. Se compra con fichas (1 ⚡ = 10 🪙, 3 ⚡ = 25 🪙). El VIP tiene energía ilimitada. Los repasos y el conteo no gastan. Los números están al principio de `js/tienda.js` (`ENERGIA`, `COMPRAS_ENERGIA`).
+- **Fichas 🪙**: 3 por nivel nuevo (6 en Oro), 5 por la meta diaria y las de los cofres. Empiezas con 20.
+- **Cofres 🎁**: uno cada 6 niveles de cada juego (`CADA_COFRE`); dan 8–20 fichas y un premio extra (XP, energía, congelador o un bote de fichas).
+- **Cosméticos**: fondos, barajas y aspecto de Nai (catálogo `CATALOGO` en `js/tienda.js`; estilos al final de `css/estilos.css`). Son solo estéticos.
+- Las fichas NO se compran con dinero real (eso necesitaría otro producto en Stripe). Todo el estado va en el progreso y entra en la copia de seguridad.
+- Limitación: como el resto del progreso, vive en el navegador; quien sepa puede editarlo.

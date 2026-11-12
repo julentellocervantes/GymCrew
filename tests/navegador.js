@@ -366,10 +366,53 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
   ok((await estado()).bienvenida === true, 'la bienvenida se recuerda');
   ok(await page.locator('#barra').isVisible(), 'la barra aparece en Juegos');
   ok(await page.locator('.pestana').count() === 4, 'cuatro pestañas: Juegos, Útil, VIP y Ajustes');
-  await page.locator('.pestana[data-pestana=vip]').click();
-  await page.waitForSelector('.premium');
-  ok(await page.locator('.pestana[data-pestana=vip]').getAttribute('aria-current') === 'page' && await page.locator('#barra').isVisible() && await page.locator('.cerrar').count() === 0, 'la pestaña VIP muestra el pase sin flecha de cerrar y con la barra');
-  await page.locator('.pestana[data-pestana=juegos]').click();
+  await page.locator('.pestana[data-pestana=tienda]').click();
+  await page.waitForSelector('.tienda');
+  ok(await page.locator('.pestana[data-pestana=tienda]').getAttribute('aria-current') === 'page' && await page.locator('#barra').isVisible(), 'la pestaña Tienda se enciende y la barra se ve');
+  ok((await page.locator('.tienda').innerText()).includes('Energía: 2 / 2') && (await page.locator('.tienda').innerText()).includes('Pase VIP'), 'la tienda muestra la energía y el pase VIP');
+  // comprar un fondo con fichas
+  await page.evaluate(() => { progreso.fichas = 100; mostrarTienda('sin'); });
+  await page.locator('[data-articulo="fondo:mesa"] button').click();
+  ok(await page.evaluate(() => progreso.fichas === 60 && document.documentElement.dataset.fondo === 'mesa' && progreso.tienda.comprados.includes('fondo:mesa')), 'comprar un fondo gasta las fichas y lo aplica');
+  await page.locator('[data-articulo="fondo:clasico"] button').click();
+  ok(await page.evaluate(() => !document.documentElement.dataset.fondo), 'volver al fondo clásico es gratis');
+  await page.locator('[data-articulo="baraja:dorada"] button').click();
+  ok(await page.evaluate(() => document.documentElement.dataset.baraja === 'dorada' && progreso.fichas === 0), 'comprar una baraja la aplica a las cartas');
+  await page.locator('[data-articulo="nai:corona"] button').click();
+  ok((await page.locator('.tienda-seccion .mensaje, .ajuste-mensaje').first().innerText()).includes('Te faltan'), 'sin fichas suficientes no se compra y avisa');
+  await page.evaluate(() => { progreso.fichas = 100; progreso.tienda.equipado.baraja = 'clasica'; progreso.energia = { n: 0, t: Date.now(), dia: hoy() }; mostrarTienda('sin'); });
+  await page.getByRole('button', { name: /\+1 ⚡/ }).click();
+  ok(await page.evaluate(() => progreso.energia.n === 1 && progreso.fichas === 90), 'comprar energía con fichas');
+  // sin energía: no se puede empezar un nivel
+  await page.evaluate(() => { progreso.energia = { n: 0, t: Date.now(), dia: hoy() }; progreso.fichas = 5; const c = CURSOS[0]; mostrarIntro(c, niveles(c)[0]); });
+  await page.getByRole('button', { name: '¡Vamos!' }).click();
+  await page.waitForSelector('.energia-espera');
+  ok((await page.locator('main').innerText()).includes('Sin energía') && await page.locator('.pregunta').count() === 0, 'sin energía no empieza el nivel');
+  ok(await page.getByRole('button', { name: /Comprar 1/ }).isDisabled(), 'sin fichas no se puede comprar energía');
+  // con energía: empieza y gasta 1
+  await page.evaluate(() => { progreso.energia = { n: 2, t: 0, dia: hoy() }; const c = CURSOS[0]; mostrarIntro(c, niveles(c)[0]); });
+  await page.getByRole('button', { name: '¡Vamos!' }).click();
+  await page.waitForSelector('.pregunta');
+  ok(await page.evaluate(() => progreso.energia.n === 1 && progreso.energia.t > 0), 'empezar un nivel gasta 1 de energía y arranca la recarga');
+  // recarga con el tiempo y reinicio diario
+  ok(await page.evaluate(() => { progreso.energia = { n: 0, t: Date.now() - 31 * 60 * 1000, dia: hoy() }; return energiaActual() === 1; }), 'tras 30 minutos se recupera 1 de energía');
+  ok(await page.evaluate(() => { progreso.energia = { n: 0, t: Date.now(), dia: '2000-01-01' }; return energiaActual() === 2; }), 'cada día empiezas con 2 de energía');
+  ok(await page.evaluate(() => { progreso.energia = { n: 0, t: Date.now(), dia: hoy() }; progreso.vip.hasta = Date.now() + 1e9; const r = tieneEnergia(); progreso.vip.hasta = 0; return r; }), 'el VIP tiene energía ilimitada');
+  // cofre en el mapa tras 6 niveles
+  await page.evaluate(() => { localStorage.setItem('progreso-v2', JSON.stringify({ bienvenida: true, xp: 40, completadas: {} })); location.reload(); });
+  await page.waitForSelector('.juego');
+  await page.evaluate(() => { const c = CURSOS[0]; progreso.fichas = 0; mostrarMapa(c); });
+  ok(await page.locator('.nodo.cofre.bloqueado').count() >= 1 && await page.locator('.nodo.cofre.listo').count() === 0, 'los cofres empiezan bloqueados');
+  await page.evaluate(() => { const c = CURSOS[0]; niveles(c).slice(0, 6).forEach((l) => (progreso.completadas[l.id] = true)); mostrarMapa(c); });
+  ok(await page.locator('.nodo.cofre.listo').count() === 1, 'al completar 6 niveles el primer cofre queda listo');
+  await page.locator('.nodo.cofre.listo').click({ force: true });
+  await page.getByRole('button', { name: 'Abrir cofre' }).click();
+  await page.waitForSelector('.cofre-premio');
+  ok(await page.locator('.cofre-premio').count() === 2 && await page.evaluate(() => progreso.fichas >= 8 && progreso.cofres['blackjack-cofre-1'] === true), 'el cofre da fichas y un premio extra, y queda abierto');
+  await page.getByRole('button', { name: 'Continuar' }).click();
+  await page.waitForSelector('.nodo.cofre.abierto');
+  ok(await page.locator('.nodo.cofre.listo').count() === 0, 'un cofre abierto no se puede volver a abrir');
+  await page.evaluate(() => mostrarInicio('sin'));
   await page.waitForSelector('.juego');
   ok(await page.locator('.pestana[data-pestana=juegos]').getAttribute('aria-current') === 'page', 'Juegos es la pestaña activa');
   ok(await page.locator('.juego').count() === 5, 'los cinco juegos están en la misma pestaña');

@@ -2,7 +2,9 @@
 // mascotaSVG(estado) devuelve el dibujo según su estado de ánimo:
 //   'normal' | 'feliz' | 'pensando' | 'triste' | 'celebrando'
 
-function mascotaSVG(estado) {
+function mascotaSVG(estado, piel) {
+  if (!piel) piel = typeof progreso !== 'undefined' && progreso.tienda ? progreso.tienda.equipado.nai : 'clasico';
+  const oro = piel === 'oro';
   const TRAZO = 'fill="none" stroke="#14181f" stroke-width="3.5" stroke-linecap="round"';
   const BRAZO = 'fill="none" stroke="#2e3a4d" stroke-width="5" stroke-linecap="round"';
   const mano = (x, y) =>
@@ -73,7 +75,7 @@ function mascotaSVG(estado) {
     // pies
     `<ellipse cx="46" cy="124" rx="12" ry="6" fill="#2e3a4d"/><ellipse cx="74" cy="124" rx="12" ry="6" fill="#2e3a4d"/>` +
     // cuerpo (el naipe)
-    `<rect x="22" y="8" width="76" height="108" rx="14" fill="#fffbea" stroke="#2e3a4d" stroke-width="4"/>` +
+    `<rect x="22" y="8" width="76" height="108" rx="14" fill="${oro ? '#ffe58a' : '#fffbea'}" stroke="${oro ? '#a86a00' : '#2e3a4d'}" stroke-width="4"/>` +
     // esquinas del naipe
     `<text x="30" y="28" font-size="15" font-weight="800" fill="#14181f" font-family="Georgia,serif">A</text>` +
     `<text x="30" y="42" font-size="14" fill="#14181f">♠</text>` +
@@ -85,9 +87,13 @@ function mascotaSVG(estado) {
     `<ellipse cx="84" cy="82" rx="6" ry="4" fill="#ffb3c1" opacity=".8"/>` +
     e.boca +
     // pajarita
-    `<path d="M52 104 L60 108 L52 112 Z M68 104 L60 108 L68 112 Z" fill="#58cc02"/>` +
-    `<circle cx="60" cy="108" r="2.5" fill="#46a302"/>` +
+    `<path d="M52 104 L60 108 L52 112 Z M68 104 L60 108 L68 112 Z" fill="${oro ? '#d62839' : '#58cc02'}"/>` +
+    `<circle cx="60" cy="108" r="2.5" fill="${oro ? '#a31b2a' : '#46a302'}"/>` +
     e.extra +
+    // accesorios de la tienda
+    (piel === 'gafas' ? `<rect x="33" y="52" width="26" height="17" rx="7" fill="#14181f"/><rect x="61" y="52" width="26" height="17" rx="7" fill="#14181f"/><path d="M59 58 H61" stroke="#14181f" stroke-width="3"/><path d="M37 56 L44 56" stroke="#7a8aa5" stroke-width="2.5" stroke-linecap="round"/><path d="M65 56 L72 56" stroke="#7a8aa5" stroke-width="2.5" stroke-linecap="round"/>` : '') +
+    (piel === 'copa' ? `<rect x="46" y="0" width="28" height="11" rx="2" fill="#14181f"/><rect x="46" y="6" width="28" height="3" fill="#d62839"/><ellipse cx="60" cy="11" rx="24" ry="4.5" fill="#14181f"/>` : '') +
+    (piel === 'corona' ? `<path d="M42 13 L45 2 L53 9 L60 0 L67 9 L75 2 L78 13 Z" fill="#ffd23f" stroke="#a86a00" stroke-width="2.5" stroke-linejoin="round"/>` : '') +
     `</svg>`
   );
 }

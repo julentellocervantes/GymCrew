@@ -26,6 +26,10 @@ const progresoNuevo = () => ({
   ajustes: { letra: 'normal', calma: false, sonido: true },
   bienvenida: false,              // true cuando ya has visto la pantalla de bienvenida
   vip: { hasta: 0 },              // membresía VIP: instante (ms) hasta el que está activa
+  fichas: 20,                     // moneda de la tienda
+  energia: { n: 2, t: 0, dia: null }, // niveles que puedes empezar; t = cuándo empezó a recargarse
+  cofres: {},                     // cofres del mapa ya abiertos
+  tienda: { comprados: [], equipado: { fondo: 'clasico', baraja: 'clasica', nai: 'clasico' } }, // cosméticos
 });
 
 // Comprueba que un progreso (guardado o importado) tiene la forma esperada y rellena lo que falte
@@ -49,6 +53,15 @@ function normalizarProgreso(datos) {
   p.conteo = Object.assign({ sesiones: 0, mejor: 0 }, obj(p.conteo, {}));
   p.ajustes = Object.assign({ letra: 'normal', calma: false, sonido: true }, obj(p.ajustes, {}));
   p.vip = { hasta: p.vip && Number.isFinite(p.vip.hasta) && p.vip.hasta > 0 ? Math.floor(p.vip.hasta) : 0 };
+  p.fichas = num(p.fichas, 20);
+  const en = obj(p.energia, {});
+  p.energia = { n: Math.min(6, num(en.n, 2)), t: num(en.t, 0), dia: typeof en.dia === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(en.dia) ? en.dia : null };
+  p.cofres = obj(p.cofres, {});
+  const tn = obj(p.tienda, {});
+  const idOk = (s) => typeof s === 'string' && /^[a-z]{3,8}:[a-z]{3,12}$/.test(s);
+  const eq = obj(tn.equipado, {});
+  const sl = (s) => (typeof s === 'string' && /^[a-z]{3,12}$/.test(s) ? s : null);
+  p.tienda = { comprados: Array.isArray(tn.comprados) ? tn.comprados.filter(idOk).slice(0, 60) : [], equipado: { fondo: sl(eq.fondo) || 'clasico', baraja: sl(eq.baraja) || 'clasica', nai: sl(eq.nai) || 'clasico' } };
   // quien ya tenía progreso no necesita la bienvenida
   p.bienvenida = p.bienvenida === true || p.xp > 0 || Object.keys(p.completadas).length > 0;
   return p;
@@ -455,8 +468,10 @@ const marcador = () => {
   return el(
     'span',
     { class: 'marcador' },
-    el('span', { class: 'dato' }, el('span', { class: 'emo emo-llama' }, '🔥'), ` ${rachaVigente()}`),
-    el('span', { class: 'dato' + (subio ? ' sube' : '') }, el('span', { class: 'emo emo-estrella' }, '⭐'), ` ${progreso.xp} XP`)
+    el('span', { class: 'dato', title: 'Racha' }, el('span', { class: 'emo emo-llama' }, '🔥'), ` ${rachaVigente()}`),
+    el('span', { class: 'dato dato-energia', title: 'Energía' }, '⚡', esVip() ? ' ∞' : ` ${energiaActual()}`),
+    el('span', { class: 'dato', title: 'Fichas' }, '🪙', ` ${progreso.fichas}`),
+    el('span', { class: 'dato' + (subio ? ' sube' : ''), title: 'XP', 'aria-label': `${progreso.xp} XP` }, el('span', { class: 'emo emo-estrella' }, '⭐'), ` ${progreso.xp}`)
   );
 };
 
@@ -717,12 +732,42 @@ function mostrarMapa(curso, entrada = 'adelante', recientes = []) {
     return envoltorio;
   };
 
+  // Cofre del camino: uno cada CADA_COFRE niveles; se abre cuando completas el nivel anterior
+  const crearCofre = (k) => {
+    const id = idCofre(curso, k);
+    const abierto = !!progreso.cofres[id];
+    const listo = !abierto && !!progreso.completadas[lista[k * CADA_COFRE - 1].id];
+    const boton = el(
+      'button',
+      {
+        class: 'nodo cofre' + (abierto ? ' abierto' : listo ? ' listo' : ' bloqueado'),
+        type: 'button',
+        'aria-label': abierto ? 'Cofre abierto' : listo ? 'Cofre listo para abrir' : 'Cofre bloqueado',
+        onclick: () => {
+          if (listo) return mostrarCofre(curso, id, () => mostrarMapa(curso, 'atras'));
+          parrafo.textContent = abierto ? 'Ya has abierto este cofre.' : 'Este cofre se abre al completar el nivel anterior.';
+          boton.classList.remove('sacudir');
+          void boton.offsetWidth;
+          boton.classList.add('sacudir');
+        },
+      },
+      abierto ? '📭' : listo ? '🎁' : '🔒'
+    );
+    return el('div', { class: 'nodo-envoltorio cofre-envoltorio', style: `--i:${numero++}` }, listo ? el('span', { class: 'empezar' }, '¡ABRIR!') : null, el('div', { class: 'nodo-fila' }, boton), el('span', { class: 'nodo-titulo' }, 'Cofre'));
+  };
+  const nodosDe = (u) =>
+    u.lecciones.flatMap((l, i) => {
+      const n = crearNodo(l, i);
+      const pos = lista.indexOf(l) + 1;
+      return pos % CADA_COFRE === 0 ? [n, crearCofre(pos / CADA_COFRE)] : [n];
+    });
+
   const unidades = curso.unidades.map((u, ui) =>
     el(
       'section',
       { class: 'unidad' },
       el('div', { class: 'unidad-banner', style: `--u:${ui}` }, el('h2', {}, u.titulo), el('p', {}, u.descripcion)),
-      el('div', { class: 'camino' }, u.lecciones.map(crearNodo))
+      el('div', { class: 'camino' }, nodosDe(u))
     )
   );
 
@@ -829,7 +874,12 @@ function mostrarLogros() {
 // PANTALLA 3: Nai explica el nivel antes de empezar
 // ============================================================
 function mostrarIntro(curso, leccion) {
-  const empezar = () => mostrarLeccion(curso, leccion);
+  const empezar = () => {
+    // cada nivel gasta 1 ⚡ (el VIP no gasta); sin energía se ofrece esperar, comprar o ir a la tienda
+    if (!tieneEnergia()) return mostrarSinEnergia(() => mostrarIntro(curso, leccion), () => mostrarMapa(curso, 'atras'));
+    gastarEnergia();
+    mostrarLeccion(curso, leccion);
+  };
   alTeclear = (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
@@ -852,7 +902,7 @@ function mostrarIntro(curso, leccion) {
       el('p', { class: 'etiqueta' }, leccion.oro ? `${curso.nombre} · Nivel Oro` : curso.nombre),
       el('h1', {}, `${leccion.icono} ${leccion.titulo}`),
       fila,
-      el('p', { class: 'aviso' }, `${leccion.ejercicios.length} ejercicios · ${leccion.xp} XP`)
+      el('p', { class: 'aviso' }, `${leccion.ejercicios.length} ejercicios · ${leccion.xp} XP · ⚡ ${esVip() ? 'ilimitada' : 'gasta 1 (tienes ' + energiaActual() + ')'}`)
     ),
     el('div', { class: 'pie' }, el('button', { class: 'boton', type: 'button', onclick: empezar }, '¡Vamos!'))
   );
@@ -1178,6 +1228,11 @@ function finalizarLeccion(curso, leccion, precision) {
   // Un repaso da XP según tus aciertos y no marca niveles como hechos
   const xp = leccion.repaso ? Math.round((leccion.xp * precision) / 100) : leccion.xp;
   const actividad = registrarActividad(xp);
+  // fichas: 3 por nivel nuevo (6 si es Oro) y 5 por cumplir la meta diaria
+  const fichas = (!leccion.repaso && !yaHecha ? (leccion.oro ? 6 : 3) : 0) + (actividad.metaCumplida ? 5 : 0);
+  progreso.fichas += fichas;
+  const idx = niveles(curso).indexOf(leccion);
+  const cofreNuevo = !leccion.repaso && !leccion.oro && !yaHecha && idx >= 0 && (idx + 1) % CADA_COFRE === 0;
   if (leccion.repaso) progreso.repasos = (progreso.repasos || 0) + 1;
   else progreso.completadas[leccion.id] = true;
   if (precision === 100 && !leccion.repaso) progreso.perfectos = (progreso.perfectos || 0) + 1;
@@ -1189,6 +1244,8 @@ function finalizarLeccion(curso, leccion, precision) {
   const nuevoNivel = !leccion.repaso && !leccion.oro && !yaHecha;
   mostrarResultado(curso, leccion, precision, {
     xp,
+    fichas,
+    cofreNuevo,
     desbloqueado: nuevoNivel ? siguiente : null,
     cursoCompleto: nuevoNivel && !siguiente,
     logros,
@@ -1227,6 +1284,8 @@ function mostrarResultado(curso, leccion, precision, extra) {
   const notas = [];
   if (rachaVigente() > 0) notas.push(linea(orden++, 'resultado-dato', `🔥 Racha: ${rachaVigente()} ${rachaVigente() === 1 ? 'día' : 'días'}`));
   const act = extra.actividad || {};
+  if (extra.fichas) notas.push(linea(orden++, 'resultado-dato', `🪙 +${extra.fichas} fichas`));
+  if (extra.cofreNuevo) notas.push(linea(orden++, 'resultado-nuevo', '🎁 ¡Hay un cofre esperándote en el mapa!'));
   if (act.metaCumplida) notas.push(linea(orden++, 'resultado-nuevo', '🎯 ¡Meta diaria cumplida!'));
   if (act.congeladorUsado) notas.push(linea(orden++, 'resultado-dato', '🧊 Un congelador ha salvado tu racha'));
   if (act.congeladorGanado) notas.push(linea(orden++, 'resultado-nuevo', '🧊 ¡Has ganado un congelador de racha!'));

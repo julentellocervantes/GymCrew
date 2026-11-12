@@ -395,7 +395,7 @@ function activarVip(dias) {
 }
 
 function mostrarPremium(volver, aviso = '') {
-  const comoPestana = volver === 'pestana'; // abierta desde la barra inferior: sin flecha de cerrar
+  const comoPestana = false;
   const salir = typeof volver === 'function' ? volver : () => mostrarInicio('atras');
   alTeclear = (e) => {
     if (e.key === 'Escape') salir();
@@ -494,7 +494,7 @@ function mostrarPremium(volver, aviso = '') {
 const PESTANAS = [
   { id: 'juegos', icono: '🃏', texto: 'Juegos', ir: () => mostrarInicio('fundido') },
   { id: 'util', icono: '🧰', texto: 'Útil', ir: () => mostrarUtil('fundido') },
-  { id: 'vip', icono: '👑', texto: 'VIP', ir: () => mostrarPremium('pestana') },
+  { id: 'tienda', icono: '🛍️', texto: 'Tienda', ir: () => mostrarTienda('fundido') },
   { id: 'ajustes', icono: '⚙️', texto: 'Ajustes', ir: () => mostrarAjustes('', 'fundido') },
 ];
 let barraPestana = null;

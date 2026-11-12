@@ -1171,3 +1171,179 @@ body.con-barra .pie { bottom: calc(var(--alto-barra) + env(safe-area-inset-botto
 .campo-texto { width: 100%; box-sizing: border-box; padding: 12px 14px; font: inherit; font-size: 16px; font-weight: 700; color: var(--texto); background: var(--tarjeta); border: 2px solid var(--borde); border-radius: 14px; }
 .campo-texto:focus { outline: 3px solid color-mix(in srgb, #f5b301 55%, transparent); border-color: #f5b301; }
 .boton:disabled { opacity: 0.7; pointer-events: none; }
+
+/* ================= TIENDA, ENERGÍA, COFRES Y COSMÉTICOS ================= */
+/* Fondos de la tienda: cada uno redefine los colores de la app (más fuerte que el modo claro/oscuro del sistema) */
+html[data-fondo="mesa"] {
+  --fondo: #0f3d2b;
+  --tarjeta: #17533b;
+  --tarjeta-hover: #1d6347;
+  --borde: #2a7a58;
+  --texto: #f2fbf5;
+  --texto-suave: #b7dcc7;
+  --sombra: rgba(0, 0, 0, 0.4);
+  --mezcla: #fff;
+  --palo: #8fd0ad;
+  --palo-rojo: #ff9aa5;
+  --bloqueado: #1d6347;
+  --bloqueado-sombra: #144530;
+  --bloqueado-texto: #7fb59a;
+  --estrella-off: #2a7a58;
+  --bien-fondo: #1f5a3a;
+  --bien-titulo: #9bf05a;
+  --mal-fondo: #4d2630;
+  --mal-titulo: #ff9a9a;
+  --foco: #ffd23f;
+  color-scheme: dark;
+}
+html[data-fondo="mesa"] .decor { background: radial-gradient(60% 40% at 15% 0%, rgba(80, 200, 130, 0.28), transparent 70%), radial-gradient(70% 45% at 50% 105%, rgba(0, 0, 0, 0.35), transparent 70%); }
+html[data-fondo="medianoche"] {
+  --fondo: #0e1226;
+  --tarjeta: #1a2142;
+  --tarjeta-hover: #232c57;
+  --borde: #2f3a6e;
+  --texto: #eef1ff;
+  --texto-suave: #aab4dd;
+  --sombra: rgba(0, 0, 0, 0.4);
+  --mezcla: #fff;
+  --palo: #8fa0e8;
+  --palo-rojo: #ff9aae;
+  --bloqueado: #232c57;
+  --bloqueado-sombra: #171d3a;
+  --bloqueado-texto: #6f7aa8;
+  --estrella-off: #2f3a6e;
+  --bien-fondo: #1d3a3a;
+  --bien-titulo: #7be0b0;
+  --mal-fondo: #4d2630;
+  --mal-titulo: #ff9a9a;
+  --foco: #9db4ff;
+  color-scheme: dark;
+}
+html[data-fondo="medianoche"] .decor { background: radial-gradient(60% 40% at 80% 0%, rgba(110, 130, 255, 0.3), transparent 70%), radial-gradient(60% 40% at 10% 100%, rgba(150, 90, 255, 0.2), transparent 70%); }
+html[data-fondo="atardecer"] {
+  --fondo: #ffe9dc;
+  --tarjeta: #fff7f1;
+  --tarjeta-hover: #ffeadc;
+  --borde: #f6cdb8;
+  --texto: #4a2c3a;
+  --texto-suave: #7d5463;
+  --sombra: rgba(120, 80, 40, 0.16);
+  --mezcla: #000;
+  --palo: #d98aa0;
+  --palo-rojo: #ff6b81;
+  --bloqueado: #f6dccd;
+  --bloqueado-sombra: #e3c3ae;
+  --bloqueado-texto: #a98878;
+  --estrella-off: #f1d3c2;
+  --bien-fondo: #e4f7d2;
+  --bien-titulo: #3d8c00;
+  --mal-fondo: #ffe3e3;
+  --mal-titulo: #d63a3a;
+  --foco: #7a5af8;
+  color-scheme: light;
+}
+html[data-fondo="atardecer"] .decor { background: radial-gradient(70% 45% at 20% 0%, rgba(255, 150, 100, 0.4), transparent 70%), radial-gradient(60% 40% at 100% 20%, rgba(255, 90, 140, 0.3), transparent 70%); }
+html[data-fondo="neon"] {
+  --fondo: #120a24;
+  --tarjeta: #1d1238;
+  --tarjeta-hover: #271a4a;
+  --borde: #4a2a8a;
+  --texto: #f4eaff;
+  --texto-suave: #c3afe6;
+  --sombra: rgba(0, 0, 0, 0.4);
+  --mezcla: #fff;
+  --palo: #36f0ff;
+  --palo-rojo: #ff4fd8;
+  --bloqueado: #271a4a;
+  --bloqueado-sombra: #190f31;
+  --bloqueado-texto: #7a68a8;
+  --estrella-off: #4a2a8a;
+  --bien-fondo: #14383a;
+  --bien-titulo: #5df0b0;
+  --mal-fondo: #4d2630;
+  --mal-titulo: #ff9a9a;
+  --foco: #36f0ff;
+  color-scheme: dark;
+}
+html[data-fondo="neon"] .decor { background: radial-gradient(60% 40% at 15% 0%, rgba(54, 240, 255, 0.25), transparent 70%), radial-gradient(60% 40% at 100% 30%, rgba(255, 79, 216, 0.25), transparent 70%); }
+html[data-fondo="dorado"] {
+  --fondo: #fff4d1;
+  --tarjeta: #fffaf0;
+  --tarjeta-hover: #fff1c9;
+  --borde: #ecd28a;
+  --texto: #3b2a00;
+  --texto-suave: #6e5a1f;
+  --sombra: rgba(120, 80, 40, 0.16);
+  --mezcla: #000;
+  --palo: #c9a227;
+  --palo-rojo: #d6432f;
+  --bloqueado: #f3e2ae;
+  --bloqueado-sombra: #dcc57a;
+  --bloqueado-texto: #9c8440;
+  --estrella-off: #ecd9a0;
+  --bien-fondo: #e4f7d2;
+  --bien-titulo: #3d8c00;
+  --mal-fondo: #ffe3e3;
+  --mal-titulo: #d63a3a;
+  --foco: #7a5af8;
+  color-scheme: light;
+}
+html[data-fondo="dorado"] .decor { background: radial-gradient(70% 45% at 50% 0%, rgba(255, 210, 63, 0.45), transparent 70%), radial-gradient(60% 40% at 100% 100%, rgba(224, 138, 0, 0.25), transparent 70%); }
+
+/* Barajas */
+html[data-baraja="dorada"] .carta, [data-baraja="dorada"] .carta { background: linear-gradient(145deg, #fff8dc, #f6dd8b); border: 2px solid #c99a1a; color: #3a2a00; }
+html[data-baraja="dorada"] .carta.roja, [data-baraja="dorada"] .carta.roja { color: #b3261e; }
+html[data-baraja="oscura"] .carta, [data-baraja="oscura"] .carta { background: #1c1a24; border: 2px solid #4a4560; color: #f2eee6; }
+html[data-baraja="oscura"] .carta.roja, [data-baraja="oscura"] .carta.roja { color: #ff7a8e; }
+html[data-baraja="rosa"] .carta, [data-baraja="rosa"] .carta { background: #ffe3ec; border: 2px solid #ff9db8; color: #5a2340; }
+html[data-baraja="rosa"] .carta.roja, [data-baraja="rosa"] .carta.roja { color: #d6336c; }
+html[data-baraja="neon"] .carta, [data-baraja="neon"] .carta { background: #130a2a; border: 2px solid #36f0ff; color: #e8fbff; box-shadow: 0 0 10px rgba(54, 240, 255, 0.55), 0 3px 0 rgba(0, 0, 0, 0.3); }
+html[data-baraja="neon"] .carta.roja, [data-baraja="neon"] .carta.roja { color: #ff4fd8; }
+html[data-baraja="retro"] .carta, [data-baraja="retro"] .carta { background: #f3e4c4; border: 2px solid #8a6a3a; color: #3b2a14; font-family: Georgia, "Times New Roman", serif; }
+html[data-baraja="retro"] .carta.roja, [data-baraja="retro"] .carta.roja { color: #a3331f; }
+
+/* Marcador con 4 datos: más compacto */
+.marcador { gap: 6px; }
+.dato { padding: 4px 10px; font-size: 14px; }
+@media (max-width: 400px) { .marcador { gap: 4px; margin-left: 6px; } .dato { padding: 3px 7px; font-size: 13px; } .logo { font-size: 14px; } }
+.dato-energia { color: #b87400; }
+@media (prefers-color-scheme: dark) { .dato-energia { color: #ffd23f; } }
+
+/* Tienda */
+.tienda > * + * { margin-top: 14px; }
+.tienda h2 { font-size: 18px; margin: 18px 0 10px; }
+.tienda-fichas, .tienda-tarjeta { display: flex; flex-direction: column; gap: 12px; padding: 14px 16px; background: var(--tarjeta); border: 2px solid var(--borde); border-radius: 18px; box-shadow: 0 3px 0 var(--borde); }
+.tienda-fichas { flex-direction: row; align-items: center; gap: 12px; }
+.ficha-grande { flex: none; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; font-size: 24px; background: linear-gradient(145deg, #ffe58a, #f5b301); box-shadow: 0 3px 0 #a86a00; }
+.tienda-fila { display: flex; align-items: center; gap: 12px; }
+.energia-pilas { display: inline-flex; gap: 2px; flex: none; }
+.pila { font-size: 22px; filter: grayscale(1); opacity: 0.35; transition: opacity 0.3s, filter 0.3s; }
+.pila.llena { filter: none; opacity: 1; }
+.tienda-compras { display: flex; gap: 10px; }
+.tienda-compras .compra { flex: 1 1 0; width: auto; }
+.boton:disabled { opacity: 0.5; cursor: not-allowed; }
+.articulos { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+.articulo { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 12px 10px; text-align: center; background: var(--tarjeta); border: 2px solid var(--borde); border-radius: 16px; box-shadow: 0 3px 0 var(--borde); }
+.articulo.puesto { border-color: #58cc02; }
+.articulo strong { font-size: 14px; }
+.mini-boton { width: 100%; padding: 8px 10px; font-size: 14px; }
+.vista { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; height: 76px; border-radius: 12px; overflow: hidden; }
+.vista-fondo { border: 2px solid var(--borde); }
+.vista-baraja { background: #2b6b4a; }
+.vista-baraja .carta { min-width: 38px; height: 54px; font-size: 16px; rotate: 0deg; }
+.vista-nai { background: color-mix(in srgb, var(--borde) 40%, transparent); }
+.vista-nai svg { height: 68px; width: auto; }
+.energia-espera { font-size: 28px; font-weight: 900; margin: 10px 0 0; }
+.energia-acciones { display: flex; flex-direction: column; gap: 10px; }
+
+/* Cofres */
+.nodo.cofre { background: linear-gradient(145deg, #ffe58a, #f5b301 60%, #e08a00); box-shadow: 0 6px 0 #a86a00; font-size: 30px; }
+.nodo.cofre.listo { animation: latido 1.6s ease-in-out infinite; }
+.nodo.cofre.abierto { background: var(--bloqueado); box-shadow: 0 6px 0 var(--bloqueado-sombra); filter: grayscale(0.6); }
+.nodo.cofre.bloqueado { background: var(--bloqueado); box-shadow: 0 6px 0 var(--bloqueado-sombra); color: var(--bloqueado-texto); }
+.cofre-grande { font-size: 96px; line-height: 1; margin: 8px 0; animation: sacudida-cofre 1.2s ease-in-out infinite; }
+.cofre-grande.abierto { animation: salto 0.9s ease-in-out 2; }
+.cofre-premios { list-style: none; padding: 0; margin: 12px 0 0; display: flex; flex-direction: column; gap: 8px; }
+.cofre-premio { display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 20px; font-weight: 900; }
+.cofre-premio-icono { font-size: 28px; }
+@keyframes sacudida-cofre { 0%, 100% { rotate: 0deg; } 20% { rotate: -6deg; } 40% { rotate: 6deg; } 60% { rotate: -4deg; } 80% { rotate: 4deg; } }

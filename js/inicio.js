@@ -1,10 +1,11 @@
 // Arranque de la app (se carga el último, cuando todo lo demás ya existe).
 aplicarAjustes();
+aplicarCosmeticos();
 
 // Cada pantalla principal enciende su pestaña en la barra inferior; el resto (niveles, resultados,
 // entrenador) la ocultan para que el contenido ocupe toda la pantalla.
 {
-  const pestanaDe = { mostrarInicio: 'juegos', mostrarMapa: 'juegos', mostrarLogros: 'juegos', mostrarUtil: 'util', mostrarAjustes: 'ajustes' };
+  const pestanaDe = { mostrarInicio: 'juegos', mostrarMapa: 'juegos', mostrarLogros: 'juegos', mostrarUtil: 'util', mostrarTienda: 'tienda', mostrarAjustes: 'ajustes' };
   for (const [nombre, pestana] of Object.entries(pestanaDe)) {
     const original = window[nombre];
     window[nombre] = function (...args) {
@@ -25,9 +26,9 @@ else mostrarBienvenida();
 
 if (nubeActiva() && (volvioDelEnlace || vuelta)) {
   const aviso = vuelta === 'cancelado' ? 'Has cancelado el pago. No se ha cobrado nada.' : vuelta === 'ok' ? '¡Pago recibido! En unos segundos se activa tu VIP.' : 'Sesión iniciada.';
-  mostrarPremium('pestana', aviso);
+  mostrarPremium(() => mostrarTienda('atras'), aviso);
   // el webhook de Stripe tarda un poco: se consulta varias veces
-  if (vuelta === 'ok') [3000, 8000, 15000].forEach((t) => setTimeout(() => sincronizarVip().then((c) => { if (c && document.querySelector('.premium')) mostrarPremium('pestana', '👑 ¡VIP activado!'); }), t));
+  if (vuelta === 'ok') [3000, 8000, 15000].forEach((t) => setTimeout(() => sincronizarVip().then((c) => { if (c && document.querySelector('.premium')) mostrarPremium(() => mostrarTienda('atras'), '👑 ¡VIP activado!'); }), t));
 } else if (nubeActiva() && leerSesion()) {
   sincronizarVip(); // se actualiza en segundo plano
 }
