@@ -365,7 +365,12 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
   await page.waitForSelector('.juego');
   ok((await estado()).bienvenida === true, 'la bienvenida se recuerda');
   ok(await page.locator('#barra').isVisible(), 'la barra aparece en Juegos');
-  ok(await page.locator('.pestana').count() === 3, 'tres pestañas: Juegos, Útil y Ajustes');
+  ok(await page.locator('.pestana').count() === 4, 'cuatro pestañas: Juegos, Útil, VIP y Ajustes');
+  await page.locator('.pestana[data-pestana=vip]').click();
+  await page.waitForSelector('.premium');
+  ok(await page.locator('.pestana[data-pestana=vip]').getAttribute('aria-current') === 'page' && await page.locator('#barra').isVisible() && await page.locator('.cerrar').count() === 0, 'la pestaña VIP muestra el pase sin flecha de cerrar y con la barra');
+  await page.locator('.pestana[data-pestana=juegos]').click();
+  await page.waitForSelector('.juego');
   ok(await page.locator('.pestana[data-pestana=juegos]').getAttribute('aria-current') === 'page', 'Juegos es la pestaña activa');
   ok(await page.locator('.juego').count() === 5, 'los cinco juegos están en la misma pestaña');
   await page.reload();

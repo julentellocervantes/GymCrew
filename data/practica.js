@@ -11,7 +11,7 @@
         ['bj-6-1', '🎯', 'Totales rápidos', 'Suma tu mano y ordena totales sin pensar: la base de todo lo demás.', 'tot tot ordT tot selD dur'],
         ['bj-6-2', '🧠', 'Estrategia en acción', 'Pedir, plantarte, doblar o dividir: decisiones nuevas contra cada carta del crupier.', 'dur bla par emp selD dur'],
         ['bj-6-3', '🔢', 'Conteo en acción', 'Cuenta cartas, convierte en cuenta verdadera y ordena cuentas para ver cuándo conviene apostar más.', 'con conN selH verN ordC con'],
-        ['bj-6-4', '💶', 'Dinero y decisiones', 'Seguro, rendición, pagos y bankroll con cifras nuevas cada vez.', 'seg ren nat dbl bank dur'],
+        ['bj-6-4', '💶', 'Dinero y decisiones', 'Seguro, rendición, pagos y bankroll con cifras nuevas cada vez.', 'seg ren dbl bank selD ordT'],
       ],
     },
     poker: {

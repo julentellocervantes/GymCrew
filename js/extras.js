@@ -395,6 +395,7 @@ function activarVip(dias) {
 }
 
 function mostrarPremium(volver, aviso = '') {
+  const comoPestana = volver === 'pestana'; // abierta desde la barra inferior: sin flecha de cerrar
   const salir = typeof volver === 'function' ? volver : () => mostrarInicio('atras');
   alTeclear = (e) => {
     if (e.key === 'Escape') salir();
@@ -460,7 +461,7 @@ function mostrarPremium(volver, aviso = '') {
 
   pintar(
     'adelante',
-    el('header', { class: 'cabecera-leccion' }, el('button', { class: 'cerrar', type: 'button', 'aria-label': 'Cerrar', onclick: () => salir() }, '✕')),
+    comoPestana ? null : el('header', { class: 'cabecera-leccion' }, el('button', { class: 'cerrar', type: 'button', 'aria-label': 'Cerrar', onclick: () => salir() }, '✕')),
     el(
       'main',
       { class: 'contenido bienvenida premium' },
@@ -481,17 +482,19 @@ function mostrarPremium(volver, aviso = '') {
     ),
     el('div', { class: 'pie' }, acciones)
   );
+  if (comoPestana) barra('vip');
 
   // al abrir la pantalla se consulta la nube por si el VIP ha cambiado (pago hecho, cancelado…)
   if (nube && sesion) sincronizarVip().then((cambio) => { if (cambio && document.querySelector('.premium')) mostrarPremium(volver); });
 }
 
 // ============================================================
-// BARRA INFERIOR (Juegos · Útil · Ajustes)
+// BARRA INFERIOR (Juegos · Útil · VIP · Ajustes)
 // ============================================================
 const PESTANAS = [
   { id: 'juegos', icono: '🃏', texto: 'Juegos', ir: () => mostrarInicio('fundido') },
   { id: 'util', icono: '🧰', texto: 'Útil', ir: () => mostrarUtil('fundido') },
+  { id: 'vip', icono: '👑', texto: 'VIP', ir: () => mostrarPremium('pestana') },
   { id: 'ajustes', icono: '⚙️', texto: 'Ajustes', ir: () => mostrarAjustes('', 'fundido') },
 ];
 let barraPestana = null;
