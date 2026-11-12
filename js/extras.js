@@ -369,7 +369,7 @@ function mostrarBienvenida(repetida = false) {
       fila,
       almacenamientoFallo ? el('p', { class: 'alerta', role: 'alert' }, 'Tu navegador no deja guardar el progreso (¿modo privado?). Puedes seguir, pero al cerrar se perderá.') : null,
       el('h1', { class: 'bienvenida-titulo' }, 'Bienvenido al Entrenador de cartas'),
-      el('p', { class: 'bienvenida-sub' }, 'Aprende blackjack, póker y mus practicando situaciones reales, poco a poco y sin dinero.'),
+      el('p', { class: 'bienvenida-sub' }, 'Aprende blackjack, póker, mus, baccarat y vídeo póker practicando situaciones reales, poco a poco y sin dinero.'),
       el('ul', { class: 'bienvenida-lista' },
         ventaja('🎮', 'Aprende jugando', 'Niveles cortos con preguntas de todo tipo: test, ordenar, unir, tocar cartas…', 0),
         ventaja('🔁', 'Repasa lo que fallas', 'La app te vuelve a preguntar justo cuando toca para que no se te olvide.', 1),
@@ -472,7 +472,7 @@ function mostrarPremium(volver, aviso = '') {
       vip
         ? null
         : el('ul', { class: 'bienvenida-lista' },
-            ventaja('🏆', `${nOro} niveles Oro`, 'Uno por cada nivel de blackjack, póker y mus.', 0),
+            ventaja('🏆', `${nOro} niveles Oro`, 'Uno por cada nivel de los cinco juegos.', 0),
             ventaja('🎯', 'Más difíciles', 'Situaciones nuevas cada vez que avanzas, sin pistas fáciles.', 1),
             ventaja('⚡', 'El doble de XP', 'Cada nivel Oro da el doble de XP que el normal.', 2),
             ventaja('📈', 'Para llegar lejos', 'Se abren al completar el nivel normal de al lado.', 3)),

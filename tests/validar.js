@@ -164,7 +164,7 @@ function verificarInteractivo(e) {
 }
 
 
-for (const f of ['cursos.js', 'blackjack.js', 'poker.js', 'mus.js', 'blackjack-extra.js', 'poker-extra.js', 'mus-extra.js', 'ordenar-extra.js', 'interactivos-extra.js', 'variedad-extra.js', 'ayuda.js', 'premium.js']) vm.runInContext(fs.readFileSync(D + f, 'utf8'), ctx, { filename: f });
+for (const f of ['cursos.js', 'blackjack.js', 'poker.js', 'mus.js', 'blackjack-extra.js', 'poker-extra.js', 'mus-extra.js', 'ordenar-extra.js', 'interactivos-extra.js', 'variedad-extra.js', 'ayuda.js', 'generadores.js', 'practica.js', 'videopoker-datos.js', 'casino.js', 'premium.js']) vm.runInContext(fs.readFileSync(D + f, 'utf8'), ctx, { filename: f });
 const CURSOS = vm.runInContext('CURSOS', ctx);
 const AYUDA = vm.runInContext('AYUDA', ctx);
 const CURSOS_ORO = vm.runInContext('CURSOS_ORO', ctx);
@@ -278,6 +278,226 @@ function ganaMus(lance, a, b) { // devuelve 1 (gana a), -1 (gana b), 0 (empate)
   return null;
 }
 
+const errores_pre = [];
+// ---------- casino: baccarat y vídeo póker (cálculos independientes) ----------
+const BAC_VAL = { A: 1, 10: 0, J: 0, Q: 0, K: 0 };
+const bacVal = (c) => { const r = c.slice(0, -1); return r in BAC_VAL ? BAC_VAL[r] : Number(r); };
+const bacTotal = (cs) => cs.map(bacVal).reduce((a, b) => a + b, 0) % 10;
+// tabla clásica: con este total la Banca pide si la tercera carta del Jugador vale alguno de estos valores
+const BANCA_PIDE = { 0: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], 1: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], 2: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], 3: [0, 1, 2, 3, 4, 5, 6, 7, 9], 4: [2, 3, 4, 5, 6, 7], 5: [4, 5, 6, 7], 6: [6, 7], 7: [] };
+function bancaDecide(totalBanca, jugador) { // jugador: sus cartas (2 o 3)
+  if (jugador.length === 2) return totalBanca <= 5;
+  return BANCA_PIDE[totalBanca].includes(bacVal(jugador[2]));
+}
+function bacSimular(p2, b2, zap) {
+  let p = [...p2], b = [...b2], i = 0;
+  if (bacTotal(p) < 8 && bacTotal(b) < 8) {
+    if (bacTotal(p) < 6) p.push(zap[i++]);
+    if (bancaDecide(bacTotal(b), p)) b.push(zap[i++]);
+  }
+  const x = bacTotal(p), y = bacTotal(b);
+  return x > y ? 'Jugador' : y > x ? 'Banca' : 'Empate';
+}
+// Probabilidades exactas con mazo infinito: cada carta vale 0 con prob. 4/13 y 1..9 con 1/13
+const BAC_EXACTO = (() => {
+  const w = [4, 1, 1, 1, 1, 1, 1, 1, 1, 1].map((x) => x / 13);
+  let pj = 0, pb = 0, pe = 0;
+  const reg = (p, r) => (r === 'J' ? (pj += p) : r === 'B' ? (pb += p) : (pe += p));
+  for (let a = 0; a < 10; a++) for (let b = 0; b < 10; b++) for (let c = 0; c < 10; c++) for (let d = 0; d < 10; d++) {
+    const p0 = w[a] * w[b] * w[c] * w[d];
+    const tp = (a + b) % 10, tb = (c + d) % 10;
+    if (tp >= 8 || tb >= 8) { reg(p0, tp > tb ? 'J' : tb > tp ? 'B' : 'E'); continue; }
+    const finalizar = (p, x, y) => reg(p, x > y ? 'J' : y > x ? 'B' : 'E');
+    if (tp >= 6) { // Jugador se planta
+      if (tb <= 5) { for (let e = 0; e < 10; e++) finalizar(p0 * w[e], tp, (tb + e) % 10); } else finalizar(p0, tp, tb);
+    } else {
+      for (let e = 0; e < 10; e++) {
+        const pe3 = p0 * w[e], tp3 = (tp + e) % 10;
+        if (BANCA_PIDE[tb].includes(e)) { for (let f = 0; f < 10; f++) finalizar(pe3 * w[f], tp3, (tb + f) % 10); } else finalizar(pe3, tp3, tb);
+      }
+    }
+  }
+  const ventaja = { Jugador: -(pj - pb) * 100, Banca: -(0.95 * pb - pj) * 100, Empate: -(8 * pe - (1 - pe)) * 100 };
+  return { pj, pb, pe, ventaja };
+})();
+
+// Vídeo póker: evaluador y valor esperado exactos (otra implementación, por multiplicidades)
+const VP_RANGO = { J: 11, Q: 12, K: 13, A: 14 };
+const vpRango = (c) => { const r = c.slice(0, -1); return VP_RANGO[r] || Number(r); };
+const VP_PALO = { '♠': 0, '♥': 1, '♦': 2, '♣': 3 };
+const VP_PAGOS = { 'Nada (no paga)': 0, 'Pareja de J o mejor': 1, 'Doble pareja': 2, 'Trío': 3, 'Escalera': 4, 'Color': 6, 'Full': 9, 'Póker': 25, 'Escalera de color': 50, 'Escalera real': 250 };
+const VP_ORDEN = Object.keys(VP_PAGOS);
+const cnt15 = new Int8Array(15);
+function vpNombre(rs, ss) {
+  let min = 99, max = 0, flush = true, suma2 = 0, parAlto = false;
+  for (let i = 0; i < 5; i++) { cnt15[rs[i]]++; if (rs[i] < min) min = rs[i]; if (rs[i] > max) max = rs[i]; if (ss[i] !== ss[0]) flush = false; }
+  for (let i = 0; i < 5; i++) { const n = cnt15[rs[i]]; if (n) { suma2 += n * n; if (n === 2 && rs[i] >= 11) parAlto = true; cnt15[rs[i]] = 0; } }
+  // suma de cuadrados de las multiplicidades: 5 = todo distinto, 7 = pareja, 9 = doble pareja, 11 = trío, 13 = full, 17 = póker
+  const recta = suma2 === 5 && (max - min === 4 || (max === 14 && min === 2 && (rs.includes(3) && rs.includes(4) && rs.includes(5))));
+  if (recta && flush) return min === 10 ? 'Escalera real' : 'Escalera de color';
+  if (suma2 === 17) return 'Póker';
+  if (suma2 === 13) return 'Full';
+  if (flush) return 'Color';
+  if (recta) return 'Escalera';
+  if (suma2 === 11) return 'Trío';
+  if (suma2 === 9) return 'Doble pareja';
+  if (suma2 === 7) return parAlto ? 'Pareja de J o mejor' : 'Nada (no paga)';
+  return 'Nada (no paga)';
+}
+const cacheEV = new Map();
+function vpTodosEV(cartas) { // devuelve el valor medio de cada una de las 32 formas de guardar (máscara de 5 bits)
+  const clave = cartas.join(',');
+  if (cacheEV.has(clave)) return cacheEV.get(clave);
+  const R = cartas.map(vpRango), S = cartas.map((c) => VP_PALO[c.slice(-1)]);
+  const mazo = [];
+  for (let r = 2; r <= 14; r++) for (let s = 0; s < 4; s++) if (!cartas.some((c, i) => R[i] === r && S[i] === s)) mazo.push([r, s]);
+  const res = [];
+  for (let mask = 0; mask < 32; mask++) {
+    const rs = [0, 0, 0, 0, 0], ss = [0, 0, 0, 0, 0];
+    let f = 0;
+    for (let i = 0; i < 5; i++) if (mask & (1 << i)) { rs[f] = R[i]; ss[f] = S[i]; f++; }
+    let suma = 0, n = 0;
+    const rec = (desde, pos) => {
+      if (pos === 5) { suma += VP_PAGOS[vpNombre(rs, ss)]; n++; return; }
+      for (let j = desde; j < mazo.length; j++) { rs[pos] = mazo[j][0]; ss[pos] = mazo[j][1]; rec(j + 1, pos + 1); }
+    };
+    rec(0, f);
+    res.push(suma / n);
+  }
+  cacheEV.set(clave, res);
+  return res;
+}
+const mascaraDe = (idx) => idx.reduce((m, i) => m | (1 << i), 0);
+
+function verificarCasino(e) {
+  const t = e.tipo, ch = e.chequeo, k = ch && ch.k;
+  const okTipo = (verif.casino = verif.casino || {});
+  if (!k) return mal(e.id, 'casino: ejercicio sin chequeo');
+  okTipo[t] = (okTipo[t] || 0) + 1;
+  // estructura
+  if (t === 'opcion_unica') {
+    if (!Array.isArray(e.opciones) || e.opciones.length < 2 || e.opciones.length > 5 || new Set(e.opciones).size !== e.opciones.length) return mal(e.id, 'opciones raras o repetidas');
+    if (!Number.isInteger(e.correcta) || e.correcta < 0 || e.correcta >= e.opciones.length) return mal(e.id, 'correcta fuera de rango');
+    if (e.situacion && e.situacion.filas && !e.situacion.filas.every((f) => f.etiqueta && f.cartas.length)) return mal(e.id, 'filas mal formadas');
+  } else if (t === 'seleccionar') {
+    const n = e.cartas.length;
+    if (n < 4 || n > 8 || new Set(e.cartas).size !== n) return mal(e.id, 'seleccionar: de 4 a 8 cartas distintas');
+    if (!(e.correctas.length > 0 && e.correctas.length < n && new Set(e.correctas).size === e.correctas.length && e.correctas.every((i) => i >= 0 && i < n))) return mal(e.id, 'seleccionar: índices no válidos');
+  } else if (t === 'emparejar') {
+    const n = e.pares.length;
+    if (n < 3 || n > 5 || new Set(e.pares.map((x) => x[0])).size !== n || new Set(e.pares.map((x) => x[1])).size !== n) return mal(e.id, 'emparejar: pares mal formados');
+  } else if (t === 'ordenar') {
+    const n = e.elementos.length;
+    if (n < 3 || n > 6 || new Set(e.elementos).size !== n) return mal(e.id, 'ordenar: elementos mal formados');
+  } else if (t === 'numero') {
+    if (!Number.isInteger(e.respuesta)) return mal(e.id, 'numero: la respuesta debe ser un entero');
+  } else return mal(e.id, 'tipo desconocido ' + t);
+  if (k === 'def') { verif.definiciones = (verif.definiciones || 0) + 1; return; }
+  verif.calculados = (verif.calculados || 0) + 1;
+  const resp = t === 'opcion_unica' ? e.opciones[e.correcta] : null;
+  const filas = e.situacion && e.situacion.filas;
+  const fila = (n) => filas && filas.find((f) => f.etiqueta === n);
+  const igual = (a, b, msg) => { if (JSON.stringify(a) !== JSON.stringify(b)) mal(e.id, `${msg}: se esperaba ${JSON.stringify(a)} y el ejercicio dice ${JSON.stringify(b)}`); };
+
+  switch (k) {
+    case 'bacVal': igual(e.cartas.map((c, i) => (bacVal(c) === 0 ? i : -1)).filter((i) => i >= 0), [...e.correctas].sort((a, b) => a - b), 'cartas que valen 0'); break;
+    case 'bacTotal': igual(ch.cartas, fila('Tu mano').cartas, 'cartas'); igual(bacTotal(ch.cartas), e.respuesta, 'total del bacarrá'); break;
+    case 'bacOrden': {
+      const tt = ch.manos.map(bacTotal);
+      if (tt.some((x, i) => i && x >= tt[i - 1])) mal(e.id, 'bacarrá: los totales no van de mayor a menor');
+      igual(ch.manos.map((m) => m.join(' ')), e.elementos, 'elementos');
+      if (new Set(ch.manos.flat()).size !== ch.manos.flat().length) mal(e.id, 'bacarrá: cartas repetidas');
+      break;
+    }
+    case 'bacVals': e.pares.forEach(([c, v]) => { if (String(bacVal(c)) !== v) mal(e.id, `${c} vale ${bacVal(c)}, no ${v}`); }); break;
+    case 'bacNat': igual(bacTotal(ch.cartas) >= 8 ? 0 : 1, e.correcta, 'natural'); igual(ch.cartas, fila('Jugador').cartas, 'cartas'); break;
+    case 'bacJugador': { const tt = bacTotal(ch.cartas); if (tt >= 8) mal(e.id, 'el Jugador tiene natural'); igual(tt < 6 ? 'Pide carta' : 'Se planta', resp, 'regla del Jugador'); igual(ch.cartas, fila('Jugador').cartas, 'cartas'); break; }
+    case 'bacBanca': {
+      const tp = bacTotal(ch.jugador.slice(0, 2)), tb = bacTotal(ch.banca);
+      if (tp >= 8 || tb >= 8) mal(e.id, 'hay un natural: no se aplica la regla');
+      if ((tp < 6) !== (ch.jugador.length === 3)) mal(e.id, 'el Jugador tiene un número de cartas que no corresponde a su total');
+      igual(bancaDecide(tb, ch.jugador) ? 'Pide carta' : 'Se planta', resp, 'regla de la Banca');
+      igual(ch.jugador, fila('Jugador').cartas, 'cartas del Jugador'); igual(ch.banca, fila('Banca').cartas, 'cartas de la Banca');
+      if (!e.pregunta.includes(String(tb))) mal(e.id, 'la pregunta no muestra el total de la Banca');
+      if (/pedido/.test(e.pregunta) !== (ch.jugador.length === 3)) mal(e.id, 'la pregunta no cuadra con las cartas del Jugador');
+      break;
+    }
+    case 'bacSelBanca': {
+      const tb = bacTotal(fila('Banca').cartas);
+      igual(ch.total, tb, 'total de la Banca');
+      igual(e.cartas.map((c, i) => (BANCA_PIDE[tb].includes(bacVal(c)) ? i : -1)).filter((i) => i >= 0), [...e.correctas].sort((a, b) => a - b), 'terceras cartas que hacen pedir');
+      break;
+    }
+    case 'bacGana': {
+      const todas = [...ch.jugador, ...ch.banca, ...ch.zapato];
+      if (new Set(todas).size !== todas.length) mal(e.id, 'cartas repetidas');
+      igual(bacSimular(ch.jugador, ch.banca, ch.zapato), resp, 'ganador');
+      igual(ch.jugador, fila('Jugador').cartas, 'cartas'); igual(ch.zapato, fila('Siguientes cartas del zapato').cartas, 'zapato');
+      break;
+    }
+    case 'bacPago': {
+      const x = ch.a === 'Jugador' ? ch.apuesta : ch.a === 'Banca' ? ch.apuesta * 0.95 : ch.apuesta * 8;
+      igual(Math.round(x * 100) / 100, e.respuesta, 'pago');
+      break;
+    }
+    case 'bacPagos': {
+      const exp = { Jugador: /^1 a 1$/, Banca: /^1 a 1, menos 5 %/, Empate: /^8 a 1$/ };
+      e.pares.forEach(([a, b]) => { if (!exp[a] || !exp[a].test(b)) mal(e.id, `pago de ${a} incorrecto: ${b}`); });
+      break;
+    }
+    case 'bacMejor': {
+      const v = BAC_EXACTO.ventaja, nombres = Object.keys(v);
+      const mejor = nombres.reduce((a, b) => ((ch.pide === 'min' ? v[b] < v[a] : v[b] > v[a]) ? b : a));
+      igual(mejor, resp, 'apuesta');
+      break;
+    }
+    case 'bacEdgeOrden': {
+      const v = BAC_EXACTO.ventaja;
+      e.elementos.forEach((x, i) => { if (i && v[x] <= v[e.elementos[i - 1]]) mal(e.id, 'bacarrá: ventaja de la casa mal ordenada'); });
+      break;
+    }
+    case 'bacPerd': igual(Math.round(BAC_EXACTO.ventaja[ch.a]), e.respuesta, 'pérdida por 100 €'); break;
+    case 'porcentaje': igual((ch.base * ch.pct) / 100, e.respuesta, 'porcentaje'); break;
+    case 'vpMano': { const nombre = vpNombre(...vpArrays(ch.cartas)); igual(nombre, resp, 'mano'); igual(ch.cartas, fila('Tu mano').cartas, 'cartas'); break; }
+    case 'vpPago': { const nom = { pareja: 'Pareja de J o mejor', dobles: 'Doble pareja', trio: 'Trío', escalera: 'Escalera', color: 'Color', full: 'Full', poker: 'Póker', escColor: 'Escalera de color' }[ch.cat]; igual(VP_PAGOS[nom] * ch.m, e.respuesta, 'pago total'); break; }
+    case 'vpOrdPagos': { const p = e.elementos.map((x) => VP_PAGOS[x]); if (p.some((x, i) => x === undefined || (i && x <= p[i - 1]))) mal(e.id, 'vídeo póker: jugadas mal ordenadas por pago'); break; }
+    case 'vpPagos': e.pares.forEach(([a, b]) => { if (VP_PAGOS[a] === undefined || Number(b.match(/\d+/)[0]) !== VP_PAGOS[a]) mal(e.id, `pago de ${a}: ${b}`); }); break;
+    case 'vpQuedan': igual(13 - ch.n, e.respuesta, 'cartas que quedan'); if (!e.pregunta.includes(`Guardas ${ch.n} cartas`)) mal(e.id, 'la pregunta no cuadra'); break;
+    case 'vpCoste': igual(ch.m * ch.v * ch.manos, e.respuesta, 'coste'); break;
+    case 'vpRet': igual(Math.round((ch.apostado * (100 - ch.ret)) / 100), e.respuesta, 'pérdida media'); break;
+    case 'vpHold': case 'vpDuelo': {
+      const cartas = t === 'seleccionar' ? e.cartas : fila('Tu mano').cartas;
+      if (cartas.length !== 5 || new Set(cartas).size !== 5) return mal(e.id, 'la mano no tiene 5 cartas distintas');
+      const evs = vpTodosEV(cartas);
+      const orden = evs.map((v, m) => [v, m]).sort((a, b) => b[0] - a[0]);
+      const mejor = orden[0][1];
+      if (mejor !== mascaraDe(ch.m)) mal(e.id, `vídeo póker: la mejor jugada es guardar máscara ${mejor} (${orden[0][0].toFixed(4)}) y el ejercicio dice ${mascaraDe(ch.m)}`);
+      if (orden[0][0] - orden[1][0] < 0.03) mal(e.id, 'vídeo póker: diferencia demasiado pequeña con la segunda mejor');
+      if (Math.abs(evs[mascaraDe(ch.m)] - ch.ev) > 0.0006) mal(e.id, `vídeo póker: EV ${evs[mascaraDe(ch.m)].toFixed(4)} y el ejercicio dice ${ch.ev}`);
+      if (!e.explicacion.includes(ch.ev.toFixed(2).replace('.', ','))) mal(e.id, 'la explicación no muestra el valor medio');
+      if (t === 'seleccionar') igual(ch.m, [...e.correctas].sort((a, b) => a - b), 'cartas a guardar');
+      else if (!ch.opciones) { igual(0, e.correcta, 'opción «guardas las cinco»'); igual(31, mascaraDe(ch.m), 'guardar las cinco'); }
+      else {
+        const masc = e.opciones.map((_, i) => mascaraDe(ch.opciones[i]));
+        const mejorOpc = masc.reduce((a, b, i) => (evs[b] > evs[masc[a]] ? i : a), 0);
+        igual(mejorOpc, e.correcta, 'opción correcta');
+        e.opciones.forEach((txt, i) => { const esperado = ch.opciones[i].length ? ch.opciones[i].map((j) => cartas[j]).join(' ') : 'Ninguna: cambias las cinco'; if (txt !== esperado) mal(e.id, `texto de la opción ${i} no coincide con las cartas`); });
+        ch.opciones.forEach((o, i) => { if (!e.explicacion.includes(evs[mascaraDe(o)].toFixed(2).replace('.', ','))) mal(e.id, `la explicación no muestra el valor medio de la opción ${i}`); });
+      }
+      break;
+    }
+    default: mal(e.id, 'chequeo desconocido ' + k);
+  }
+}
+const vpArrays = (cartas) => [cartas.map(vpRango), cartas.map((c) => VP_PALO[c.slice(-1)])];
+{
+  const v = BAC_EXACTO.ventaja;
+  if (Math.abs(BAC_EXACTO.pj + BAC_EXACTO.pb + BAC_EXACTO.pe - 1) > 1e-9) errores_pre.push('bacarrá: las probabilidades no suman 1');
+  if (Math.abs(v.Banca - 1.06) > 0.05 || Math.abs(v.Jugador - 1.24) > 0.05 || Math.abs(v.Empate - 14) > 0.5) errores_pre.push(`bacarrá: ventajas ${JSON.stringify(v)} no cuadran con las lecciones (1,06 / 1,24 / 14)`);
+  if (Math.abs(BAC_EXACTO.pe - 0.095) > 0.002) errores_pre.push('bacarrá: la probabilidad de empate no es ≈ 9,5 %');
+  verif.bacarraEmpate = +(BAC_EXACTO.pe * 100).toFixed(2);
+}
+
 // ---------- recorrido ----------
 for (const c of CURSOS.concat(CURSOS_ORO)) {
   for (const campo of ['id', 'nombre', 'icono', 'color', 'descripcion', 'reglas']) if (!c[campo]) mal(c.id, `curso sin ${campo}`);
@@ -293,6 +513,7 @@ for (const c of CURSOS.concat(CURSOS_ORO)) {
         nEj++;
         if (ids.has(e.id)) mal(e.id, 'id repetido'); ids.add(e.id);
         if (!e.pregunta || !e.explicacion) mal(e.id, 'falta pregunta o explicación');
+        if (c.id === 'baccarat' || c.id === 'videopoker') { verificarCasino(e); continue; }
         if (['seleccionar', 'numero', 'emparejar', 'ordenar'].includes(e.tipo)) {
           verificarInteractivo(e);
           continue;
@@ -424,5 +645,6 @@ function verificarAyuda() {
   const esp = { 'Proyecto de color': 13 - 4, 'Escalera abierta': 2 * 4, 'Dos cartas altas sin pareja': 2 * 3, 'Escalera de pulmón (gutshot)': 4, 'Pareja que busca trío': 4 - 2 };
   AYUDA.outs.forEach(([n, v]) => { if (esp[n] !== v) mal('ayuda:outs', `${n}: ${v} y debería ser ${esp[n]}`); });
 }
+errores.push(...errores_pre);
 if (errores.length) { console.log('\nERRORES:\n' + errores.map((x) => ' - ' + x).join('\n')); process.exit(1); }
 console.log('\nDATOS OK: estructura, estrategia básica, Hi-Lo, cuenta verdadera, mus (lances), póker (manos y ganador), pot odds, outs y probabilidades');

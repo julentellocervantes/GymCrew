@@ -367,7 +367,7 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
   ok(await page.locator('#barra').isVisible(), 'la barra aparece en Juegos');
   ok(await page.locator('.pestana').count() === 3, 'tres pestañas: Juegos, Útil y Ajustes');
   ok(await page.locator('.pestana[data-pestana=juegos]').getAttribute('aria-current') === 'page', 'Juegos es la pestaña activa');
-  ok(await page.locator('.juego').count() === 3, 'los tres juegos están en la misma pestaña');
+  ok(await page.locator('.juego').count() === 5, 'los cinco juegos están en la misma pestaña');
   await page.reload();
   ok(await page.locator('.bienvenida').count() === 0, 'la bienvenida no vuelve a salir');
   await foto('12-juegos-barra');
@@ -440,11 +440,11 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
   await page.reload();
   await page.locator('.juego').first().click();
   await page.waitForSelector('.nodo');
-  ok(await page.locator('.nodo-oro').count() === 16, 'cada nivel de blackjack tiene su nivel Oro al lado');
+  ok(await page.locator('.nodo-oro').count() === 20, 'cada nivel de blackjack tiene su nivel Oro al lado');
   ok((await page.locator('.nodo-oro').first().getAttribute('aria-label')).includes('solo para VIP'), 'sin VIP el nivel Oro avisa de que es solo VIP');
   await page.locator('.nodo-oro').first().click();
   await page.waitForSelector('.premium');
-  ok((await page.locator('main').innerText()).includes('38 niveles Oro') && await page.locator('#barra').isHidden(), 'pantalla VIP con 38 niveles Oro y sin barra');
+  ok((await page.locator('main').innerText()).includes('66 niveles Oro') && await page.locator('#barra').isHidden(), 'pantalla VIP con 66 niveles Oro y sin barra');
   await foto('16-vip');
   await page.locator('.cerrar').click();
   await page.waitForSelector('.nodo');

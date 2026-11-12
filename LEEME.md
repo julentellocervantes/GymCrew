@@ -66,7 +66,7 @@ Si la web está publicada (https), el navegador te ofrece **instalarla** en el m
 ## Pruebas
 
 - `node tests/validar.js`: comprueba la estructura de todos los datos y recalcula con código independiente las respuestas de estrategia básica, Hi-Lo, cuenta verdadera, mus y póker. No necesita instalar nada. Ejecútalo cada vez que añadas ejercicios.
-- `node tests/recorrido.js`: juega los 38 niveles respondiendo bien cada pregunta (todos los tipos) y comprueba que cada nivel mezcla al menos 3 tipos. Tarda unos minutos.
+- `node tests/recorrido.js`: juega los 66 niveles respondiendo bien cada pregunta (todos los tipos) y comprueba que cada nivel mezcla al menos 3 tipos. Tarda unos minutos.
 - `node tests/navegador.js`: abre la app en un navegador real (Playwright) y prueba pantallas, repetición espaciada, rachas, ajustes, copia de seguridad y conteo. Necesita `npm i playwright` y la carpeta servida, por ejemplo con `python3 -m http.server 8123`.
 
 ## Cómo añadir ejercicios o niveles
@@ -121,7 +121,7 @@ Cuidado con las comas entre elementos y con las comillas.
 ## Bienvenida, barra inferior y pestaña Útil
 
 - **Bienvenida**: la primera vez se muestra una pantalla de presentación (se puede volver a ver desde Ajustes → Bienvenida).
-- **Barra inferior** con tres pestañas: **Juegos** (blackjack, póker y mus, mapas y logros en la misma pestaña), **Útil** y **Ajustes**. Se oculta durante las lecciones y el entrenador de conteo.
+- **Barra inferior** con tres pestañas: **Juegos** (blackjack, póker, mus, baccarat y vídeo póker, mapas y logros en la misma pestaña), **Útil** y **Ajustes**. Se oculta durante las lecciones y el entrenador de conteo.
 - **Útil** (`js/util.js`, datos en `data/ayuda.js`): calculadoras (cuenta verdadera, outs, pot odds), contador rápido de cartas, tabla de estrategia básica de blackjack, chuleta de conteo, ranking de póker, valores del mus y glosario. La tabla se verifica en `tests/validar.js` contra la lógica de estrategia.
 - `tests/navegador.js` cubre ahora la bienvenida, la barra y las calculadoras (174 comprobaciones).
 
@@ -151,4 +151,11 @@ Cuidado con las comas entre elementos y con las comillas.
 **Límites que conviene saber**
 - Los niveles Oro viajan dentro del código de la web, así que alguien con conocimientos podría saltarse el bloqueo. Para protegerlos de verdad habría que servirlos desde el servidor solo a los VIP.
 - El proyecto de Supabase es el mismo que el de «Gym social»: comparten el sistema de cuentas (los usuarios son los mismos) y la plantilla de los correos de acceso.
-- `tests/recorrido.js` juega ahora también los 38 niveles Oro. `tests/webhook.mjs` prueba la firma de Stripe y la lógica del VIP.
+- `tests/recorrido.js` juega ahora también los 66 niveles Oro. `tests/webhook.mjs` prueba la firma de Stripe y la lógica del VIP.
+
+## Más juegos y más lecciones (noviembre)
+
+- **Baccarat (Punto Banco)** y **Vídeo póker (Jacks or Better 9/6)**: 9 niveles cada uno (+9 niveles Oro cada uno). Archivos: `data/casino.js` (cursos y generadores) y `data/videopoker-datos.js` (232 manos con su mejor jugada, calculada con valor esperado exacto; se regenera con `node tools/armar-datos-videopoker.js`).
+- **Niveles de «Práctica extra»** al final de blackjack, póker y mus (`data/practica.js`), con los generadores de `data/generadores.js`.
+- `tests/validar.js` comprueba el bacarrá con reglas propias de la tercera carta y enumeración exacta de probabilidades (empate ≈ 9,5 %; ventaja de la casa ≈ 1,06 % Banca, ≈ 1,24 % Jugador, ≈ 14 % Empate) y cada jugada de vídeo póker recalculando el valor esperado de las 32 formas de guardar cartas.
+- Aviso: el retorno «≈ 99,5 %» de la 9/6 con juego perfecto es una cifra conocida que NO recalcula el validador. Es contenido educativo, sin dinero real; no es una invitación a apostar.
