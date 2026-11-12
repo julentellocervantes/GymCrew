@@ -110,8 +110,9 @@ const CURSOS_ORO = [];
   const TABLAS = { blackjack: GEN.BJ, poker: GEN.PK, mus: GEN.MS, baccarat: CASINO.BAC, videopoker: CASINO.VP };
 
   for (const curso of CURSOS) {
-    const recetas = RECETAS[curso.id];
-    if (!recetas) continue;
+    const extra = (typeof AMPLIACION !== 'undefined' ? AMPLIACION[curso.id] || [] : []).map(([id, , titulo, , receta]) => [id, 'Oro · ' + titulo, receta]);
+    const recetas = (RECETAS[curso.id] || []).concat(extra);
+    if (!recetas.length) continue;
     const base = {};
     curso.unidades.forEach((u) => u.lecciones.forEach((l) => (base[l.id] = l)));
     const lecciones = [];

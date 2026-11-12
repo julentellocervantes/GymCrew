@@ -66,7 +66,7 @@ Si la web está publicada (https), el navegador te ofrece **instalarla** en el m
 ## Pruebas
 
 - `node tests/validar.js`: comprueba la estructura de todos los datos y recalcula con código independiente las respuestas de estrategia básica, Hi-Lo, cuenta verdadera, mus y póker. No necesita instalar nada. Ejecútalo cada vez que añadas ejercicios.
-- `node tests/recorrido.js`: juega los 66 niveles respondiendo bien cada pregunta (todos los tipos) y comprueba que cada nivel mezcla al menos 3 tipos. Tarda unos minutos.
+- `node tests/recorrido.js`: juega los 150 niveles respondiendo bien cada pregunta (todos los tipos) y comprueba que cada nivel mezcla al menos 3 tipos. Tarda unos minutos.
 - `node tests/navegador.js`: abre la app en un navegador real (Playwright) y prueba pantallas, repetición espaciada, rachas, ajustes, copia de seguridad y conteo. Necesita `npm i playwright` y la carpeta servida, por ejemplo con `python3 -m http.server 8123`.
 
 ## Cómo añadir ejercicios o niveles
@@ -151,7 +151,7 @@ Cuidado con las comas entre elementos y con las comillas.
 **Límites que conviene saber**
 - Los niveles Oro viajan dentro del código de la web, así que alguien con conocimientos podría saltarse el bloqueo. Para protegerlos de verdad habría que servirlos desde el servidor solo a los VIP.
 - El proyecto de Supabase es el mismo que el de «Gym social»: comparten el sistema de cuentas (los usuarios son los mismos) y la plantilla de los correos de acceso.
-- `tests/recorrido.js` juega ahora también los 66 niveles Oro. `tests/webhook.mjs` prueba la firma de Stripe y la lógica del VIP.
+- `tests/recorrido.js` juega ahora también los 150 niveles Oro. `tests/webhook.mjs` prueba la firma de Stripe y la lógica del VIP.
 
 ## Más juegos y más lecciones (noviembre)
 
@@ -159,3 +159,4 @@ Cuidado con las comas entre elementos y con las comillas.
 - **Niveles de «Práctica extra»** al final de blackjack, póker y mus (`data/practica.js`), con los generadores de `data/generadores.js`.
 - `tests/validar.js` comprueba el bacarrá con reglas propias de la tercera carta y enumeración exacta de probabilidades (empate ≈ 9,5 %; ventaja de la casa ≈ 1,06 % Banca, ≈ 1,24 % Jugador, ≈ 14 % Empate) y cada jugada de vídeo póker recalculando el valor esperado de las 32 formas de guardar cartas.
 - Aviso: el retorno «≈ 99,5 %» de la 9/6 con juego perfecto es una cifra conocida que NO recalcula el validador. Es contenido educativo, sin dinero real; no es una invitación a apostar.
+- **30 niveles normales por juego** (150 en total, más 150 niveles Oro): `data/ampliacion.js` añade las unidades nuevas (blackjack, póker y mus con generadores; baccarat y vídeo póker con `data/casino.js`). Los niveles «Examen» y «Torneo» usan las situaciones difíciles.

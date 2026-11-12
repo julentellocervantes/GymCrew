@@ -445,11 +445,11 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
   await page.reload();
   await page.locator('.juego').first().click();
   await page.waitForSelector('.nodo');
-  ok(await page.locator('.nodo-oro').count() === 20, 'cada nivel de blackjack tiene su nivel Oro al lado');
+  ok(await page.locator('.nodo-oro').count() === 30, 'cada nivel de blackjack tiene su nivel Oro al lado');
   ok((await page.locator('.nodo-oro').first().getAttribute('aria-label')).includes('solo para VIP'), 'sin VIP el nivel Oro avisa de que es solo VIP');
   await page.locator('.nodo-oro').first().click();
   await page.waitForSelector('.premium');
-  ok((await page.locator('main').innerText()).includes('66 niveles Oro') && await page.locator('#barra').isHidden(), 'pantalla VIP con 66 niveles Oro y sin barra');
+  ok((await page.locator('main').innerText()).includes('150 niveles Oro') && await page.locator('#barra').isHidden(), 'pantalla VIP con 150 niveles Oro y sin barra');
   await foto('16-vip');
   await page.locator('.cerrar').click();
   await page.waitForSelector('.nodo');

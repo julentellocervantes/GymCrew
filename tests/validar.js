@@ -164,7 +164,7 @@ function verificarInteractivo(e) {
 }
 
 
-for (const f of ['cursos.js', 'blackjack.js', 'poker.js', 'mus.js', 'blackjack-extra.js', 'poker-extra.js', 'mus-extra.js', 'ordenar-extra.js', 'interactivos-extra.js', 'variedad-extra.js', 'ayuda.js', 'generadores.js', 'practica.js', 'videopoker-datos.js', 'casino.js', 'premium.js']) vm.runInContext(fs.readFileSync(D + f, 'utf8'), ctx, { filename: f });
+for (const f of ['cursos.js', 'blackjack.js', 'poker.js', 'mus.js', 'blackjack-extra.js', 'poker-extra.js', 'mus-extra.js', 'ordenar-extra.js', 'interactivos-extra.js', 'variedad-extra.js', 'ayuda.js', 'generadores.js', 'practica.js', 'videopoker-datos.js', 'casino.js', 'ampliacion.js', 'premium.js']) vm.runInContext(fs.readFileSync(D + f, 'utf8'), ctx, { filename: f });
 const CURSOS = vm.runInContext('CURSOS', ctx);
 const AYUDA = vm.runInContext('AYUDA', ctx);
 const CURSOS_ORO = vm.runInContext('CURSOS_ORO', ctx);
