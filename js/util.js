@@ -133,6 +133,21 @@ function contadorRapido() {
 }
 
 // ---------- chuletas ----------
+// Las chuletas son exclusivas del VIP: llevan borde dorado y, sin VIP, el bloque lleva un candado y abre la pantalla del pase.
+function chuleta(b) {
+  b.classList.add('chuleta');
+  if (esVip()) {
+    b.querySelector('.util-icono').after(el('span', { class: 'etiqueta-vip' }, el('span', { class: 'ico-vip', 'aria-hidden': 'true' }, '👑'), 'VIP'));
+    return b;
+  }
+  b.classList.add('bloqueada');
+  const resumen = b.querySelector('summary');
+  b.querySelector('.util-cuerpo').remove();
+  resumen.querySelector('.flecha').replaceWith(el('span', { class: 'candado-vip', 'aria-hidden': 'true' }, '🔒'));
+  resumen.setAttribute('aria-label', resumen.textContent.replace(/\s+/g, ' ').trim() + '. Exclusiva del pase VIP');
+  resumen.addEventListener('click', (e) => { e.preventDefault(); sonido('toque'); mostrarPremium(() => mostrarUtil('atras')); });
+  return b;
+}
 const CODIGOS = { P: ['Pe', 'pedir'], S: ['Pl', 'plantarte'], D: ['Do', 'doblar'], X: ['Di', 'dividir'] };
 function tablaEstrategia(titulo, filas) {
   return el('div', { class: 'tabla-caja' },
@@ -143,7 +158,7 @@ function tablaEstrategia(titulo, filas) {
     ));
 }
 function chuletaBlackjack() {
-  return bloque('♠️', 'Blackjack: estrategia básica', 'Qué hacer con cada mano',
+  return bloque('2️⃣', 'Blackjack: estrategia básica', 'Qué hacer con cada mano',
     el('p', { class: 'util-nota' }, 'Arriba, la carta que enseña el crupier. Para 4-8 mazos, el crupier se planta con 17 blando.'),
     el('div', { class: 'leyenda' }, Object.entries(CODIGOS).map(([k, [a, t]]) => el('span', { class: 'leyenda-item c-' + k }, `${a} ${t}`))),
     tablaEstrategia('Manos duras (sin As, o con As que vale 1)', AYUDA.estrategia.duras),
@@ -195,6 +210,7 @@ function mostrarUtil(entrada = 'fundido') {
       el('p', { class: 'util-intro' }, 'Calculadoras y chuletas para tener a mano mientras juegas. Pulsa una para abrirla.'),
       el('h2', { class: 'util-grupo' }, 'Calculadoras'),
       calcCuentaVerdadera(), calcOuts(), calcPotOdds(), contadorRapido(),
-      el('h2', { class: 'util-grupo' }, 'Chuletas'),
-      chuletaBlackjack(), chuletaConteo(), chuletaPoker(), chuletaMus(), glosario()));
+      el('h2', { class: 'util-grupo' }, 'Chuletas · exclusivas VIP'),
+      esVip() ? null : el('p', { class: 'util-nota' }, 'Estrategia básica, ranking de manos, valores del mus y glosario, siempre a mano. Toca una chuleta para conocer el pase VIP.'),
+      chuleta(chuletaBlackjack()), chuleta(chuletaConteo()), chuleta(chuletaPoker()), chuleta(chuletaMus()), chuleta(glosario())));
 }

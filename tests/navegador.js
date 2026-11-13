@@ -440,7 +440,15 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
   await page.locator('.pestana[data-pestana=util]').click();
   await page.waitForSelector('.util-bloque');
   ok(await page.locator('.pestana[data-pestana=util]').getAttribute('aria-current') === 'page', 'Útil queda marcada');
-  ok(await page.locator('.util-bloque').count() === 9, 'Útil tiene 4 calculadoras y 5 chuletas');
+  ok(await page.locator('.util-bloque').count() === 9 && await page.locator('.util-bloque.chuleta.bloqueada').count() === 5, 'Útil tiene 4 calculadoras y 5 chuletas bloqueadas sin VIP');
+  await page.locator('.util-bloque.chuleta').first().locator('summary').click();
+  await page.waitForSelector('.premium, .bienvenida-titulo');
+  ok((await page.locator('main').innerText()).includes('Ruta dorada VIP'), 'una chuleta sin VIP abre la pantalla del pase');
+  await page.evaluate(() => { progreso.vip.hasta = Date.now() + 1e9; mostrarUtil('sin'); });
+  await page.waitForSelector('.util-bloque');
+  ok(await page.locator('.util-bloque.chuleta:not(.bloqueada)').count() === 5 && await page.locator('.util-bloque.chuleta .util-cuerpo').count() === 5, 'con VIP las chuletas se abren y tienen borde dorado');
+  await page.evaluate(() => { progreso.vip.hasta = 0; mostrarUtil('sin'); });
+  await page.waitForSelector('.util-bloque');
   await page.locator('.util-bloque', { hasText: 'Cuenta verdadera' }).first().locator('summary').click();
   ok((await page.locator('.resultado-calc').first().innerText()).includes('+3'), 'cuenta verdadera 6 ÷ 2 = +3');
   await page.getByLabel('Mazos que quedan', { exact: true }).fill('4');
@@ -460,6 +468,8 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
   ok((await cont.locator('.contador-gran').innerText()) === '+3', 'deshacer quita la última carta');
   await cont.getByRole('button', { name: 'Reiniciar' }).click();
   ok((await cont.locator('.contador-gran').innerText()) === '0', 'reiniciar pone la cuenta a 0');
+  await page.evaluate(() => { progreso.vip.hasta = Date.now() + 1e9; mostrarUtil('sin'); });
+  await page.waitForSelector('.util-bloque');
   await page.locator('.util-bloque', { hasText: 'estrategia básica' }).locator('summary').click();
   ok(await page.locator('.tabla-bj td').count() === 210, 'la tabla de estrategia tiene 21 filas x 10 columnas');
   ok(await page.locator('td[aria-label="A,7 contra 9: pedir"]').count() === 1 && await page.locator('td[aria-label="A,A contra 6: dividir"]').count() === 1, 'las celdas se leen con claridad (aria-label)');
@@ -469,6 +479,7 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
   await page.locator('.util-bloque', { hasText: 'Mus: valores' }).locator('summary').click();
   await page.locator('.util-bloque', { hasText: 'Glosario' }).locator('summary').click();
   ok(await page.locator('.glosario dt').count() === 16, 'glosario con 16 términos');
+  await page.evaluate(() => { progreso.vip.hasta = 0; });
   // pestaña Ajustes y volver a ver la bienvenida
   await page.locator('.pestana[data-pestana=ajustes]').click();
   await page.waitForSelector('.ajuste');
@@ -480,6 +491,7 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
   await page.waitForSelector('.juego');
   // en pantallas pequeñas nada se sale
   await page.setViewportSize({ width: 320, height: 640 });
+  await page.evaluate(() => { progreso.vip.hasta = Date.now() + 1e9; });
   await page.locator('.pestana[data-pestana=util]').click();
   await page.locator('.util-bloque', { hasText: 'estrategia básica' }).locator('summary').click();
   await page.locator('.util-bloque', { hasText: 'Contador rápido' }).locator('summary').click();
@@ -488,6 +500,7 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
   const solapa = await page.evaluate(() => { const b = document.getElementById('barra').getBoundingClientRect(); return b.height; });
   ok(solapa > 40 && solapa < 90, 'la barra tiene un alto razonable: ' + solapa);
   await foto('15-util-320');
+  await page.evaluate(() => { progreso.vip.hasta = 0; });
   await page.setViewportSize({ width: 390, height: 844 });
 
   // 6e) Ruta dorada VIP

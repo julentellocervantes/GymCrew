@@ -1446,3 +1446,13 @@ html[data-calma="si"] .i-traza, html[data-calma="si"] .i-traza2 { stroke-dashoff
 .pestana-tienda { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; border: 2px solid var(--borde, #e5e5e5); background: var(--tarjeta, #fff); color: inherit; font: inherit; font-weight: 800; padding: 9px 14px; border-radius: 999px; cursor: pointer; white-space: nowrap; }
 .pestana-tienda.activa { background: var(--verde, #58cc02); border-color: var(--verde, #58cc02); color: #fff; }
 .pestana-tienda:focus-visible { outline: 3px solid #3a92ff; outline-offset: 2px; }
+
+/* CHULETAS VIP: borde dorado */
+.util-bloque.chuleta { border: 3px solid transparent; background: linear-gradient(var(--tarjeta), var(--tarjeta)) padding-box, linear-gradient(135deg, #fff3a8, #ffc928 35%, #e08a00 60%, #ffe27a) border-box; box-shadow: 0 3px 0 #c98a00, 0 0 14px rgba(255, 201, 40, .35); }
+.util-bloque.chuleta[open] { box-shadow: 0 3px 0 #c98a00, 0 0 20px rgba(255, 201, 40, .5); }
+.util-bloque.chuleta summary:focus-visible { outline-color: #e08a00; }
+.etiqueta-vip { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 900; letter-spacing: .06em; padding: 3px 8px; border-radius: 999px; background: linear-gradient(135deg, #ffe27a, #ffc928); color: #6b3d00; flex: none; }
+.etiqueta-vip .ico { width: 1.1em; height: 1.1em; }
+.candado-vip { display: inline-flex; flex: none; font-size: 22px; }
+.util-bloque.bloqueada summary { cursor: pointer; }
+.util-bloque.bloqueada .util-icono { filter: grayscale(.4); opacity: .85; }
