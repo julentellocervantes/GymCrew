@@ -47,6 +47,23 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
       if (!acertar) { await izq(ej.pares[0][0]).click(); await der(ej.pares[1][1]).click(); }
       for (const [a, b2] of ej.pares) { await izq(a).click(); await der(b2).click(); }
       await page.waitForSelector('.feedback');
+    } else if (ej.tipo === 'clasificar') {
+      for (let k = 0; k < ej.elementos.length; k++) {
+        const txt = (await page.locator('.clas-ficha').innerText()).trim();
+        const cajon = ej.elementos.find((x) => x[0] === txt)[1];
+        if (!acertar && k === 0) await page.locator('.clas-cajon').nth((cajon + 1) % ej.categorias.length).click();
+        await page.locator('.clas-cajon').nth(cajon).click();
+      }
+      await page.waitForSelector('.feedback');
+    } else if (ej.tipo === 'deslizador') {
+      const v = acertar ? ej.respuesta : (ej.respuesta + ej.tolerancia + 5 <= ej.max ? ej.respuesta + ej.tolerancia + 5 : ej.respuesta - ej.tolerancia - 5);
+      await page.locator('.desliz-control').evaluate((c, x) => { c.value = x; c.dispatchEvent(new Event('input', { bubbles: true })); }, String(Math.max(ej.min, Math.min(ej.max, v))));
+      await page.getByRole('button', { name: 'Comprobar' }).click();
+    } else if (ej.tipo === 'rellenar') {
+      const palabras = acertar ? ej.huecos : ej.huecos.slice().reverse().concat([]);
+      const orden = acertar ? ej.huecos : ej.banco.filter((w) => !ej.huecos.includes(w)).slice(0, 1).concat(ej.huecos.slice(1));
+      for (const h of orden) await page.locator('.rell-palabra:not(:disabled)', { hasText: new RegExp('^\\s*' + h.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*$') }).click();
+      await page.getByRole('button', { name: 'Comprobar' }).click();
     } else {
       const t = await textosOp();
       const buena = ej.opciones[ej.correcta];
@@ -66,6 +83,44 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
   ok(await page.locator('.meta').count() === 1, 'tarjeta de meta diaria');
   ok((await page.locator('.meta').innerText()).includes('0 / 20 XP'), 'meta por defecto 20 XP');
   await foto('1-inicio');
+
+  // 1b) Las tres formas nuevas de responder: fallar una vez cada una y acertar después
+  await inicio({ xp: 35, racha: 0, ultimoDia: null, completadas: {} });
+  await page.evaluate(() => {
+    const l = { id: 'prueba-nuevas', titulo: 'Prueba', icono: '🎯', xp: 10, intro: 'Prueba de las formas nuevas de responder.',
+      ejercicios: CURSOS.flatMap((c) => c.unidades.flatMap((u) => u.lecciones.flatMap((x) => x.ejercicios))).filter((e) => ['bj-3-1-c1', 'bj-3-3-d1', 'bj-3-3-r1'].includes(e.id)) };
+    mostrarLeccion(CURSOS[0], l);
+  });
+  const falladas = new Set();
+  for (let paso = 0; paso < 6 && (await hayPregunta()); paso++) {
+    const q = await page.locator('.pregunta').first().innerText();
+    const primera = !falladas.has(q);
+    falladas.add(q);
+    const ej = await responder(!primera);
+    if (primera) {
+      ok(await page.locator('.feedback.mal').count() === 1, 'fallar «' + ej.tipo + '» da feedback de error');
+      ok((await page.locator('.correcta').innerText()).startsWith('Respuesta correcta'), ej.tipo + ': enseña la respuesta correcta');
+    } else ok(await page.locator('.feedback.bien').count() === 1, 'acertar «' + ej.tipo + '» da feedback correcto');
+    await page.locator('.feedback .boton').click();
+  }
+  ok(falladas.size === 3, 'se jugaron clasificar, deslizador y rellenar');
+  ok(await page.locator('.resultado-titulo').count() === 1, 'las formas nuevas terminan el nivel');
+  // clasificar con teclado (teclas 1, 2, 3) y arrastrando con el ratón
+  await page.evaluate(() => mostrarLeccion(CURSOS[0], { id: 'prueba-arrastre', titulo: 'P', icono: '🎯', xp: 10, intro: 'Prueba de arrastrar y teclas.', ejercicios: CURSOS.flatMap((c) => c.unidades.flatMap((u) => u.lecciones.flatMap((x) => x.ejercicios))).filter((e) => e.id === 'bj-3-1-c1') }));
+  const primeraCarta = (await page.locator('.clas-ficha').innerText()).trim();
+  const cajonBueno = (await page.evaluate(() => CURSOS[0].unidades[2].lecciones[0].ejercicios.find((e) => e.id === 'bj-3-1-c1').elementos)).find((x) => x[0] === primeraCarta)[1];
+  const caja = await page.locator('.clas-cajon').nth(cajonBueno).boundingBox();
+  const fb = await page.locator('.clas-ficha').boundingBox();
+  await page.mouse.move(fb.x + fb.width / 2, fb.y + fb.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(caja.x + caja.width / 2, caja.y + caja.height / 2, { steps: 8 });
+  await page.mouse.up();
+  ok(await page.locator('.clas-cajon').nth(cajonBueno).locator('.clas-mini').count() === 1, 'arrastrar la carta al cajón correcto la coloca');
+  const sig = (await page.locator('.clas-ficha').innerText()).trim();
+  const buenoSig = (await page.evaluate(() => CURSOS[0].unidades[2].lecciones[0].ejercicios.find((e) => e.id === 'bj-3-1-c1').elementos)).find((x) => x[0] === sig)[1];
+  await page.keyboard.press(String(buenoSig + 1));
+  ok(await page.locator('.clas-mini').count() === 2, 'la tecla del cajón también coloca la carta');
+  await inicio({ xp: 35, racha: 0, ultimoDia: null, completadas: {} });
 
   // 2) Nivel con ejercicio de ordenar: accesibilidad, SRS, meta y XP
   await page.locator('.juego').first().click();

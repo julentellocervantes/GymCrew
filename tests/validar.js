@@ -31,6 +31,89 @@ const hayEscalera = (valores) => { const s = new Set(valores); if (s.has(14)) s.
 const numDe = (t) => Number(String(t).replace('−', '-'));
 const DEALERS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'A'];
 
+
+// ---------- formas nuevas de responder: clasificar, deslizador y rellenar ----------
+function verificarNuevos(e) {
+  const t = e.tipo, ch = e.chequeo || {};
+  verif[t] = (verif[t] || 0) + 1;
+  const calculado = () => (verif.calculados = (verif.calculados || 0) + 1);
+  const definicion = () => (verif.definiciones = (verif.definiciones || 0) + 1);
+  if (t === 'clasificar') {
+    const nc = e.categorias.length, n = e.elementos.length;
+    if (nc < 2 || nc > 3 || new Set(e.categorias).size !== nc) return mal(e.id, 'clasificar: de 2 a 3 cajones distintos');
+    if (n < 4 || n > 8 || new Set(e.elementos.map((x) => x[0])).size !== n) return mal(e.id, 'clasificar: de 4 a 8 elementos distintos');
+    if (!e.elementos.every((x) => Number.isInteger(x[1]) && x[1] >= 0 && x[1] < nc)) return mal(e.id, 'clasificar: cajón fuera de rango');
+    for (let k = 0; k < nc; k++) if (!e.elementos.some((x) => x[1] === k)) return mal(e.id, 'clasificar: un cajón queda vacío');
+    const esperado = (texto) => {
+      if (ch.valor10) return valBJ(rangoC(texto)) === 10 ? 'Vale 10' : 'Vale 2 a 9';
+      if (ch.hilo) return signo(hiLo(rangoC(texto))).replace('-', '−');
+      if (ch.valMus) { const v = valMus(texto); return v === 10 ? 'Vale 10' : v === 1 ? 'Vale 1' : 'Vale su número'; }
+      if (ch.bacVal) return ['10', 'J', 'Q', 'K'].includes(rangoC(texto)) ? 'Vale 0' : 'Vale 1 a 9';
+      if (ch.pk) return categoriaPoker(texto.split(' '));
+      if (ch.vpPaga) {
+        const cartas = texto.split(' '), cat = categoriaPoker(cartas);
+        const paga = cat !== 'Carta alta' && !(cat === 'Pareja' && !Object.entries(cartas.reduce((m, c) => ((m[rangoC(c)] = (m[rangoC(c)] || 0) + 1), m), {})).some(([r, n2]) => n2 === 2 && VAL_PK[r] >= 11));
+        return paga ? 'Paga' : 'No paga';
+      }
+      return null;
+    };
+    if (ch.bj) {
+      calculado();
+      if (ch.bj.manos.length !== n) return mal(e.id, 'clasificar: manos y elementos no coinciden');
+      e.elementos.forEach(([txt, k], i) => {
+        if (txt !== ch.bj.manos[i].join(' + ')) mal(e.id, `clasificar: el texto «${txt}» no coincide con la mano`);
+        const m = mejorJugada(ch.bj.manos[i], ch.bj.crupier);
+        if (e.categorias[k] !== m) mal(e.id, `clasificar: ${txt} contra ${ch.bj.crupier} es «${m}», no «${e.categorias[k]}»`);
+      });
+    } else if (ch.bacJugador) {
+      calculado();
+      e.elementos.forEach(([txt, k], i) => {
+        const tot = ch.bacJugador[i];
+        const c = tot >= 8 ? 'Natural' : tot >= 6 ? 'Se planta' : 'Pide carta';
+        if (txt !== 'Total ' + tot || e.categorias[k] !== c) mal(e.id, `clasificar: con ${tot} el Jugador «${c}»`);
+      });
+    } else if (ch.valor10 || ch.hilo || ch.valMus || ch.bacVal || ch.pk || ch.vpPaga) {
+      calculado();
+      e.elementos.forEach(([txt, k]) => {
+        const c = esperado(txt);
+        if (e.categorias[k] !== c) mal(e.id, `clasificar: «${txt}» va a «${c}», no a «${e.categorias[k]}»`);
+      });
+      if (ch.hilo && JSON.stringify(e.categorias) !== JSON.stringify(['+1', '0', '−1'])) mal(e.id, 'clasificar: los cajones del Hi-Lo deben ser +1, 0 y −1');
+    } else definicion();
+    return;
+  }
+  if (t === 'deslizador') {
+    const { min, max, paso, respuesta, tolerancia } = e;
+    if (![min, max, paso, respuesta, tolerancia].every(Number.isFinite) || min >= max || paso <= 0) return mal(e.id, 'deslizador: números raros');
+    if (respuesta < min || respuesta > max || (respuesta - min) % paso !== 0) return mal(e.id, 'deslizador: la respuesta no cae en el control');
+    if (tolerancia < 0 || tolerancia > (max - min) / 8) return mal(e.id, 'deslizador: tolerancia demasiado grande');
+    let esperado = null;
+    if (ch.cuentaVerdadera) { const [c, m] = ch.cuentaVerdadera; esperado = c / m; if (!Number.isInteger(esperado)) return mal(e.id, 'deslizador: la cuenta verdadera debe ser entera'); }
+    else if (ch.pago) { const [ap, a, b] = ch.pago; esperado = (ap / b) * a; }
+    else if (ch.potOdds) { const [bote, pagar] = ch.potOdds; esperado = (100 * pagar) / (bote + pagar); if (Math.abs(esperado - respuesta) > tolerancia) return mal(e.id, `deslizador: pot odds ${esperado}, no ${respuesta}`); esperado = respuesta; }
+    else if (ch.outs) {
+      const o = ch.outs.n, exacto = ch.outs.fase === 'flop' ? (1 - ((47 - o) * (46 - o)) / (47 * 46)) * 100 : (o / 46) * 100;
+      if (respuesta !== o * (ch.outs.fase === 'flop' ? 4 : 2)) return mal(e.id, 'deslizador: la regla del 4 y el 2 da otra cifra');
+      if (Math.abs(exacto - respuesta) > tolerancia + 1.5) return mal(e.id, `deslizador: el valor exacto es ${exacto.toFixed(1)}, demasiado lejos de ${respuesta}`);
+      esperado = respuesta;
+    } else if (ch.mus) esperado = ch.mus.reduce((a, c) => a + valMus(c), 0);
+    else if (ch.bacTotal) esperado = ch.bacTotal.reduce((a, c) => a + (['10', 'J', 'Q', 'K'].includes(c) ? 0 : c === 'A' ? 1 : Number(c)), 0) % 10;
+    if (esperado === null) definicion();
+    else { calculado(); if (esperado !== respuesta) mal(e.id, `deslizador: se esperaba ${esperado} y el ejercicio dice ${respuesta}`); }
+    return;
+  }
+  if (t === 'rellenar') {
+    const nh = (e.texto.match(/\{\}/g) || []).length;
+    if (nh < 1 || nh > 3 || nh !== e.huecos.length) return mal(e.id, 'rellenar: los huecos no coinciden con las palabras');
+    if (e.banco.length < 3 || e.banco.length > 6 || new Set(e.banco).size !== e.banco.length) return mal(e.id, 'rellenar: el banco debe tener de 3 a 6 palabras distintas');
+    if (!e.huecos.every((h) => e.banco.includes(h)) || new Set(e.huecos).size !== nh) return mal(e.id, 'rellenar: cada hueco necesita su palabra distinta en el banco');
+    if (e.banco.length <= nh) return mal(e.id, 'rellenar: falta alguna palabra de relleno en el banco');
+    definicion();
+    return;
+  }
+  mal(e.id, 'tipo desconocido ' + t);
+}
+
 function verificarInteractivo(e) {
   const t = e.tipo;
   if (!e.pregunta || !e.explicacion) mal(e.id, t + ': falta pregunta o explicación');
@@ -164,7 +247,7 @@ function verificarInteractivo(e) {
 }
 
 
-for (const f of ['cursos.js', 'blackjack.js', 'poker.js', 'mus.js', 'blackjack-extra.js', 'poker-extra.js', 'mus-extra.js', 'ordenar-extra.js', 'interactivos-extra.js', 'variedad-extra.js', 'ayuda.js', 'generadores.js', 'practica.js', 'videopoker-datos.js', 'casino.js', 'ampliacion.js', 'premium.js']) vm.runInContext(fs.readFileSync(D + f, 'utf8'), ctx, { filename: f });
+for (const f of ['cursos.js', 'blackjack.js', 'poker.js', 'mus.js', 'blackjack-extra.js', 'poker-extra.js', 'mus-extra.js', 'ordenar-extra.js', 'interactivos-extra.js', 'variedad-extra.js', 'ayuda.js', 'generadores.js', 'practica.js', 'videopoker-datos.js', 'casino.js', 'ampliacion.js', 'formas-nuevas.js', 'premium.js']) vm.runInContext(fs.readFileSync(D + f, 'utf8'), ctx, { filename: f });
 const CURSOS = vm.runInContext('CURSOS', ctx);
 const AYUDA = vm.runInContext('AYUDA', ctx);
 const CURSOS_ORO = vm.runInContext('CURSOS_ORO', ctx);
@@ -513,6 +596,7 @@ for (const c of CURSOS.concat(CURSOS_ORO)) {
         nEj++;
         if (ids.has(e.id)) mal(e.id, 'id repetido'); ids.add(e.id);
         if (!e.pregunta || !e.explicacion) mal(e.id, 'falta pregunta o explicación');
+        if (['clasificar', 'deslizador', 'rellenar'].includes(e.tipo)) { verificarNuevos(e); continue; }
         if (c.id === 'baccarat' || c.id === 'videopoker') { verificarCasino(e); continue; }
         if (['seleccionar', 'numero', 'emparejar', 'ordenar'].includes(e.tipo)) {
           verificarInteractivo(e);

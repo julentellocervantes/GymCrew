@@ -174,3 +174,8 @@ Cuidado con las comas entre elementos y con las comillas.
 - **Iconos propios**: la app no usa emojis. `js/iconos.js` dibuja 79 iconos SVG animados y sustituye automáticamente cualquier emoji que aparezca en un texto (`EMOJI_A_ICONO`). Las animaciones se apagan con el modo calma y con «reducir movimiento».
 - **Tienda con pestañas** (Fondos, Barajas, Aspecto de Nai) y **VIP ×2**: el pase da el doble de XP y de fichas (niveles, repasos, conteo y cofres; `multVip()` en `js/app.js`).
 - **Chuletas VIP**: en la pestaña Útil las cinco chuletas son exclusivas del VIP y llevan borde dorado; sin VIP muestran un candado y abren la pantalla del pase (`chuleta()` en `js/util.js`).
+- **Tres formas más de responder** (`data/formas-nuevas.js`, render en `js/app.js`, estilos al final de `css/estilos.css`):
+  - `clasificar`: la carta que sale se arrastra (o se toca el cajón, o teclas 1-3) a su cajón: Hi-Lo, valores, manos de póker, estrategia…
+  - `deslizador`: mueve el control hasta tu estimación (porcentajes, cuenta verdadera, puntos…) y se acepta dentro de un margen.
+  - `rellenar`: completa la frase tocando palabras de un banco (con palabras de relleno).
+  Se añaden a 40 niveles existentes; `tests/validar.js` recalcula las respuestas verificables con reglas independientes.
