@@ -92,6 +92,14 @@ const CATALOGO = {
     { id: 'dorada', nombre: 'Dorada', precio: 60 },
     { id: 'neon', nombre: 'Neón', precio: 90 },
   ],
+  espanola: [
+    { id: 'clasica', nombre: 'Clásica', precio: 0 },
+    { id: 'taberna', nombre: 'Taberna', precio: 40 },
+    { id: 'pergamino', nombre: 'Pergamino', precio: 50 },
+    { id: 'dorada', nombre: 'Dorada', precio: 60 },
+    { id: 'nocturna', nombre: 'Nocturna', precio: 70 },
+    { id: 'neon', nombre: 'Neón', precio: 90 },
+  ],
   nai: [
     { id: 'clasico', nombre: 'Nai clásica', precio: 0 },
     { id: 'gafas', nombre: 'Gafas de sol', precio: 40 },
@@ -104,6 +112,7 @@ let pestanaTienda = 'fondo';
 const SECCIONES_TIENDA = [
   { tipo: 'fondo', titulo: 'Fondos', icono: '🖼' },
   { tipo: 'baraja', titulo: 'Barajas', icono: '🃏' },
+  { tipo: 'espanola', titulo: 'Baraja española', icono: '🎴' },
   { tipo: 'nai', titulo: 'Aspecto de Nai', icono: '🎩' },
 ];
 const articuloDe = (tipo, id) => CATALOGO[tipo].find((a) => a.id === id);
@@ -114,7 +123,8 @@ const equipado = (tipo) => { const id = progreso.tienda.equipado[tipo]; return a
 // Pone el fondo y la baraja elegidos en la página (Nai lo lee de progreso al dibujarse)
 function aplicarCosmeticos() {
   const raiz = document.documentElement;
-  const fondo = equipado('fondo'), baraja = equipado('baraja');
+  const fondo = equipado('fondo'), baraja = equipado('baraja'), espanola = equipado('espanola');
+  if (espanola === 'clasica') raiz.removeAttribute('data-espanola'); else raiz.setAttribute('data-espanola', espanola);
   if (fondo === 'clasico') raiz.removeAttribute('data-fondo'); else raiz.setAttribute('data-fondo', fondo);
   if (baraja === 'clasica') raiz.removeAttribute('data-baraja'); else raiz.setAttribute('data-baraja', baraja);
 }
@@ -269,6 +279,7 @@ function mostrarTienda(entrada = 'fundido') {
   const vistaArticulo = (tipo, a) => {
     if (tipo === 'fondo') return el('span', { class: 'vista vista-fondo', style: `background:${a.vista}` });
     if (tipo === 'baraja') return el('span', { class: 'vista vista-baraja', 'data-baraja': a.id }, el('span', { class: 'carta' }, 'A♠'), el('span', { class: 'carta roja' }, 'K♥'));
+    if (tipo === 'espanola') return el('span', { class: 'vista vista-es', 'data-espanola': a.id }, cartaEspanola('Rey', 0), cartaEspanola('As', 2));
     const caja = el('span', { class: 'vista vista-nai' });
     caja.innerHTML = mascotaSVG('feliz', a.id);
     return caja;

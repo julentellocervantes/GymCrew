@@ -14,6 +14,7 @@ const esc = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   await page.goto(URL);
   // los niveles normales y, a continuación, los niveles Oro de la ruta dorada
   let lecciones = await page.evaluate(() => CURSOS.flatMap((c) => niveles(c).concat(niveles(c).map((l) => ORO[l.id]).filter(Boolean)).map((l) => ({ curso: c.id, id: l.id, n: l.ejercicios.length, nueva: l.ejercicios.some((e) => ['clasificar', 'deslizador', 'rellenar'].includes(e.tipo)) }))));
+  if (process.env.SOLO_CURSO) lecciones = lecciones.filter((l) => l.curso === process.env.SOLO_CURSO);
   if (process.env.SOLO_NUEVAS) lecciones = lecciones.filter((l) => l.nueva); // node tests/recorrido.js con SOLO_NUEVAS=1
   const porTipo = {};
   for (const lec of lecciones) {
@@ -47,8 +48,7 @@ const esc = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         await page.waitForSelector('.feedback');
       } else if (ej.tipo === 'clasificar') {
         for (let k = 0; k < ej.elementos.length; k++) {
-          const txt = (await page.locator('.clas-ficha').innerText()).trim();
-          const cajon = ej.elementos.find((x) => x[0] === txt)[1];
+          const cajon = ej.elementos[Number(await page.locator('.clas-ficha').getAttribute('data-clas'))][1];
           await page.locator('.clas-cajon').nth(cajon).click();
         }
         await page.waitForSelector('.feedback');

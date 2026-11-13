@@ -29,7 +29,7 @@ const progresoNuevo = () => ({
   fichas: 20,                     // moneda de la tienda
   energia: { n: 2, t: 0, dia: null }, // niveles que puedes empezar; t = cuándo empezó a recargarse
   cofres: {},                     // cofres del mapa ya abiertos
-  tienda: { comprados: [], equipado: { fondo: 'clasico', baraja: 'clasica', nai: 'clasico' } }, // cosméticos
+  tienda: { comprados: [], equipado: { fondo: 'clasico', baraja: 'clasica', espanola: 'clasica', nai: 'clasico' } }, // cosméticos
 });
 
 // Comprueba que un progreso (guardado o importado) tiene la forma esperada y rellena lo que falte
@@ -61,7 +61,7 @@ function normalizarProgreso(datos) {
   const idOk = (s) => typeof s === 'string' && /^[a-z]{3,8}:[a-z]{3,12}$/.test(s);
   const eq = obj(tn.equipado, {});
   const sl = (s) => (typeof s === 'string' && /^[a-z]{3,12}$/.test(s) ? s : null);
-  p.tienda = { comprados: Array.isArray(tn.comprados) ? tn.comprados.filter(idOk).slice(0, 60) : [], equipado: { fondo: sl(eq.fondo) || 'clasico', baraja: sl(eq.baraja) || 'clasica', nai: sl(eq.nai) || 'clasico' } };
+  p.tienda = { comprados: Array.isArray(tn.comprados) ? tn.comprados.filter(idOk).slice(0, 60) : [], equipado: { fondo: sl(eq.fondo) || 'clasico', baraja: sl(eq.baraja) || 'clasica', espanola: sl(eq.espanola) || 'clasica', nai: sl(eq.nai) || 'clasico' } };
   // quien ya tenía progreso no necesita la bienvenida
   p.bienvenida = p.bienvenida === true || p.xp > 0 || Object.keys(p.completadas).length > 0;
   return p;
@@ -439,8 +439,11 @@ function nombreCarta(texto) {
   const m = /^(10|[2-9AJQK])([♠♥♦♣])$/.exec(texto);
   return m ? `${FIGURAS[m[1]] || m[1]} de ${PALOS[m[2]]}` : texto;
 }
+// Las preguntas del mus se ven con la baraja española (js/baraja-espanola.js); el resto, con la francesa
+let barajaEspanola = false;
 function carta(valor, n = 0) {
   const texto = String(valor);
+  if (barajaEspanola && esCartaMus(texto)) return cartaEspanola(texto, n);
   const roja = /[♥♦]/.test(texto);
   const larga = texto.length > 3;
   const nombre = nombreCarta(texto);
@@ -986,6 +989,7 @@ function mostrarLeccion(curso, leccion) {
 
   function dibujar(entrada) {
     const ejercicio = cola[idx];
+    barajaEspanola = curso.id === 'mus' || /^(oro-)?ms-/.test(ejercicio.id);
     const respondido = elegida !== null;
     const acierto = respondido && elegida === ejercicio.correcta;
 
@@ -1182,7 +1186,8 @@ function mostrarLeccion(curso, leccion) {
           setTimeout(() => { clas.error = false; if (cola[idx] === dueno && elegida === null) dibujar('sin'); }, 500);
         }
       };
-      const ficha = actual === null ? null : el('div', { class: 'clas-ficha' + (clas.error ? ' error' : ''), role: 'img', 'aria-label': `Carta para clasificar: ${ejercicio.elementos[actual][0]}`, 'data-clas': String(actual) }, el('span', {}, ejercicio.elementos[actual][0]));
+      const ficha = actual === null ? null : el('div', { class: 'clas-ficha' + (clas.error ? ' error' : '') + (barajaEspanola && esCartaMus(ejercicio.elementos[actual][0]) ? ' con-carta' : ''), role: 'img', 'aria-label': `Carta para clasificar: ${ejercicio.elementos[actual][0]}`, 'data-clas': String(actual) },
+        barajaEspanola && esCartaMus(ejercicio.elementos[actual][0]) ? cartaEspanola(ejercicio.elementos[actual][0], clas.i, true) : el('span', {}, ejercicio.elementos[actual][0]));
       if (ficha) {
         // arrastrar con el dedo o el ratón hasta un cajón
         let ini = null;
@@ -1351,6 +1356,7 @@ function mostrarLeccion(curso, leccion) {
       feedback
     );
 
+    barajaEspanola = false; // solo vale mientras se dibuja la pregunta
     if (!respondido && ejercicio.tipo === 'numero') {
       const entradaNum = raiz.querySelector('.numero-entrada');
       if (entradaNum) entradaNum.focus({ preventScroll: true });

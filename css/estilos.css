@@ -1512,3 +1512,55 @@ html[data-calma="si"] .i-traza, html[data-calma="si"] .i-traza2 { stroke-dashoff
 html[data-calma="si"] .clas-ficha, html[data-calma="si"] .rell-hueco, html[data-calma="si"] .clas-mini { animation: none !important; }
 @media (prefers-reduced-motion: reduce) { .clas-ficha, .rell-hueco, .clas-mini { animation: none !important; } }
 .rell-junto { white-space: nowrap; }
+
+/* ============================================================
+   BARAJA ESPAÑOLA (mus): js/baraja-espanola.js
+   ============================================================ */
+:root {
+  --es-papel: #fffaf0; --es-borde: #b9a98a; --es-tinta: #3a2a1a; --es-fondo-fig: rgba(255, 214, 120, .35);
+  --es-oros: #f0b429; --es-oros-h: #fff1a8; --es-oros-d: #9a6a00;
+  --es-copas: #d1303a; --es-copas-h: #ff9aa2; --es-copas-d: #8a1d2c;
+  --es-espadas: #3a7bd5; --es-espadas-h: #a9ccff; --es-espadas-d: #1f4a96;
+  --es-bastos: #3fa34d; --es-bastos-h: #b6e8b0; --es-bastos-d: #226b2c;
+}
+.carta-es { display: inline-block; width: 58px; height: 90px; flex: none; filter: drop-shadow(0 3px 0 rgba(0,0,0,.2)) drop-shadow(0 8px 8px rgba(0,0,0,.25)); transition: translate .2s var(--rebote), rotate .2s var(--rebote); }
+.carta-es.grande { width: 96px; height: 148px; }
+.carta-es .es-svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.carta-es:nth-child(odd) { rotate: -1.5deg; }
+.carta-es:nth-child(even) { rotate: 1.5deg; }
+@media (hover: hover) { .carta-es:hover { translate: 0 -6px; rotate: 0deg; } }
+.es-svg .n { fill: none; }
+.es-papel { fill: var(--es-papel); }
+.es-borde { stroke: var(--es-borde); stroke-width: 2; }
+.es-filete { stroke: var(--es-borde); stroke-width: .8; opacity: .55; }
+.es-num { font: 900 13px Georgia, 'Times New Roman', serif; fill: var(--es-tinta); }
+.marco-as { stroke: var(--es-borde); stroke-width: 1; stroke-dasharray: 2 2; }
+.es-svg .f0 { fill: var(--es-oros); } .es-svg .f0h { fill: var(--es-oros-h); } .es-svg .s0, .es-svg .s0d { stroke: var(--es-oros-d); stroke-width: 1.3; }
+.es-svg .f1 { fill: var(--es-copas); } .es-svg .f1h { fill: var(--es-copas-h); } .es-svg .s1, .es-svg .s1d { stroke: var(--es-copas-d); stroke-width: 1.3; }
+.es-svg .f2 { fill: var(--es-espadas); } .es-svg .f2d { fill: var(--es-espadas-d); } .es-svg .s2, .es-svg .s2d { stroke: var(--es-espadas-d); stroke-width: 1.3; }
+.es-svg .f3 { fill: var(--es-bastos); } .es-svg .f3h { fill: var(--es-bastos-h); } .es-svg .s3, .es-svg .s3d { stroke: var(--es-bastos-d); stroke-width: 1.3; }
+.es-svg .brillo { stroke: #fff; stroke-opacity: .6; stroke-width: 1.6; stroke-linecap: round; fill: none; }
+.es-svg .fondo-fig { fill: var(--es-fondo-fig); }
+.es-svg .marco-fig { stroke: var(--es-borde); stroke-width: 1.2; }
+.es-svg .armino { fill: #fff; stroke: #cfc6b5; stroke-width: .5; } .es-svg .armino-p { fill: #222; }
+.es-svg .cetro { stroke: var(--es-oros-d); stroke-width: 2.4; stroke-linecap: round; }
+.es-svg .barba { fill: #f1ebe0; stroke: #b9ad98; stroke-width: .6; }
+.es-svg .cara { stroke: #b9772a; stroke-width: .8; }
+.es-svg .tinta-f { fill: #2a1a10; } .es-svg .tinta-l { stroke: #2a1a10; stroke-width: 1.2; stroke-linecap: round; fill: none; }
+.es-svg .corona { fill: #f3bf2a; stroke: #a86a00; stroke-width: 1; } .es-svg .corona-b { fill: #d99a1a; } .es-svg .gema { fill: #e8374a; }
+.es-svg .crin { fill: #6b3d1a; } .es-svg .crin-l { stroke: #6b3d1a; stroke-width: 2.4; stroke-linecap: round; fill: none; }
+.es-svg .yelmo { fill: #c9d2e0; stroke: #6c7a99; stroke-width: .8; }
+.es-svg .pluma { stroke: #e8374a; stroke-width: 2.2; stroke-linecap: round; fill: none; } .es-svg .pluma-f { fill: #e8374a; }
+.es-svg .cinto { stroke: #7a4318; stroke-width: 3; fill: none; } .es-svg .hebilla { fill: #f3bf2a; } .es-svg .pelo { fill: #6b3d1a; }
+html[data-espanola="taberna"] .carta-es, .vista-es[data-espanola="taberna"] .carta-es { --es-papel:#f3e0bd;--es-borde:#7a4a1e;--es-tinta:#3b2410;--es-fondo-fig:rgba(122,74,30,.18);--es-oros:#c98a0b;--es-oros-h:#f6d77a;--es-oros-d:#7a5200;--es-copas:#a8281f;--es-copas-h:#e8948a;--es-copas-d:#6d1510;--es-espadas:#27517a;--es-espadas-h:#9bbbd9;--es-espadas-d:#14304d;--es-bastos:#4c7a2a;--es-bastos-h:#b4d49a;--es-bastos-d:#2b4a14; }
+html[data-espanola="pergamino"] .carta-es, .vista-es[data-espanola="pergamino"] .carta-es { --es-papel:#ead7a4;--es-borde:#8a6a3a;--es-tinta:#4a3416;--es-fondo-fig:rgba(138,106,58,.22);--es-oros:#b98a2c;--es-oros-h:#e8d08a;--es-oros-d:#6e4f12;--es-copas:#9a3b2b;--es-copas-h:#d49a8a;--es-copas-d:#5e1d12;--es-espadas:#4d6a8a;--es-espadas-h:#aebfd0;--es-espadas-d:#2a3d52;--es-bastos:#6a7a3a;--es-bastos-h:#c4cf9a;--es-bastos-d:#3a4519; }
+html[data-espanola="nocturna"] .carta-es, .vista-es[data-espanola="nocturna"] .carta-es { --es-papel:#1d2140;--es-borde:#ffd24a;--es-tinta:#f4e9c8;--es-fondo-fig:rgba(255,210,74,.14);--es-oros:#ffd24a;--es-oros-h:#fff4b8;--es-oros-d:#b98a00;--es-copas:#ff6b81;--es-copas-h:#ffc0ca;--es-copas-d:#a8243a;--es-espadas:#6fb7ff;--es-espadas-h:#d4ebff;--es-espadas-d:#2f6fb0;--es-bastos:#6fe08a;--es-bastos-h:#d2f7d9;--es-bastos-d:#2a8a42; }
+html[data-espanola="dorada"] .carta-es, .vista-es[data-espanola="dorada"] .carta-es { --es-papel:#fff0b0;--es-borde:#c98a00;--es-tinta:#5a3a00;--es-fondo-fig:rgba(201,138,0,.2);--es-oros:#d99a1a;--es-oros-h:#fff3a8;--es-oros-d:#7a4e00;--es-copas:#a32020;--es-copas-h:#e8908a;--es-copas-d:#5e0f0f;--es-espadas:#4a3a1a;--es-espadas-h:#b9a46a;--es-espadas-d:#241a08;--es-bastos:#5a6a1a;--es-bastos-h:#c4cf8a;--es-bastos-d:#2e3809; }
+html[data-espanola="neon"] .carta-es, .vista-es[data-espanola="neon"] .carta-es { --es-papel:#12081f;--es-borde:#17d3ff;--es-tinta:#ffffff;--es-fondo-fig:rgba(23,211,255,.12);--es-oros:#ffe14a;--es-oros-h:#fffbc0;--es-oros-d:#c99a00;--es-copas:#ff4fa3;--es-copas-h:#ffc0e0;--es-copas-d:#b3166a;--es-espadas:#17d3ff;--es-espadas-h:#c4f4ff;--es-espadas-d:#0a7fa3;--es-bastos:#5dff8a;--es-bastos-h:#d2ffdf;--es-bastos-d:#1a9a45; }
+html[data-espanola="neon"] .carta-es, .vista-es[data-espanola="neon"] .carta-es { filter: drop-shadow(0 0 6px rgba(23, 211, 255, .7)); }
+html[data-espanola="nocturna"] .carta-es { filter: drop-shadow(0 0 6px rgba(255, 210, 74, .35)); }
+html[data-espanola="dorada"] .carta-es, .vista-es[data-espanola="dorada"] .carta-es { filter: drop-shadow(0 0 7px rgba(255, 201, 40, .6)); }
+.vista-es { display: flex; justify-content: center; gap: 4px; }
+.vista-es .carta-es { width: 38px; height: 59px; }
+.clas-ficha.con-carta { padding: 14px 18px; min-width: 0; }
+.clas-ficha .carta-es { rotate: 0deg; }

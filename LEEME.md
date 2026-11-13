@@ -179,3 +179,4 @@ Cuidado con las comas entre elementos y con las comillas.
   - `deslizador`: mueve el control hasta tu estimación (porcentajes, cuenta verdadera, puntos…) y se acepta dentro de un margen.
   - `rellenar`: completa la frase tocando palabras de un banco (con palabras de relleno).
   Se añaden a 40 niveles existentes; `tests/validar.js` recalcula las respuestas verificables con reglas independientes.
+- **Baraja española** (`js/baraja-espanola.js`): las preguntas del mus (y su ruta Oro) muestran cartas españolas dibujadas en SVG (oros, copas, espadas y bastos; sota 10, caballo 11, rey 12). El mus no usa palos, así que cada carta recibe uno según su posición. En la tienda hay una pestaña «Baraja española» con 6 estilos (Clásica, Taberna, Pergamino, Dorada, Nocturna y Neón) que cambian los colores mediante variables `--es-*`.

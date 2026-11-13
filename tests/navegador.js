@@ -49,8 +49,7 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
       await page.waitForSelector('.feedback');
     } else if (ej.tipo === 'clasificar') {
       for (let k = 0; k < ej.elementos.length; k++) {
-        const txt = (await page.locator('.clas-ficha').innerText()).trim();
-        const cajon = ej.elementos.find((x) => x[0] === txt)[1];
+        const cajon = ej.elementos[Number(await page.locator('.clas-ficha').getAttribute('data-clas'))][1];
         if (!acertar && k === 0) await page.locator('.clas-cajon').nth((cajon + 1) % ej.categorias.length).click();
         await page.locator('.clas-cajon').nth(cajon).click();
       }
@@ -122,6 +121,29 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
   ok(await page.locator('.clas-mini').count() === 2, 'la tecla del cajón también coloca la carta');
   await inicio({ xp: 35, racha: 0, ultimoDia: null, completadas: {} });
 
+  // 1c) Baraja española en las preguntas del mus y estilos en la tienda
+  await inicio({ xp: 35, racha: 0, ultimoDia: null, completadas: {}, fichas: 500 });
+  await page.evaluate(() => {
+    const todos = CURSOS.flatMap((c) => c.unidades.flatMap((u) => u.lecciones.flatMap((x) => x.ejercicios)));
+    const mus = CURSOS.find((c) => c.id === 'mus');
+    mostrarLeccion(mus, { id: 'prueba-mus', titulo: 'M', icono: '🎯', xp: 10, intro: 'Prueba de la baraja española.', ejercicios: [todos.find((e) => e.id === 'ms-1-1-c1'), todos.find((e) => e.id === 'ms-5-2-d1')].concat(todos.filter((e) => e.tipo === 'seleccionar' && /^ms-/.test(e.id)).slice(0, 1)) });
+  });
+  await page.waitForSelector('.pregunta');
+  ok(await page.locator('.clas-ficha .carta-es').count() === 1 && await page.locator('.clas-ficha .carta').count() === 0, 'clasificar del mus usa la baraja española');
+  await foto('1c-mus-clasificar');
+  await page.evaluate(() => { const l = CURSOS.find((c) => c.id === 'blackjack').unidades[0].lecciones[0]; mostrarLeccion(CURSOS[0], l); });
+  await page.waitForSelector('.pregunta');
+  ok(await page.locator('.carta-es').count() === 0, 'el blackjack sigue con la baraja francesa');
+  await page.evaluate(() => mostrarTienda('sin'));
+  await page.locator('[data-pestana=espanola]').click();
+  ok(await page.locator('[data-articulo^="espanola:"]').count() === 6 && await page.locator('[data-articulo^="espanola:"] .carta-es').count() === 12, 'la tienda tiene 6 estilos de baraja española con vista previa');
+  ok(await page.evaluate(() => document.documentElement.getAttribute('data-espanola')) === null, 'sin comprar no se aplica el estilo');
+  await page.locator('[data-articulo="espanola:taberna"] button').click();
+  await page.waitForSelector('[data-articulo="espanola:taberna"].puesto');
+  ok(await page.evaluate(() => document.documentElement.getAttribute('data-espanola')) === 'taberna' && await page.evaluate(() => progreso.fichas) === 460, 'comprar la baraja Taberna la equipa y cobra 40 fichas');
+  ok(await page.evaluate(() => getComputedStyle(document.querySelector('[data-articulo="espanola:taberna"] .es-papel')).fill) !== 'rgb(255, 250, 240)', 'el estilo cambia los colores de la baraja');
+  await foto('1c-tienda-espanola');
+  await inicio({ xp: 35, racha: 0, ultimoDia: null, completadas: {} });
   // 2) Nivel con ejercicio de ordenar: accesibilidad, SRS, meta y XP
   await page.locator('.juego').first().click();
   await page.locator('.nodo.actual').click({ force: true });
