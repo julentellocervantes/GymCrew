@@ -17,7 +17,7 @@
   CURSOS.push({
     id: 'blackjack',
     nombre: 'Blackjack',
-    icono: '🃏',
+    icono: '2️⃣',
     color: '#a560ff',
     descripcion: 'Estrategia básica y conteo de cartas Hi-Lo',
     reglas: '4 a 8 mazos y el crupier se planta con 17 blando. Con otras reglas algunas jugadas cambian un poco.',
