@@ -170,3 +170,6 @@ Cuidado con las comas entre elementos y con las comillas.
 - **Cosméticos**: fondos, barajas y aspecto de Nai (catálogo `CATALOGO` en `js/tienda.js`; estilos al final de `css/estilos.css`). Son solo estéticos.
 - Las fichas NO se compran con dinero real (eso necesitaría otro producto en Stripe). Todo el estado va en el progreso y entra en la copia de seguridad.
 - Limitación: como el resto del progreso, vive en el navegador; quien sepa puede editarlo.
+
+- **Iconos propios**: la app no usa emojis. `js/iconos.js` dibuja 79 iconos SVG animados y sustituye automáticamente cualquier emoji que aparezca en un texto (`EMOJI_A_ICONO`). Las animaciones se apagan con el modo calma y con «reducir movimiento».
+- **Tienda con pestañas** (Fondos, Barajas, Aspecto de Nai) y **VIP ×2**: el pase da el doble de XP y de fichas (niveles, repasos, conteo y cofres; `multVip()` en `js/app.js`).

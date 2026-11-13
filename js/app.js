@@ -143,6 +143,7 @@ function registrarRespuesta(id, acierto) {
 
 // ---------- datos de los cursos ----------
 const esVip = () => progreso.vip.hasta > Date.now();
+const multVip = () => (esVip() ? 2 : 1); // el pase VIP da el doble de XP y de fichas
 const niveles = (curso) => curso.unidades.flatMap((u) => u.lecciones);
 const hechosDe = (curso) => niveles(curso).filter((l) => progreso.completadas[l.id]).length;
 const siguienteNivel = (curso) => niveles(curso).find((l) => !progreso.completadas[l.id]) || null;
@@ -259,7 +260,7 @@ function el(etiqueta, props = {}, ...hijos) {
     if (valor === undefined || valor === null) continue;
     if (clave === 'class') nodo.className = valor;
     else if (clave.startsWith('on')) nodo.addEventListener(clave.slice(2), valor);
-    else nodo.setAttribute(clave, valor);
+    else nodo.setAttribute(clave, (clave === 'aria-label' || clave === 'title') && typeof valor === 'string' ? sinEmojis(valor) : valor);
   }
   for (const hijo of hijos.flat(Infinity)) {
     if (hijo === null || hijo === undefined || hijo === false) continue;
@@ -1226,11 +1227,13 @@ function finalizarLeccion(curso, leccion, precision) {
   const yaHecha = !!progreso.completadas[leccion.id];
 
   // Un repaso da XP según tus aciertos y no marca niveles como hechos
-  const xp = leccion.repaso ? Math.round((leccion.xp * precision) / 100) : leccion.xp;
+  const vipX = multVip();
+  const xp = (leccion.repaso ? Math.round((leccion.xp * precision) / 100) : leccion.xp) * vipX;
   const actividad = registrarActividad(xp);
   // fichas: 3 por nivel nuevo (6 si es Oro) y 5 por cumplir la meta diaria
   const fichas = (!leccion.repaso && !yaHecha ? (leccion.oro ? 6 : 3) : 0) + (actividad.metaCumplida ? 5 : 0);
-  progreso.fichas += fichas;
+  const fichasTotal = fichas * vipX;
+  progreso.fichas += fichasTotal;
   const idx = niveles(curso).indexOf(leccion);
   const cofreNuevo = !leccion.repaso && !leccion.oro && !yaHecha && idx >= 0 && (idx + 1) % CADA_COFRE === 0;
   if (leccion.repaso) progreso.repasos = (progreso.repasos || 0) + 1;
@@ -1244,7 +1247,8 @@ function finalizarLeccion(curso, leccion, precision) {
   const nuevoNivel = !leccion.repaso && !leccion.oro && !yaHecha;
   mostrarResultado(curso, leccion, precision, {
     xp,
-    fichas,
+    fichas: fichasTotal,
+    vip: vipX > 1,
     cofreNuevo,
     desbloqueado: nuevoNivel ? siguiente : null,
     cursoCompleto: nuevoNivel && !siguiente,
@@ -1284,6 +1288,7 @@ function mostrarResultado(curso, leccion, precision, extra) {
   const notas = [];
   if (rachaVigente() > 0) notas.push(linea(orden++, 'resultado-dato', `🔥 Racha: ${rachaVigente()} ${rachaVigente() === 1 ? 'día' : 'días'}`));
   const act = extra.actividad || {};
+  if (extra.vip) notas.push(linea(orden++, 'resultado-dato', '👑 Bonus VIP: el doble de XP y de fichas'));
   if (extra.fichas) notas.push(linea(orden++, 'resultado-dato', `🪙 +${extra.fichas} fichas`));
   if (extra.cofreNuevo) notas.push(linea(orden++, 'resultado-nuevo', '🎁 ¡Hay un cofre esperándote en el mapa!'));
   if (act.metaCumplida) notas.push(linea(orden++, 'resultado-nuevo', '🎯 ¡Meta diaria cumplida!'));

@@ -375,14 +375,21 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
   await page.locator('[data-articulo="fondo:mesa"] button').click();
   ok(await page.evaluate(() => progreso.fichas === 60 && document.documentElement.dataset.fondo === 'mesa' && progreso.tienda.comprados.includes('fondo:mesa')), 'comprar un fondo gasta las fichas y lo aplica');
   await page.locator('[data-articulo="fondo:clasico"] button').click();
+  ok(await page.locator('.tienda .ico').count() > 3 && !/[\p{Emoji_Presentation}\uFE0F]/u.test(await page.locator("main").innerText()), 'la tienda usa iconos propios y ningún emoji');
   ok(await page.evaluate(() => !document.documentElement.dataset.fondo), 'volver al fondo clásico es gratis');
+  await page.locator('[data-pestana=baraja]').click();
+  ok(await page.locator('[data-articulo^="baraja:"]').count() === 6 && await page.locator('[data-articulo^="fondo:"]').count() === 0, 'las pestañas de la tienda muestran una categoría cada vez');
   await page.locator('[data-articulo="baraja:dorada"] button').click();
+  ok(await page.locator('[data-pestana=baraja]').getAttribute('aria-selected') === 'true', 'tras comprar se queda en la misma pestaña');
   ok(await page.evaluate(() => document.documentElement.dataset.baraja === 'dorada' && progreso.fichas === 0), 'comprar una baraja la aplica a las cartas');
+  await page.locator('[data-pestana=nai]').click();
   await page.locator('[data-articulo="nai:corona"] button').click();
   ok((await page.locator('.tienda-seccion .mensaje, .ajuste-mensaje').first().innerText()).includes('Te faltan'), 'sin fichas suficientes no se compra y avisa');
   await page.evaluate(() => { progreso.fichas = 100; progreso.tienda.equipado.baraja = 'clasica'; progreso.energia = { n: 0, t: Date.now(), dia: hoy() }; mostrarTienda('sin'); });
-  await page.getByRole('button', { name: /\+1 ⚡/ }).click();
+  await page.getByRole('button', { name: /\+1 .*energía/ }).click();
   ok(await page.evaluate(() => progreso.energia.n === 1 && progreso.fichas === 90), 'comprar energía con fichas');
+  // VIP: el doble de XP y fichas
+  ok(await page.evaluate(() => { progreso.vip.hasta = Date.now() + 1e9; const r = multVip() === 2; progreso.vip.hasta = 0; return r && multVip() === 1; }), 'el VIP multiplica por 2 y sin VIP es ×1');
   // sin energía: no se puede empezar un nivel
   await page.evaluate(() => { progreso.energia = { n: 0, t: Date.now(), dia: hoy() }; progreso.fichas = 5; const c = CURSOS[0]; mostrarIntro(c, niveles(c)[0]); });
   await page.getByRole('button', { name: '¡Vamos!' }).click();

@@ -100,8 +100,9 @@ const CATALOGO = {
     { id: 'oro', nombre: 'Nai de oro', precio: 150 },
   ],
 };
+let pestanaTienda = 'fondo';
 const SECCIONES_TIENDA = [
-  { tipo: 'fondo', titulo: 'Fondos', icono: '🖼️' },
+  { tipo: 'fondo', titulo: 'Fondos', icono: '🖼' },
   { tipo: 'baraja', titulo: 'Barajas', icono: '🃏' },
   { tipo: 'nai', titulo: 'Aspecto de Nai', icono: '🎩' },
 ];
@@ -141,17 +142,18 @@ const idCofre = (curso, k) => `${curso.id}-cofre-${k}`;
 function abrirCofre(id) {
   if (progreso.cofres[id]) return [];
   const premios = [];
-  const fichas = 8 + Math.floor(Math.random() * 13);
+  const m = multVip();
+  const fichas = (8 + Math.floor(Math.random() * 13)) * m;
   const suerte = Math.random();
   let extra = null;
-  if (suerte < 0.1) extra = { icono: '🪙', texto: '¡Bote! +40 fichas', fichas: 40 };
+  if (suerte < 0.1) extra = { icono: '🪙', texto: `¡Bote! +${40 * m} fichas`, fichas: 40 * m };
   else if (suerte < 0.2) extra = { icono: '⚡', texto: '+2 de energía', energia: 2 };
   else if (suerte < 0.45) extra = { icono: '⚡', texto: '+1 de energía', energia: 1 };
   else if (suerte < 0.55 && progreso.congeladores < 2) extra = { icono: '🧊', texto: 'Un congelador de racha', congelador: 1 };
-  else { const xp = 20 + Math.floor(Math.random() * 6) * 5; extra = { icono: '⭐', texto: `+${xp} XP`, xp }; }
+  else { const xp = 20 + Math.floor(Math.random() * 6) * 5; extra = { icono: '⭐', texto: `+${xp * m} XP`, xp: xp * m }; }
   progreso.cofres[id] = true;
   progreso.fichas += fichas + (extra.fichas || 0);
-  premios.push({ icono: '🪙', texto: `+${fichas} fichas` });
+  premios.push({ icono: '🪙', texto: `+${fichas} fichas${m > 1 ? ' (VIP ×2)' : ''}` });
   if (extra.energia) ganarEnergia(extra.energia);
   if (extra.congelador) progreso.congeladores = Math.min(2, progreso.congeladores + 1);
   if (extra.xp) progreso.xp += extra.xp;
@@ -260,7 +262,7 @@ function mostrarTienda(entrada = 'fundido') {
   // VIP
   const tarjetaVip = el('button', { class: 'banner-oro' + (vip ? ' activo' : ''), type: 'button', onclick: () => mostrarPremium(() => mostrarTienda('atras')) },
     el('span', { class: 'banner-oro-icono', 'aria-hidden': 'true' }, '👑'),
-    el('span', { class: 'juego-texto' }, el('strong', {}, vip ? 'Tu pase VIP está activo' : 'Pase VIP'), el('span', { class: 'juego-desc' }, vip ? `Hasta el ${fechaVip(progreso.vip.hasta)}: energía ilimitada y ruta dorada.` : 'Energía ilimitada y ruta dorada con niveles Oro. ¡5 días gratis!')),
+    el('span', { class: 'juego-texto' }, el('strong', {}, vip ? 'Tu pase VIP está activo' : 'Pase VIP'), el('span', { class: 'juego-desc' }, vip ? `Hasta el ${fechaVip(progreso.vip.hasta)}: XP y fichas ×2, energía ilimitada y ruta dorada.` : 'Doble de XP y de fichas, energía ilimitada y ruta dorada con niveles Oro. ¡5 días gratis!')),
     el('span', { class: 'flecha', 'aria-hidden': 'true' }, '›'));
 
   // Cosméticos
@@ -282,7 +284,11 @@ function mostrarTienda(entrada = 'fundido') {
     } }, puesto ? 'Equipado' : mio ? 'Equipar' : `${a.precio} 🪙`);
     return el('div', { class: 'articulo' + (puesto ? ' puesto' : ''), 'data-articulo': tipo + ':' + a.id }, vistaArticulo(tipo, a), el('strong', {}, a.nombre), boton);
   };
-  const secciones = SECCIONES_TIENDA.map((s) => el('section', { class: 'tienda-seccion' }, el('h2', {}, `${s.icono} ${s.titulo}`), el('div', { class: 'articulos' }, CATALOGO[s.tipo].map((a) => articulo(s.tipo, a)))));
+  if (!SECCIONES_TIENDA.some((x) => x.tipo === pestanaTienda)) pestanaTienda = 'fondo';
+  const panel = el('div', { class: 'articulos', role: 'tabpanel', id: 'panel-tienda', 'aria-labelledby': 'tab-tienda-' + pestanaTienda }, CATALOGO[pestanaTienda].map((a) => articulo(pestanaTienda, a)));
+  const pestanas = el('div', { class: 'pestanas-tienda', role: 'tablist', 'aria-label': 'Categorías de la tienda' }, SECCIONES_TIENDA.map((x) =>
+    el('button', { class: 'pestana-tienda' + (x.tipo === pestanaTienda ? ' activa' : ''), type: 'button', role: 'tab', id: 'tab-tienda-' + x.tipo, 'aria-selected': x.tipo === pestanaTienda ? 'true' : 'false', 'aria-controls': 'panel-tienda', 'data-pestana': x.tipo, onclick: () => { pestanaTienda = x.tipo; sonido('toque'); recargar(); } }, x.icono, ' ' + x.titulo)));
+  const secciones = el('section', { class: 'tienda-seccion' }, pestanas, panel);
 
   pintar(
     entrada,

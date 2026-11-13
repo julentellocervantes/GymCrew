@@ -295,7 +295,7 @@ function preguntarConteo(cartas, total) {
 
 function resultadoConteo(cartas, total, dicho) {
   const acierto = dicho === total;
-  const xp = acierto ? 5 + Math.round(cartas.length / 4) : 2;
+  const xp = (acierto ? 5 + Math.round(cartas.length / 4) : 2) * multVip();
   const rangoAntes = rangoDe(progreso.xp).indice;
   const actividad = registrarActividad(xp);
   progreso.conteo.sesiones += 1;
@@ -475,7 +475,7 @@ function mostrarPremium(volver, aviso = '') {
         : el('ul', { class: 'bienvenida-lista' },
             ventaja('🏆', `${nOro} niveles Oro`, 'Uno por cada nivel de los cinco juegos.', 0),
             ventaja('🎯', 'Más difíciles', 'Situaciones nuevas cada vez que avanzas, sin pistas fáciles.', 1),
-            ventaja('⚡', 'El doble de XP', 'Cada nivel Oro da el doble de XP que el normal.', 2),
+            ventaja('⚡', 'Doble de XP y de fichas', 'Todo lo que ganas en niveles, repasos y cofres vale el doble.', 2),
             ventaja('📈', 'Para llegar lejos', 'Se abren al completar el nivel normal de al lado.', 3)),
       vip ? null : el('div', { class: 'premium-precio' }, el('strong', {}, PREMIUM.precio), el('span', {}, ` ${PREMIUM.periodo} · cancela cuando quieras`)),
       el('p', { class: 'aviso' }, 'Contenido educativo. Sin dinero real. Solo para mayores de 18 años.')
