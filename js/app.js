@@ -21,9 +21,10 @@ const progresoNuevo = () => ({
   meta: 20,                       // XP que quieres ganar cada día
   xpHoy: { dia: null, xp: 0 },    // XP ganado en el día indicado
   congeladores: 0,                // protegen la racha si fallas un día (máx. 2)
-  stats: { u: {}, t: {}, d: {} }, // estadísticas: aciertos y fallos por tema, tipo de pregunta y día ([aciertos, fallos])
+  stats: { u: {}, t: {}, d: {}, s: {} }, // estadísticas: aciertos y fallos por tema, tipo de pregunta y día ([aciertos, fallos])
   srs: {},                        // repetición espaciada: id del ejercicio -> { caja, prox, fallos }
   conteo: { sesiones: 0, mejor: 0 }, // entrenador de conteo
+  rapida: { partidas: 0, mejor: 0 }, // partida rápida de 60 segundos
   ajustes: { letra: 'normal', calma: false, sonido: true },
   bienvenida: false,              // true cuando ya has visto la pantalla de bienvenida
   vip: { hasta: 0 },              // membresía VIP: instante (ms) hasta el que está activa
@@ -52,9 +53,12 @@ function normalizarProgreso(datos) {
   p.srs = obj(p.srs, {});
   const st = obj(p.stats, {});
   const pares = (o, max) => { const r = {}; for (const k of Object.keys(obj(o, {})).slice(-max)) { const a = o[k]; if (Array.isArray(a) && a.length === 2 && a.every((x) => Number.isFinite(x) && x >= 0)) r[String(k).slice(0, 40)] = [Math.floor(a[0]), Math.floor(a[1])]; } return r; };
-  p.stats = { u: pares(st.u, 80), t: pares(st.t, 20), d: pares(st.d, 31) };
+  p.stats = { u: pares(st.u, 80), t: pares(st.t, 20), d: pares(st.d, 31), s: pares(st.s, 40) };
   p.xpHoy = Object.assign({ dia: null, xp: 0 }, obj(p.xpHoy, {}));
   p.conteo = Object.assign({ sesiones: 0, mejor: 0 }, obj(p.conteo, {}));
+  p.rapida = Object.assign({ partidas: 0, mejor: 0 }, obj(p.rapida, {}));
+  p.rapida.partidas = num(p.rapida.partidas, 0);
+  p.rapida.mejor = num(p.rapida.mejor, 0);
   p.ajustes = Object.assign({ letra: 'normal', calma: false, sonido: true }, obj(p.ajustes, {}));
   p.vip = { hasta: p.vip && Number.isFinite(p.vip.hasta) && p.vip.hasta > 0 ? Math.floor(p.vip.hasta) : 0 };
   p.fichas = num(p.fichas, 20);
@@ -149,8 +153,16 @@ function registrarEstadistica(id, acierto) {
   const dias = Object.keys(progreso.stats.d).sort();
   while (dias.length > 31) delete progreso.stats.d[dias.shift()];
 }
+// Apunta el resultado en una situación concreta (ver js/situaciones.js)
+function registrarSituacion(clave, acierto) {
+  const a = progreso.stats.s[clave] || [0, 0];
+  a[acierto ? 0 : 1] += 1;
+  progreso.stats.s[clave] = a;
+}
 function registrarRespuesta(id, acierto) {
   registrarEstadistica(id, acierto);
+  const ind = INDICE_EJERCICIOS[id];
+  if (ind && ind.ejercicio.tipo !== 'relampago') situacionesDe(ind.ejercicio).forEach((c) => registrarSituacion(c, acierto)); // el relámpago apunta cada decisión por separado
   const s = progreso.srs[id] || { caja: 0, prox: hoy(), fallos: 0 };
   if (acierto) s.caja = Math.min(INTERVALOS_DIAS.length - 1, s.caja + 1);
   else {
@@ -617,6 +629,18 @@ function mostrarInicio(entrada = 'fundido') {
     nErr ? filaRepaso('', '🩹', 'Mis errores', `${nErr} ${nErr === 1 ? 'pregunta' : 'preguntas'} que fallaste y aún no dominas`, () => iniciarRepasoGlobal('errores')) : null,
   ];
 
+  // Racha en peligro: tienes racha y hoy aún no has practicado (una partida rápida de 1 minuto la salva)
+  const enPeligro = rachaVigente() > 0 && progreso.ultimoDia !== hoy();
+  const tarde = new Date().getHours() >= 18;
+  const avisoRacha = enPeligro
+    ? el('button', { class: 'racha-aviso' + (tarde ? ' urgente' : ''), type: 'button', onclick: () => iniciarPartidaRapida() },
+        el('span', { class: 'racha-aviso-icono' }, '🔥'),
+        el('span', { class: 'juego-texto' },
+          el('strong', {}, tarde ? `¡Tu racha de ${rachaVigente()} ${rachaVigente() === 1 ? 'día' : 'días'} se acaba esta noche!` : `Tu racha de ${rachaVigente()} ${rachaVigente() === 1 ? 'día' : 'días'} te espera`),
+          el('span', { class: 'juego-desc' }, 'Sálvala con una partida rápida de 1 minuto')),
+        el('span', { class: 'flecha', 'aria-hidden': 'true' }, '›'))
+    : null;
+
   const tarjetas = CURSOS.map((curso, i) => {
     const total = niveles(curso).length;
     const hechos = hechosDe(curso);
@@ -647,9 +671,11 @@ function mostrarInicio(entrada = 'fundido') {
         ? el('p', { class: 'alerta', role: 'alert' }, 'Tu navegador no deja guardar el progreso (¿modo privado?). Puedes seguir, pero al cerrar se perderá.')
         : null,
       el('div', { class: 'resumen' }, tarjetaMeta, tarjetaRango),
+      avisoRacha,
       repasos.some(Boolean) ? el('div', { class: 'repasos-mini' }, repasos) : null,
       el('h1', {}, 'Elige un juego'),
       tarjetas,
+      filaRepaso('conteo', '⚡', 'Partida rápida', progreso.rapida.mejor ? `60 segundos, todas las que puedas · Récord: ${progreso.rapida.mejor}` : '60 segundos: contesta todas las que puedas', () => iniciarPartidaRapida()),
       filaRepaso('conteo', '⏱️', 'Entrena el conteo', 'Cartas a toda velocidad con el sistema Hi-Lo', () => mostrarConteo()),
       filaRepaso('conteo', '📊', 'Mis estadísticas', 'Tus aciertos por juego y tus puntos débiles', () => mostrarEstadisticas()),
       puedeInstalar() ? crearBotonInstalar() : null,
@@ -966,7 +992,22 @@ function mostrarLeccion(curso, leccion) {
   let valorDes = null; // ejercicios "deslizador": posición del control
   let huecos = []; // ejercicios "rellenar": palabra puesta en cada hueco (índice del banco o null)
   let comprobar = null; // acción del botón «Comprobar» de la pantalla actual
-  const salir = () => (curso.global ? mostrarInicio('atras') : mostrarMapa(curso, 'atras'));
+  let rapidaTimer = null; // partida rápida: 60 s en total
+  let rapidaInicio = 0;
+  const salir = () => { clearTimeout(rapidaTimer); return curso.global ? mostrarInicio('atras') : mostrarMapa(curso, 'atras'); };
+  const aciertosRapida = () => Object.keys(vistos).filter((id) => !fallados[id]).length;
+  function terminarRapida() {
+    clearTimeout(rapidaTimer);
+    clearTimeout(relTimer);
+    if (!raiz.querySelector('[data-rapida]')) return; // ya saliste de la partida
+    const n = aciertosRapida();
+    progreso.rapida.partidas += 1;
+    leccion.rapidaNuevoRecord = n > progreso.rapida.mejor;
+    if (leccion.rapidaNuevoRecord) progreso.rapida.mejor = n;
+    leccion.rapidaAciertos = n;
+    leccion.xp = Math.max(2, Math.min(30, n * 2));
+    finalizarLeccion(curso, leccion, 100);
+  }
 
   function elegir(i) {
     if (elegida !== null) return;
@@ -992,8 +1033,9 @@ function mostrarLeccion(curso, leccion) {
   function continuar() {
     const ejercicio = cola[idx];
     // Si fallas, el ejercicio vuelve al final de la lección
-    if (elegida !== ejercicio.correcta) cola = cola.concat([preparar(ejercicio)]);
+    if (elegida !== ejercicio.correcta && !leccion.rapida) cola = cola.concat([preparar(ejercicio)]);
 
+    if (idx + 1 >= cola.length && leccion.rapida) return terminarRapida();
     if (idx + 1 >= cola.length) {
       const total = leccion.ejercicios.length;
       const nFallados = Object.keys(fallados).length;
@@ -1344,6 +1386,7 @@ function mostrarLeccion(curso, leccion) {
         clearTimeout(relTimer);
         const bien = k === ejercicio.items[actual][1];
         if (!bien) rel.fallos += 1;
+        situacionesDe(ejercicio, actual).forEach((c) => registrarSituacion(c, bien));
         sonido(bien ? 'unir' : 'error');
         rel.flash = k < 0 ? 'tarde' : bien ? 'bien' : 'mal';
         rel.bloqueado = true;
@@ -1407,6 +1450,8 @@ function mostrarLeccion(curso, leccion) {
       : null;
 
     // La barra avanza en cuanto aciertas, y arranca desde donde estaba (no desde cero)
+    if (leccion.rapida && !rapidaInicio) { rapidaInicio = Date.now(); rapidaTimer = setTimeout(terminarRapida, 60000); }
+    const transcurrido = rapidaInicio ? (Date.now() - rapidaInicio) / 1000 : 0;
     const objetivo = (idx + (acierto ? 1 : 0)) / cola.length;
     const relleno = el('div', { class: 'barra-relleno', style: `transform:scaleX(${anchoPrevio})` });
     const cambiaBarra = objetivo !== anchoPrevio;
@@ -1416,13 +1461,17 @@ function mostrarLeccion(curso, leccion) {
       entrada,
       el(
         'header',
-        { class: 'cabecera-leccion' },
+        { class: 'cabecera-leccion' + (leccion.rapida ? ' rapida' : ''), 'data-rapida': leccion.rapida ? '1' : null },
         el('button', { class: 'cerrar', type: 'button', 'aria-label': 'Salir de la lección', onclick: salir }, '✕'),
-        el(
+        leccion.rapida
+          ? el('div', { class: 'barra barra-tiempo', role: 'timer', 'aria-label': 'Tiempo restante de la partida rápida', style: `--acento:${curso.color}` },
+              el('div', { class: 'barra-relleno tiempo', style: `animation-delay:-${transcurrido.toFixed(2)}s` }))
+          : el(
           'div',
           { class: 'barra', style: `--acento:${curso.color}`, role: 'progressbar', 'aria-label': 'Progreso de la lección', 'aria-valuemin': '0', 'aria-valuemax': '100', 'aria-valuenow': String(Math.round(objetivo * 100)) },
           relleno
-        )
+        ),
+        leccion.rapida ? el('span', { class: 'rapida-puntos', 'aria-live': 'polite' }, el('strong', {}, String(aciertosRapida())), ' ✓') : null
       ),
       el('main', { class: 'contenido' }, fila, situacion(ejercicio), tablero, opciones),
       feedback
@@ -1508,15 +1557,18 @@ function mostrarResultado(curso, leccion, precision, extra) {
     }
   };
 
+  const rap = leccion.rapida ? leccion.rapidaAciertos : null;
   const mensaje =
-    leccion.repaso && precision === 100
+    rap !== null
+      ? leccion.rapidaNuevoRecord && rap > 0 ? `¡Nuevo récord! ${rap} aciertos en 60 segundos.` : `${rap} ${rap === 1 ? 'acierto' : 'aciertos'} en 60 segundos.`
+      : leccion.repaso && precision === 100
       ? '¡Repaso perfecto! Se nota que lo tienes claro.'
       : precision === 100
       ? '¡Perfecto! Ni un solo fallo. Así se aprende.'
       : precision >= 67
       ? '¡Muy bien! Lo has hecho genial.'
       : 'Nivel completado. Los fallos también enseñan: repítelo cuando quieras para afianzar.';
-  const nEstrellas = precision === 100 ? 3 : precision >= 67 ? 2 : 1;
+  const nEstrellas = rap !== null ? (rap >= 12 ? 3 : rap >= 6 ? 2 : 1) : precision === 100 ? 3 : precision >= 67 ? 2 : 1;
   const { fila } = naiFila(precision >= 67 ? 'celebrando' : 'feliz', mensaje, 'grande');
 
   // Las líneas van apareciendo una tras otra (--i) y los números suben desde 0
@@ -1543,7 +1595,7 @@ function mostrarResultado(curso, leccion, precision, extra) {
     el(
       'main',
       { class: 'contenido centro', style: `--acento:${curso.color}` },
-      el('h1', { class: 'resultado-titulo' }, leccion.repaso ? '¡Repaso terminado!' : leccion.oro ? '👑 ¡Nivel Oro completado!' : '¡Nivel completado!'),
+      el('h1', { class: 'resultado-titulo' }, rap !== null ? '¡Tiempo!' : leccion.repaso ? '¡Repaso terminado!' : leccion.oro ? '👑 ¡Nivel Oro completado!' : '¡Nivel completado!'),
       el(
         'div',
         { class: 'estrellas', 'aria-hidden': 'true' },
@@ -1555,7 +1607,7 @@ function mostrarResultado(curso, leccion, precision, extra) {
       notas
     ),
     el('div', { class: 'pie' }, el('button', { class: 'boton', type: 'button', onclick: volver }, 'Continuar')),
-    precision >= 67 || extra.cursoCompleto || extra.rangoNuevo ? confeti(extra.cursoCompleto || extra.rangoNuevo ? 80 : 40) : null
+    precision >= 67 && rap !== 0 || extra.cursoCompleto || extra.rangoNuevo ? confeti(extra.cursoCompleto || extra.rangoNuevo ? 80 : 40) : null
   );
 
   // Sonidos del resultado: fanfarria, y luego meta, logros y rango si los hay
@@ -1564,6 +1616,7 @@ function mostrarResultado(curso, leccion, precision, extra) {
   if (extra.logros && extra.logros.length) sonido('logro', act.metaCumplida ? 1300 : 700);
   if (extra.rangoNuevo) sonido('rango', 1500);
   contar(xp, extra.xp, (v) => `+${v} XP`, 350);
-  contar(prec, precision, (v) => `Precisión: ${v}%`, 550);
+  if (rap !== null) contar(prec, rap, (v) => `Aciertos: ${v}`, 550);
+  else contar(prec, precision, (v) => `Precisión: ${v}%`, 550);
 }
 

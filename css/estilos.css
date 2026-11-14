@@ -1605,3 +1605,17 @@ html[data-calma="si"] .rel-item.mal, html[data-calma="si"] .rel-item.tarde { ani
 .est-col { display: flex; flex-direction: column-reverse; justify-content: flex-start; min-height: 4px; border-radius: 8px; overflow: hidden; align-self: end; height: 100%; }
 .est-col-bien { display: block; background: #58cc02; } .est-col-mal { display: block; background: #ff5a5a; }
 .est-dia-n { font-size: 12px; font-weight: 800; color: var(--texto-suave); text-transform: uppercase; }
+
+/* Partida rápida y aviso de racha */
+.cabecera-leccion.rapida .barra-tiempo { background: var(--borde); }
+.barra-relleno.tiempo { transform-origin: left center; transform: scaleX(1); animation: rapida-baja 60s linear forwards; background: linear-gradient(90deg, #f5a524, #ef4444); }
+@keyframes rapida-baja { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+.rapida-puntos { font-weight: 800; color: var(--texto); min-width: 44px; text-align: right; font-variant-numeric: tabular-nums; }
+.racha-aviso { display: flex; align-items: center; gap: 12px; width: 100%; margin: 0 0 14px; padding: 12px 14px; border: 2px solid #f5a524; border-radius: 16px; background: color-mix(in srgb, #f5a524 12%, var(--tarjeta, #fff)); color: var(--texto); font: inherit; text-align: left; cursor: pointer; }
+.racha-aviso.urgente { border-color: #ef4444; background: color-mix(in srgb, #ef4444 12%, var(--tarjeta, #fff)); animation: racha-latido 1.8s ease-in-out infinite; }
+.racha-aviso-icono { width: 34px; height: 34px; flex: none; display: inline-flex; }
+@keyframes racha-latido { 50% { transform: scale(1.015); } }
+html[data-calma="si"] .racha-aviso.urgente { animation: none; }
+@media (prefers-reduced-motion: reduce) { .racha-aviso.urgente { animation: none; } }
+.est-debil .mini-boton { width: auto; flex: none; padding: 8px 16px; }
+@media (max-width: 380px) { .est-debil { flex-wrap: wrap; } .est-debil .mini-boton { width: 100%; } }

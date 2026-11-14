@@ -184,7 +184,52 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
   await foto('1d-estadisticas');
   await page.locator('.est-debil .boton').first().click();
   ok(await page.locator('.pregunta').count() === 1, 'Entrenar abre un repaso de ese tema');
-  await page.goto('about:blank'); await page.goto(URL);
+  // jugadas concretas: "fallas el 60 % de las jugadas con 12-16 contra 7 o más"
+  await inicio({ xp: 35, racha: 1, ultimoDia: dia(0), completadas: {}, stats: { u: {}, t: { accion: [4, 6] }, d: { [dia(0)]: [4, 6] }, s: { 'bj-12-16-f': [4, 6], 'bj-17': [9, 1] } } });
+  await page.evaluate(() => mostrarEstadisticas());
+  ok(/Fallas el 60 % de las jugadas con 12-16 contra 7 o más/.test(await page.locator('.estadisticas').innerText()), 'estadísticas: «fallas el 60 % de las jugadas con 12-16 contra 7 o más»');
+  ok(await page.locator('[data-situacion]').count() === 1, 'estadísticas: solo sale la jugada con muchos fallos');
+  await foto('1d-estadisticas-jugadas');
+  await page.locator('[data-situacion] .boton').click();
+  ok(await page.locator('.pregunta').count() === 1, 'Entrenar jugada abre un repaso');
+  const todasBien = [];
+  for (let k = 0; k < 8 && (await hayPregunta()); k++) { const id = await page.locator('.pregunta').first().getAttribute('data-id'); todasBien.push(await page.evaluate((i) => situacionesDe(INDICE_EJERCICIOS[i].ejercicio).includes('bj-12-16-f'), id)); await responder(true); await page.locator('.feedback .boton').click(); }
+  ok(todasBien.length >= 3 && todasBien.every(Boolean), 'el entreno solo trae preguntas de esa jugada');
+  const s2 = await page.evaluate(() => JSON.parse(localStorage.getItem('progreso-v2')).stats.s['bj-12-16-f']);
+  ok(s2[0] >= 4 + todasBien.length && s2[1] === 6, 'responder apunta los aciertos en la situación');
+  await inicio({ xp: 35, racha: 0, ultimoDia: null, completadas: {} });
+
+  // 1e) Racha en peligro y partida rápida de 60 s (con reloj simulado)
+  {
+    const p3 = await ctx.newPage();
+    p3.on('pageerror', (e) => fallos.push('p3: ' + e.message));
+    await p3.clock.install({ time: new Date() });
+    const prog = JSON.stringify({ bienvenida: true, xp: 120, racha: 5, ultimoDia: dia(-1), completadas: {}, rapida: { partidas: 2, mejor: 3 } });
+    await p3.addInitScript((j) => { if (!sessionStorage.getItem('sembrado')) { sessionStorage.setItem('sembrado', '1'); localStorage.setItem('progreso-v2', j); } }, prog);
+    await p3.goto(URL);
+    await p3.waitForSelector('.racha-aviso');
+    ok(await p3.locator('.racha-aviso').count() === 1 && /5 días/.test(await p3.locator('.racha-aviso').innerText()), 'aviso de racha en peligro con los días de racha');
+    ok(/Récord: 3/.test(await p3.locator('.repaso', { hasText: 'Partida rápida' }).innerText()), 'la fila de partida rápida enseña el récord');
+    await p3.locator('.racha-aviso').click();
+    await p3.waitForSelector('[data-rapida] .barra-tiempo');
+    let buenas = 0;
+    for (let k = 0; k < 5; k++) {
+      const id = await p3.locator('.pregunta').first().getAttribute('data-id');
+      const buena = await p3.evaluate((i) => { const e = INDICE_EJERCICIOS[i].ejercicio; return e.opciones[e.correcta]; }, id);
+      const textos = await p3.locator('.opcion').evaluateAll((els) => els.map((x) => x.innerText.replace(/^\s*\d+\s*/, '').trim()));
+      await p3.locator('.opcion').nth(textos.indexOf(buena)).click();
+      buenas++;
+      await p3.locator('.feedback .boton').click();
+    }
+    ok(Number(await p3.locator('.rapida-puntos strong').innerText()) === 5, 'la partida rápida cuenta los aciertos');
+    await p3.clock.fastForward(61000);
+    await p3.waitForSelector('.resultado-titulo');
+    ok((await p3.locator('.resultado-titulo').innerText()) === '¡Tiempo!', 'al acabar los 60 s sale el resultado');
+    ok(/5 aciertos/.test(await p3.locator('main').innerText()) && /récord/i.test(await p3.locator('main').innerText()), 'resultado con aciertos y nuevo récord');
+    const guardado = await p3.evaluate(() => JSON.parse(localStorage.getItem('progreso-v2')).rapida);
+    ok(guardado.mejor === 5 && guardado.partidas === 3, 'se guarda el récord de la partida rápida');
+    await p3.close();
+  }
 
   // 2) Nivel con ejercicio de ordenar: accesibilidad, SRS, meta y XP
   await page.locator('.juego').first().click();

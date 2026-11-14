@@ -43,6 +43,19 @@ function iniciarEntrenoTema(cursoId, ui) {
     ejercicios: barajar(unidad.lecciones.flatMap((l) => l.ejercicios)).slice(0, 8),
   });
 }
+// Partida rápida: 60 segundos seguidos de preguntas de todos los juegos; cuenta los aciertos y guarda tu récord
+function iniciarPartidaRapida() {
+  const pool = Object.values(INDICE_EJERCICIOS).map((x) => x.ejercicio).filter((e) => (e.tipo === 'opcion_unica' || e.tipo === 'accion') && e.opciones && e.opciones.length >= 2);
+  const curso = { id: 'global', nombre: 'Partida rápida', icono: '⚡', color: '#f5a524', unidades: [], global: true };
+  mostrarLeccion(curso, { id: 'partida-rapida', titulo: 'Partida rápida', icono: '⚡', xp: 10, repaso: true, rapida: true, ejercicios: barajar(pool).slice(0, 80) });
+}
+// Repaso de 8 preguntas que comparten una situación concreta (p. ej. «12-16 contra 7 o más»)
+function iniciarEntrenoSituacion(clave) {
+  const pool = Object.values(INDICE_EJERCICIOS).map((x) => x.ejercicio).filter((e) => situacionesDe(e).includes(clave));
+  if (!pool.length) return mostrarEstadisticas('atras');
+  const curso = { id: 'global', nombre: 'Repaso', icono: '🎯', color: '#7a5af8', unidades: [], global: true };
+  mostrarLeccion(curso, { id: 'repaso-global', titulo: 'Entreno: ' + SITUACIONES[clave].nombre.replace(/^(jugadas|preguntas) (con|de) /, ''), icono: '🎯', xp: 10, repaso: true, ejercicios: barajar(pool).slice(0, 8) });
+}
 function mostrarEstadisticas(entrada = 'adelante') {
   alTeclear = null;
   const st = progreso.stats;
@@ -62,6 +75,9 @@ function mostrarEstadisticas(entrada = 'adelante') {
     .filter((t) => t && t.a[0] + t.a[1] >= 5);
   const debiles = temas.filter((t) => pct(t.a) < 85).sort((x, y) => pct(x.a) - pct(y.a) || y.a[1] - x.a[1]).slice(0, 3);
   const fuertes = temas.filter((t) => pct(t.a) >= 85).sort((x, y) => pct(y.a) - pct(x.a)).slice(0, 2);
+  // jugadas concretas: las situaciones con más fallos (mínimo 4 respuestas y al menos un 30 % de fallos)
+  const jugadasFloja = Object.entries(st.s || {}).filter(([k, a]) => SITUACIONES[k] && a[0] + a[1] >= 4 && a[1] / (a[0] + a[1]) >= 0.3)
+    .map(([clave, a]) => ({ clave, a })).sort((x, y) => y.a[1] / (y.a[0] + y.a[1]) - x.a[1] / (x.a[0] + x.a[1]) || y.a[1] - x.a[1]).slice(0, 3);
   // por tipo
   const tipos = Object.entries(st.t).filter(([k]) => NOMBRE_TIPO[k]).sort((x, y) => y[1][0] + y[1][1] - (x[1][0] + x[1][1]));
   // últimos 7 días
@@ -80,6 +96,10 @@ function mostrarEstadisticas(entrada = 'adelante') {
         el('div', { class: 'est-dato' }, el('strong', {}, String(Object.keys(st.d).length)), el('span', {}, 'días jugados'))),
       el('h2', { class: 'est-titulo' }, 'Por juego'),
       el('div', { class: 'est-lista' }, porJuego.map(({ c, a }) => el('div', { class: 'est-fila', style: `--acento:${c.color}` }, el('span', { class: 'est-nombre' }, c.icono + ' ' + c.nombre), barra(a), el('span', { class: 'est-pct' }, pct(a) + ' %')))),
+      jugadasFloja.length ? el('h2', { class: 'est-titulo' }, 'Jugadas que más fallas') : null,
+      jugadasFloja.length ? el('div', { class: 'est-lista' }, jugadasFloja.map((j) => el('div', { class: 'est-debil', 'data-situacion': j.clave },
+        el('div', { class: 'est-debil-texto' }, el('strong', {}, `Fallas el ${100 - pct(j.a)} % de las ${SITUACIONES[j.clave].nombre}`), el('span', { class: 'juego-desc' }, `${j.a[1]} fallos de ${j.a[0] + j.a[1]} respuestas`), barra(j.a, 'mala')),
+        el('button', { class: 'boton mini-boton', type: 'button', onclick: () => iniciarEntrenoSituacion(j.clave) }, 'Entrenar')))) : null,
       el('h2', { class: 'est-titulo' }, 'Tus puntos débiles'),
       debiles.length
         ? el('div', { class: 'est-lista' }, debiles.map((t) => el('div', { class: 'est-debil', 'data-tema': t.c.id + '|' + t.ui },
