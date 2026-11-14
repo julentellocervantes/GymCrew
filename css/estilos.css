@@ -207,7 +207,7 @@ h1 { font-size: 28px; font-weight: 900; margin: 0 0 14px; letter-spacing: -0.01e
   pointer-events: none;
   animation: onda 0.7s var(--suave) forwards;
 }
-.opcion { --onda: rgba(31, 138, 93, 0.2); }
+.opcion { --onda: rgba(47, 111, 214, 0.2); }
 .juego { --onda: rgba(255, 190, 110, 0.35); --onda: color-mix(in srgb, var(--acento) 30%, transparent); }
 
 .chispas { position: fixed; inset: 0; pointer-events: none; z-index: 30; }
@@ -819,7 +819,7 @@ h1 { font-size: 28px; font-weight: 900; margin: 0 0 14px; letter-spacing: -0.01e
   text-align: left;
   position: relative;
   overflow: hidden;
-  --onda: rgba(31, 138, 93, 0.2);
+  --onda: rgba(47, 111, 214, 0.2);
   transition: translate 0.15s var(--suave), scale 0.12s var(--suave);
 }
 .ficha:active { scale: 0.97; }
@@ -900,7 +900,7 @@ html[data-calma="si"] .decor span { animation: none; }
 }
 .carta-pick .carta { rotate: 0deg; pointer-events: none; }
 .carta-pick:active { scale: 0.94; }
-.carta-pick.on { border-color: var(--marca); background: rgba(31, 138, 93, 0.14); translate: 0 -6px; }
+.carta-pick.on { border-color: var(--marca); background: rgba(47, 111, 214, 0.14); translate: 0 -6px; }
 .carta-pick.on::after { content: "✓"; position: absolute; top: -8px; right: -6px; width: 22px; height: 22px; border-radius: 50%; background: var(--marca); color: #fff; font-size: 13px; font-weight: 900; display: grid; place-items: center; }
 .carta-pick.bien { border-color: #58cc02; background: var(--bien-fondo); }
 .carta-pick.bien::after { background: #58cc02; }
@@ -949,7 +949,7 @@ html[data-calma="si"] .decor span { animation: none; }
   transition: translate 0.15s var(--suave), scale 0.12s, border-color 0.15s, background-color 0.15s;
 }
 .par:active { scale: 0.97; }
-.par.sel { border-color: var(--marca); box-shadow: 0 3px 0 var(--marca); background: rgba(31, 138, 93, 0.14); translate: 0 -3px; }
+.par.sel { border-color: var(--marca); box-shadow: 0 3px 0 var(--marca); background: rgba(47, 111, 214, 0.14); translate: 0 -3px; }
 .par.unido {
   --c: hsl(calc(var(--k) * 65 + 110) 55% 42%);
   border-color: var(--c);
@@ -1465,7 +1465,7 @@ html[data-calma="si"] .i-traza, html[data-calma="si"] .i-traza2 { stroke-dashoff
 .clas-ficha {
   min-width: 150px; max-width: 100%; padding: 22px 26px; text-align: center; font-size: 24px; font-weight: 900;
   background: linear-gradient(160deg, #fff, var(--tarjeta)); color: var(--texto);
-  border: 3px solid var(--marca); border-radius: 20px; box-shadow: 0 6px 0 var(--marca), 0 12px 24px rgba(31, 138, 93, .25);
+  border: 3px solid var(--marca); border-radius: 20px; box-shadow: 0 6px 0 var(--marca), 0 12px 24px rgba(47, 111, 214, .25);
   cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; animation: clas-entra .35s var(--rebote);
 }
 .clas-ficha.arrastrando { cursor: grabbing; box-shadow: 0 14px 28px rgba(0, 0, 0, .3); z-index: 5; position: relative; transition: none; scale: 1.06; }
@@ -1501,12 +1501,12 @@ html[data-calma="si"] .i-traza, html[data-calma="si"] .i-traza2 { stroke-dashoff
 .desliz-extremos { display: flex; justify-content: space-between; color: var(--texto-suave); font-weight: 800; font-size: 13px; }
 .deslizador .boton { margin-top: 14px; }
 .rell-frase { font-size: 20px; font-weight: 800; line-height: 2.3; margin: 8px 0 14px; }
-.rell-hueco { display: inline-block; vertical-align: middle; min-width: 88px; height: 40px; margin: 0 4px; padding: 0 12px; border: 0; border-bottom: 4px solid var(--borde); border-radius: 10px 10px 0 0; background: rgba(31, 138, 93, .08); font: inherit; font-weight: 900; color: var(--texto); }
+.rell-hueco { display: inline-block; vertical-align: middle; min-width: 88px; height: 40px; margin: 0 4px; padding: 0 12px; border: 0; border-bottom: 4px solid var(--borde); border-radius: 10px 10px 0 0; background: rgba(47, 111, 214, .08); font: inherit; font-weight: 900; color: var(--texto); }
 .rell-hueco.siguiente { border-bottom-color: var(--marca); animation: rell-late 1.2s ease-in-out infinite; }
-.rell-hueco.lleno { background: rgba(31, 138, 93, .18); border-bottom-color: var(--marca); animation: pop .35s var(--rebote); cursor: pointer; }
+.rell-hueco.lleno { background: rgba(47, 111, 214, .18); border-bottom-color: var(--marca); animation: pop .35s var(--rebote); cursor: pointer; }
 .rell-hueco.bien { background: var(--bien-fondo); border-bottom-color: #58cc02; }
 .rell-hueco.mal { background: var(--mal-fondo); border-bottom-color: #ff5a5a; animation: sacudir .42s ease-in-out; }
-@keyframes rell-late { 0%, 100% { background-color: rgba(31, 138, 93, .08); } 50% { background-color: rgba(31, 138, 93, .26); } }
+@keyframes rell-late { 0%, 100% { background-color: rgba(47, 111, 214, .08); } 50% { background-color: rgba(47, 111, 214, .26); } }
 .rell-palabra.usada { opacity: .35; }
 .rellenar .boton { margin-top: 14px; }
 html[data-calma="si"] .clas-ficha, html[data-calma="si"] .rell-hueco, html[data-calma="si"] .clas-mini { animation: none !important; }
@@ -1697,57 +1697,57 @@ html[data-calma="si"] .vip-chuleta { animation: none; }
 
 /* ============================================================
    TAPETE: la identidad de la app
-   Una mesa de entrenamiento: fieltro verde, cartón de baraja, latón y tinta roja.
-   - Sobre el fieltro: la cabecera y la barra inferior, con el dibujo del reverso de una carta.
+   Una mesa de entrenamiento: fieltro azul noche, cartón de baraja, latón y tinta roja.
+   - Sobre el fieltro azul: la cabecera y la barra inferior, con el dibujo del reverso de una carta.
    - Sobre el cartón: las tarjetas (con su índice de palo en la esquina) y los botones.
    - Las fichas: cada nivel del mapa es una ficha con marcas en el borde.
    Los colores se definen una vez aquí; el resto de la hoja los usa.
    ============================================================ */
 :root {
   --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", "Noto Serif", Georgia, serif;
-  --fieltro: #0f5a3f;
-  --fieltro-osc: #0a3b2a;
+  --fieltro: #1a407a;
+  --fieltro-osc: #0c2147;
   --carton: #fffcf0;
   --tinta: #17241d;
   --laton: #d4a548;
   --laton-osc: #a67a22;
   --rojo: #c93a3a;
 
-  --fondo: #e7eee2;
+  --fondo: #e6ecf5;
   --tarjeta: #fffdf5;
-  --tarjeta-hover: #f3f2df;
-  --borde: #c7d2c0;
-  --texto: #15241d;
-  --texto-suave: #4f6358;
-  --sombra: rgba(10, 59, 42, 0.2);
+  --tarjeta-hover: #eef0f6;
+  --borde: #c2cee3;
+  --texto: #121c30;
+  --texto-suave: #4a5b78;
+  --sombra: rgba(12, 33, 71, 0.2);
   --mezcla: #000;
-  --palo: #4f7a63;
+  --palo: #4f6fa8;
   --palo-rojo: #c93a3a;
-  --bloqueado: #d3dccd;
-  --bloqueado-sombra: #b5c1ae;
-  --bloqueado-texto: #75877b;
-  --estrella-off: #c9d3c2;
-  --foco: #0f6b49;
-  --marca: #0f6b49;
+  --bloqueado: #d2dbeb;
+  --bloqueado-sombra: #b3c0d8;
+  --bloqueado-texto: #70829f;
+  --estrella-off: #c2cee3;
+  --foco: #1f4fa8;
+  --marca: #1f4fa8;
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --fondo: #0b3a29;
-    --tarjeta: #11503a;
-    --tarjeta-hover: #176147;
-    --borde: #237a58;
+    --fondo: #0b1a33;
+    --tarjeta: #132a50;
+    --tarjeta-hover: #1b3868;
+    --borde: #2b4d85;
     --texto: #f7f0dc;
-    --texto-suave: #b8d4c4;
+    --texto-suave: #b4c6e4;
     --sombra: rgba(0, 0, 0, 0.4);
     --mezcla: #fff;
-    --palo: #7fc4a0;
+    --palo: #8fb0e0;
     --palo-rojo: #ff7d78;
-    --bloqueado: #14513b;
-    --bloqueado-sombra: #0c3c2b;
-    --bloqueado-texto: #6aa88a;
-    --estrella-off: #237a58;
+    --bloqueado: #152b52;
+    --bloqueado-sombra: #0d1f3d;
+    --bloqueado-texto: #7490c0;
+    --estrella-off: #2b4d85;
     --foco: #f0c25c;
-    --marca: #7fe0b0;
+    --marca: #8dbbff;
   }
 }
 ::selection { background: var(--laton); color: #2a1c00; }
@@ -1756,12 +1756,12 @@ html[data-calma="si"] .vip-chuleta { animation: none; }
 .decor {
   background:
     radial-gradient(70% 42% at 50% -6%, rgba(255, 255, 255, 0.55), transparent 72%),
-    radial-gradient(60% 40% at 100% 100%, rgba(15, 90, 63, 0.14), transparent 70%);
+    radial-gradient(60% 40% at 100% 100%, rgba(26, 64, 122, 0.16), transparent 70%);
 }
 @media (prefers-color-scheme: dark) {
   .decor {
     background:
-      radial-gradient(75% 45% at 50% -8%, rgba(127, 224, 176, 0.16), transparent 72%),
+      radial-gradient(75% 45% at 50% -8%, rgba(120, 170, 255, 0.16), transparent 72%),
       radial-gradient(60% 40% at 100% 100%, rgba(0, 0, 0, 0.3), transparent 70%);
   }
 }
@@ -1782,7 +1782,7 @@ html[data-calma="si"] .vip-chuleta { animation: none; }
   margin-bottom: 14px;
   border-bottom: 3px solid var(--laton);
   border-radius: 0 0 24px 24px;
-  box-shadow: 0 10px 18px -12px rgba(5, 40, 28, 0.7);
+  box-shadow: 0 10px 18px -12px rgba(4, 14, 36, 0.7);
   color: #fbf4de;
 }
 .logo { color: #fbf4de; font-family: var(--serif); font-weight: 800; font-size: 17px; letter-spacing: 0.005em; }
@@ -1821,8 +1821,8 @@ h1, .bienvenida-titulo { font-weight: 800; letter-spacing: -0.015em; }
 }
 
 /* Botón principal: ficha verde con aro de puntos */
-.boton { background: linear-gradient(180deg, #1c8f63, #0f6b49); color: #fdf6df; border-bottom: 5px solid #084a33; text-shadow: 0 1px 0 rgba(0, 0, 0, 0.25); }
-@media (hover: hover) { .boton:hover { background: linear-gradient(180deg, #22a073, #137a54); } }
+.boton { background: linear-gradient(180deg, #3b7fe3, #2158b4); color: #fdf6df; border-bottom: 5px solid #123c84; text-shadow: 0 1px 0 rgba(0, 0, 0, 0.25); }
+@media (hover: hover) { .boton:hover { background: linear-gradient(180deg, #4d8df0, #2a66c8); } }
 .boton::after { content: ""; position: absolute; inset: 5px; border: 2px dashed rgba(255, 246, 220, 0.34); border-radius: 12px; pointer-events: none; }
 .boton.secundario { background: var(--tarjeta); color: var(--texto); text-shadow: none; border-bottom-width: 2px; }
 .boton.secundario::after { display: none; }
@@ -1852,8 +1852,8 @@ h1, .bienvenida-titulo { font-weight: 800; letter-spacing: -0.015em; }
 .nodo:active { box-shadow: 0 2px 0 color-mix(in srgb, var(--acento) 55%, #000), inset 0 0 0 1.5px rgba(0, 0, 0, 0.18); }
 
 /* Barra inferior: riel de fieltro con filete de latón */
-.barra-pestanas { border-top: 3px solid var(--laton); border-radius: 22px 22px 0 0; box-shadow: 0 -8px 20px rgba(5, 40, 28, 0.25); -webkit-backdrop-filter: none; backdrop-filter: none; }
-.pestana { color: #a9c9b8; }
+.barra-pestanas { border-top: 3px solid var(--laton); border-radius: 22px 22px 0 0; box-shadow: 0 -8px 20px rgba(4, 14, 36, 0.3); -webkit-backdrop-filter: none; backdrop-filter: none; }
+.pestana { color: #a9bfe0; }
 .pestana.activa { color: #fff7e0; }
 .barra-pestanas .pildora { background: rgba(212, 165, 72, 0.22); box-shadow: inset 0 0 0 1.5px rgba(212, 165, 72, 0.65); }
 

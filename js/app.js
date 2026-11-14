@@ -619,7 +619,7 @@ function mostrarInicio(entrada = 'fundido') {
   const filaRepaso = (clase, icono, titulo, desc, alPulsar) =>
     el(
       'button',
-      { class: 'repaso fijo ' + clase + (clase === 'conteo' ? '' : ' mini'), type: 'button', style: '--acento:#1d8f63', onclick: alPulsar },
+      { class: 'repaso fijo ' + clase + (clase === 'conteo' ? '' : ' mini'), type: 'button', style: '--acento:#3a7be0', onclick: alPulsar },
       el('span', { class: 'repaso-icono' }, icono),
       el('span', { class: 'juego-texto' }, el('strong', {}, titulo), el('span', { class: 'juego-desc' }, desc)),
       el('span', { class: 'flecha', 'aria-hidden': 'true' }, '›')
