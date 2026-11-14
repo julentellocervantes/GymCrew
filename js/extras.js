@@ -568,9 +568,12 @@ function mostrarPremium(volver, aviso = '') {
         ? null
         : el('ul', { class: 'bienvenida-lista' },
             ventaja('🏆', `${nOro} niveles Oro`, 'Uno por cada nivel de los cinco juegos.', 0),
-            ventaja('🎯', 'Más difíciles', 'Situaciones nuevas cada vez que avanzas, sin pistas fáciles.', 1),
-            ventaja('⚡', 'Doble de XP y de fichas', 'Todo lo que ganas en niveles, repasos y cofres vale el doble.', 2),
-            ventaja('📈', 'Para llegar lejos', 'Se abren al completar el nivel normal de al lado.', 3)),
+            ventaja('📖', 'Todas las chuletas', 'Estrategia básica, conteo Hi-Lo, ranking de póker, valores del mus y glosario, siempre a mano en Útil.', 1),
+            ventaja('🎯', 'Más difíciles', 'Situaciones nuevas cada vez que avanzas, sin pistas fáciles.', 2),
+            ventaja('⚡', 'Doble de XP y de fichas', 'Todo lo que ganas en niveles, repasos y cofres vale el doble.', 3),
+            ventaja('📈', 'Para llegar lejos', 'Se abren al completar el nivel normal de al lado.', 4)),
+      vip ? null : el('div', { class: 'vip-chuletas', 'aria-label': 'Chuletas incluidas con el VIP' },
+        ['Estrategia de blackjack', 'Conteo Hi-Lo', 'Ranking de póker', 'Valores del mus', 'Glosario'].map((n, i) => el('span', { class: 'vip-chuleta', style: `--i:${i}` }, n))),
       vip ? null : el('div', { class: 'premium-precio' }, el('strong', {}, PREMIUM.precio), el('span', {}, ` ${PREMIUM.periodo} · cancela cuando quieras`)),
       el('p', { class: 'aviso' }, 'Contenido educativo. Sin dinero real. Solo para mayores de 18 años.')
     ),
@@ -599,12 +602,20 @@ function barra(activa) {
   document.body.classList.toggle('con-barra', !!activa);
   nav.hidden = !activa;
   if (!activa) return;
-  if (!nav.children.length)
+  if (!nav.querySelector('.pestana'))
     nav.append(
       ...PESTANAS.map((t) =>
         el('button', { class: 'pestana', type: 'button', 'data-pestana': t.id, onclick: () => t.ir() }, el('span', { class: 'pestana-icono', 'aria-hidden': 'true' }, t.icono), el('span', { class: 'pestana-texto' }, t.texto))
       )
     );
+  // La píldora violeta se desliza hasta la pestaña activa (solo se anima desde la segunda vez que se muestra)
+  let pildora = nav.querySelector('.pildora');
+  if (!pildora) { pildora = el('span', { class: 'pildora', 'aria-hidden': 'true' }); nav.prepend(pildora); }
+  const pos = PESTANAS.findIndex((t) => t.id === activa);
+  nav.style.setProperty('--pos', String(Math.max(pos, 0)));
+  nav.style.setProperty('--n', String(PESTANAS.length));
+  pildora.hidden = pos < 0;
+  if (!nav.classList.contains('lista')) requestAnimationFrame(() => requestAnimationFrame(() => nav.classList.add('lista')));
   nav.querySelectorAll('.pestana').forEach((b) => {
     const on = b.dataset.pestana === activa;
     b.classList.toggle('activa', on);

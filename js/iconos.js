@@ -118,7 +118,7 @@ const ALIAS_ICONOS = {};
 const EMOJI_A_ICONO = {
   '⚡': 'rayo', '🪙': 'ficha', '🔥': 'fuego', '⭐': 'estrella', '🌟': 'estrella', '👑': 'corona', '🎁': 'cofre', '📭': 'cofreAbierto', '🎉': 'confeti', '🔒': 'candado',
   '✅': 'check', '🏆': 'trofeo', '🏅': 'medalla', '🎖': 'medalla', '🥇': 'medalla', '🎯': 'diana', '🧠': 'cerebro', '🔍': 'lupa', '🔎': 'lupa',
-  '📖': 'libro', '📘': 'libro', '📋': 'lista', '📝': 'lista', '⏱': 'reloj', '🧊': 'hielo', '🃏': 'cartas', '🎴': 'cartas', '🎲': 'dado',
+  '📖': 'libro', '📚': 'libro', '📘': 'libro', '📋': 'lista', '📝': 'lista', '⏱': 'reloj', '🧊': 'hielo', '🃏': 'cartas', '🎴': 'cartas', '🎲': 'dado',
   '💰': 'bolsa', '💶': 'billete', '🏦': 'banco', '💼': 'maletin', '📈': 'graficoSube', '📉': 'graficoBaja', '📊': 'barras', '📶': 'barras',
   '🧮': 'calculadora', '🔢': 'numeros', '➕': 'mas', '✖': 'por', '📐': 'regla', '⚙': 'engranaje', '🛍': 'bolsaCompra', '🧰': 'herramientas',
   '🛡': 'escudo', '🏁': 'bandera', '🏳': 'bandera', '⚖': 'balanza', '⚔': 'espadas', '🎓': 'birrete', '🧭': 'brujula',
