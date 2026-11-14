@@ -12,7 +12,7 @@ function aplicarAjustes() {
 function iniciarRepasoGlobal(tipo) {
   const ids = tipo === 'errores' ? misErrores() : pendientesHoy();
   if (!ids.length) return mostrarInicio('fundido');
-  const curso = { id: 'global', nombre: 'Repaso', icono: '🧠', color: '#7a5af8', unidades: [], global: true };
+  const curso = { id: 'global', nombre: 'Repaso', icono: '🧠', color: '#1d8f63', unidades: [], global: true };
   mostrarLeccion(curso, {
     id: 'repaso-global',
     titulo: tipo === 'errores' ? 'Mis errores' : 'Repaso del día',
@@ -33,7 +33,7 @@ function iniciarEntrenoTema(cursoId, ui) {
   const real = CURSOS.find((c) => c.id === cursoId);
   const unidad = real && real.unidades[ui];
   if (!unidad) return mostrarEstadisticas('atras');
-  const curso = { id: 'global', nombre: 'Repaso', icono: '🎯', color: '#7a5af8', unidades: [], global: true };
+  const curso = { id: 'global', nombre: 'Repaso', icono: '🎯', color: '#1d8f63', unidades: [], global: true };
   mostrarLeccion(curso, {
     id: 'repaso-global',
     titulo: 'Tema: ' + unidad.titulo,
@@ -53,7 +53,7 @@ function iniciarPartidaRapida() {
 function iniciarEntrenoSituacion(clave) {
   const pool = Object.values(INDICE_EJERCICIOS).map((x) => x.ejercicio).filter((e) => situacionesDe(e).includes(clave));
   if (!pool.length) return mostrarEstadisticas('atras');
-  const curso = { id: 'global', nombre: 'Repaso', icono: '🎯', color: '#7a5af8', unidades: [], global: true };
+  const curso = { id: 'global', nombre: 'Repaso', icono: '🎯', color: '#1d8f63', unidades: [], global: true };
   mostrarLeccion(curso, { id: 'repaso-global', titulo: 'Entreno: ' + SITUACIONES[clave].nombre.replace(/^(jugadas|preguntas) (con|de) /, ''), icono: '🎯', xp: 10, repaso: true, ejercicios: barajar(pool).slice(0, 8) });
 }
 function mostrarEstadisticas(entrada = 'adelante') {

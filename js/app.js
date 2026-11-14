@@ -619,7 +619,7 @@ function mostrarInicio(entrada = 'fundido') {
   const filaRepaso = (clase, icono, titulo, desc, alPulsar) =>
     el(
       'button',
-      { class: 'repaso fijo ' + clase + (clase === 'conteo' ? '' : ' mini'), type: 'button', style: '--acento:#7a5af8', onclick: alPulsar },
+      { class: 'repaso fijo ' + clase + (clase === 'conteo' ? '' : ' mini'), type: 'button', style: '--acento:#1d8f63', onclick: alPulsar },
       el('span', { class: 'repaso-icono' }, icono),
       el('span', { class: 'juego-texto' }, el('strong', {}, titulo), el('span', { class: 'juego-desc' }, desc)),
       el('span', { class: 'flecha', 'aria-hidden': 'true' }, '›')
@@ -646,7 +646,7 @@ function mostrarInicio(entrada = 'fundido') {
     const hechos = hechosDe(curso);
     return el(
       'button',
-      { class: 'juego', type: 'button', style: `--acento:${curso.color};--i:${i}`, onclick: () => mostrarMapa(curso) },
+      { class: 'juego', type: 'button', 'data-curso': curso.id, style: `--acento:${curso.color};--i:${i}`, onclick: () => mostrarMapa(curso) },
       el('span', { class: 'juego-icono' }, curso.icono),
       el(
         'span',
