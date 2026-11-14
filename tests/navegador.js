@@ -28,7 +28,8 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
   // Responde la pregunta actual (opción o ordenar). acertar=false para fallar a propósito.
   async function responder(acertar = true) {
     const q = await page.locator('.pregunta').first().innerText();
-    const ej = todos.find((e) => e.pregunta === q);
+    const idq = await page.locator('.pregunta').first().getAttribute('data-id');
+    const ej = todos.find((e) => e.id === idq) || todos.find((e) => e.pregunta === q);
     ok(ej, 'ejercicio reconocido: ' + q);
     if (ej.tipo === 'ordenar') {
       const orden = acertar ? ej.elementos : ej.elementos.slice().reverse();
@@ -58,6 +59,15 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
       const v = acertar ? ej.respuesta : (ej.respuesta + ej.tolerancia + 5 <= ej.max ? ej.respuesta + ej.tolerancia + 5 : ej.respuesta - ej.tolerancia - 5);
       await page.locator('.desliz-control').evaluate((c, x) => { c.value = x; c.dispatchEvent(new Event('input', { bubbles: true })); }, String(Math.max(ej.min, Math.min(ej.max, v))));
       await page.getByRole('button', { name: 'Comprobar' }).click();
+    } else if (ej.tipo === 'relampago') {
+      while (!(await page.locator('.feedback').count())) {
+        await page.waitForSelector('.feedback, .rel-opcion:not([disabled])');
+        if (await page.locator('.feedback').count()) break;
+        const i = Number(await page.locator('.rel-item').getAttribute('data-rel'));
+        const bueno = ej.items[i][1];
+        const k = acertar ? bueno : (bueno + 1) % ej.opciones.length;
+        await page.locator('.rel-opcion').nth(k).click();
+      }
     } else if (ej.tipo === 'rellenar') {
       const palabras = acertar ? ej.huecos : ej.huecos.slice().reverse().concat([]);
       const orden = acertar ? ej.huecos : ej.banco.filter((w) => !ej.huecos.includes(w)).slice(0, 1).concat(ej.huecos.slice(1));
@@ -93,6 +103,7 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
   const falladas = new Set();
   for (let paso = 0; paso < 6 && (await hayPregunta()); paso++) {
     const q = await page.locator('.pregunta').first().innerText();
+    const idq = await page.locator('.pregunta').first().getAttribute('data-id');
     const primera = !falladas.has(q);
     falladas.add(q);
     const ej = await responder(!primera);
@@ -144,6 +155,37 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
   ok(await page.evaluate(() => getComputedStyle(document.querySelector('[data-articulo="espanola:taberna"] .es-papel')).fill) !== 'rgb(255, 250, 240)', 'el estilo cambia los colores de la baraja');
   await foto('1c-tienda-espanola');
   await inicio({ xp: 35, racha: 0, ultimoDia: null, completadas: {} });
+  // 1d) Relámpago (cuenta atrás) y estadísticas de errores
+  await inicio({ xp: 35, racha: 0, ultimoDia: null, completadas: {} });
+  const relId = await page.evaluate(() => CURSOS[0].unidades.flatMap((u) => u.lecciones.flatMap((x) => x.ejercicios)).find((e) => e.tipo === 'relampago').id);
+  const abrirRel = () => page.evaluate((id) => {
+    const e = CURSOS.flatMap((c) => c.unidades.flatMap((u) => u.lecciones.flatMap((x) => x.ejercicios))).find((x) => x.id === id);
+    mostrarLeccion(CURSOS[0], { id: 'prueba-rel', titulo: 'Prueba', icono: '🎯', xp: 10, intro: 'Relámpago.', ejercicios: [e] });
+  }, relId);
+  await abrirRel();
+  ok(await page.locator('.relampago .rel-barra').count() === 1 && await page.locator('.rel-opcion').count() >= 2, 'el relámpago muestra barra de tiempo y opciones');
+  await foto('1d-relampago');
+  await responder(false);
+  ok(await page.locator('.feedback.mal').count() === 1, 'relámpago: todo mal no aprueba');
+  await page.locator('.feedback .boton').click().catch(() => {});
+  await page.waitForTimeout(300);
+  await abrirRel();
+  await responder(true);
+  ok(await page.locator('.feedback.bien').count() === 1, 'relámpago: todo bien aprueba');
+  // con la cuenta atrás: si pasa el tiempo cuenta como fallo
+  await abrirRel();
+  await page.waitForSelector('.feedback, .rel-item.fallo', { timeout: 40000 }).catch(() => {});
+  const stats = await page.evaluate(() => { const p = JSON.parse(localStorage.getItem('progreso-v2')); return p.stats; });
+  ok(stats && Object.keys(stats.t).length > 0 && Object.keys(stats.d).length === 1, 'se guardan estadísticas por tipo y día');
+  await inicio({ xp: 35, racha: 1, ultimoDia: dia(0), completadas: {}, stats: { u: { 'blackjack|0': [3, 9], 'poker|1': [18, 2] }, t: { opcion_unica: [15, 5], relampago: [6, 6] }, d: { [dia(0)]: [21, 11] } } });
+  await page.evaluate(() => mostrarEstadisticas());
+  ok(await page.locator('.est-debil').count() >= 1, 'estadísticas: muestra el punto débil');
+  ok(/%/.test(await page.locator('.est-debil').first().innerText()), 'estadísticas: el punto débil lleva su porcentaje');
+  await foto('1d-estadisticas');
+  await page.locator('.est-debil .boton').first().click();
+  ok(await page.locator('.pregunta').count() === 1, 'Entrenar abre un repaso de ese tema');
+  await page.goto('about:blank'); await page.goto(URL);
+
   // 2) Nivel con ejercicio de ordenar: accesibilidad, SRS, meta y XP
   await page.locator('.juego').first().click();
   await page.locator('.nodo.actual').click({ force: true });
@@ -154,7 +196,8 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
   let vistoOrdenar = false;
   while (await hayPregunta()) {
     const q = await page.locator('.pregunta').first().innerText();
-    const ej = todos.find((e) => e.pregunta === q);
+    const idq = await page.locator('.pregunta').first().getAttribute('data-id');
+    const ej = todos.find((e) => e.id === idq) || todos.find((e) => e.pregunta === q);
     if (ej.tipo === 'ordenar' && !vistoOrdenar) {
       vistoOrdenar = true;
       await foto('2-ordenar');
@@ -312,7 +355,8 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
   let fallosSel = 0;
   while (await hayPregunta()) {
     const q = await page.locator('.pregunta').first().innerText();
-    const ej = todos.find((e) => e.pregunta === q);
+    const idq = await page.locator('.pregunta').first().getAttribute('data-id');
+    const ej = todos.find((e) => e.id === idq) || todos.find((e) => e.pregunta === q);
     if (ej.tipo === 'seleccionar') {
       ok(await page.getByRole('button', { name: 'Comprobar' }).isDisabled(), 'Comprobar está desactivado sin selección');
       const cartas = await page.locator('.carta-pick').evaluateAll((els) => els.map((e) => e.querySelector('.carta').textContent));
@@ -335,7 +379,8 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
   const numeros = [];
   while (await hayPregunta()) {
     const q = await page.locator('.pregunta').first().innerText();
-    const ej = todos.find((e) => e.pregunta === q);
+    const idq = await page.locator('.pregunta').first().getAttribute('data-id');
+    const ej = todos.find((e) => e.id === idq) || todos.find((e) => e.pregunta === q);
     if (ej.tipo === 'numero') {
       ok(await page.evaluate(() => document.activeElement.classList.contains('numero-entrada')), 'el cursor está en el campo numérico');
       const primera = !numeros.includes(ej.id); numeros.push(ej.id);
@@ -352,7 +397,8 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
   let emparejado = false;
   while (await hayPregunta()) {
     const q = await page.locator('.pregunta').first().innerText();
-    const ej = todos.find((e) => e.pregunta === q);
+    const idq = await page.locator('.pregunta').first().getAttribute('data-id');
+    const ej = todos.find((e) => e.id === idq) || todos.find((e) => e.pregunta === q);
     if (ej.tipo === 'emparejar' && !emparejado) {
       emparejado = true;
       await foto('10-emparejar');
@@ -736,4 +782,4 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
   ok(fallos.length === 0, 'sin errores de consola: ' + fallos.join(' | '));
   await b.close();
   console.log(`NAVEGADOR OK: ${hechos} comprobaciones`);
-})().catch((e) => { console.error('FALLO:', e.message); process.exit(1); });
+})().catch((e) => { console.error('FALLO:', e.stack || e.message); process.exit(1); });

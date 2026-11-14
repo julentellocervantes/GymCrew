@@ -111,6 +111,57 @@ function verificarNuevos(e) {
     definicion();
     return;
   }
+  if (t === 'relampago') {
+    const no = e.opciones.length, n = e.items.length;
+    if (no < 2 || no > 3 || new Set(e.opciones).size !== no) return mal(e.id, 'relampago: de 2 a 3 opciones distintas');
+    if (n < 4 || n > 6) return mal(e.id, 'relampago: de 4 a 6 situaciones');
+    if (!(e.segundos >= 5 && e.segundos <= 12)) return mal(e.id, 'relampago: segundos entre 5 y 12');
+    if (!e.items.every((x) => typeof x[0] === 'string' && Number.isInteger(x[1]) && x[1] >= 0 && x[1] < no)) return mal(e.id, 'relampago: opción fuera de rango');
+    for (let k = 0; k < no; k++) if (!e.items.some((x) => x[1] === k)) return mal(e.id, 'relampago: una opción nunca es la correcta');
+    const pagaVP = (texto) => { const cartas = texto.split(' '), cat = categoriaPoker(cartas); return cat !== 'Carta alta' && !(cat === 'Pareja' && !Object.entries(cartas.reduce((m, c) => ((m[rangoC(c)] = (m[rangoC(c)] || 0) + 1), m), {})).some(([r, n2]) => n2 === 2 && VAL_PK[r] >= 11)); };
+    const comprobar = (i, esperado, que) => { if (e.items[i][1] !== esperado) mal(e.id, `relampago: «${e.items[i][0]}» ${que}: se esperaba ${e.opciones[esperado]}`); };
+    if (ch.bjRel) {
+      calculado();
+      if (ch.bjRel.length !== n) return mal(e.id, 'relampago: manos y situaciones no coinciden');
+      e.items.forEach(([txt], i) => {
+        const [a, b, cru] = ch.bjRel[i];
+        if (!txt.startsWith(a) || !txt.includes(' ' + b)) mal(e.id, `relampago: «${txt}» no coincide con la mano ${a}+${b}`);
+        if (e.items[i][2] !== 'Crupier: ' + cru) mal(e.id, 'relampago: la carta del crupier no coincide');
+        const m = mejorJugada([a, b], cru);
+        if (m === 'Dividir' || m === 'Doblar') return mal(e.id, `relampago: ${a}+${b} contra ${cru} es «${m}», no cabe en Pedir/Plantarte`);
+        comprobar(i, e.opciones.indexOf(m), `contra ${cru} es ${m}`);
+      });
+    } else if (ch.potOddsSi) {
+      calculado();
+      e.items.forEach(([txt, , et], i) => {
+        const [b, p, eq] = ch.potOddsSi[i], req = (100 * p) / (b + p);
+        if (txt !== `Tu probabilidad: ${eq} %` || et !== `Bote ${b} · Te piden ${p}`) mal(e.id, 'relampago: los datos no coinciden');
+        if (Math.abs(eq - req) < 3) mal(e.id, 'relampago: caso demasiado ajustado');
+        comprobar(i, eq > req ? e.opciones.indexOf('Pagar') : e.opciones.indexOf('Tirar'), `(${eq} % contra ${req.toFixed(1)} %)`);
+      });
+    } else if (ch.musJuego) {
+      calculado();
+      e.items.forEach(([txt], i) => {
+        const rs = ch.musJuego[i];
+        if (txt !== rs.join(' · ')) mal(e.id, 'relampago: la mano no coincide');
+        const tot = rs.reduce((a, c) => a + valMus(c), 0);
+        if (tot === 30 || tot === 31) mal(e.id, 'relampago: caso límite');
+        comprobar(i, tot >= 31 ? 0 : 1, `suma ${tot}`);
+      });
+    } else if (ch.bacNatural) {
+      calculado();
+      e.items.forEach(([txt], i) => {
+        const [a, b] = ch.bacNatural[i];
+        if (!txt.startsWith(a) || !txt.includes(' ' + b)) mal(e.id, 'relampago: la mano no coincide');
+        const v = (r) => (['10', 'J', 'Q', 'K'].includes(r) ? 0 : r === 'A' ? 1 : Number(r));
+        comprobar(i, (v(a) + v(b)) % 10 >= 8 ? 0 : 1, 'en el bacarrá');
+      });
+    } else if (ch.vpPagaRel) {
+      calculado();
+      e.items.forEach(([txt], i) => comprobar(i, pagaVP(txt) ? 0 : 1, 'en Jacks or Better'));
+    } else definicion();
+    return;
+  }
   mal(e.id, 'tipo desconocido ' + t);
 }
 
@@ -247,7 +298,7 @@ function verificarInteractivo(e) {
 }
 
 
-for (const f of ['cursos.js', 'blackjack.js', 'poker.js', 'mus.js', 'blackjack-extra.js', 'poker-extra.js', 'mus-extra.js', 'ordenar-extra.js', 'interactivos-extra.js', 'variedad-extra.js', 'ayuda.js', 'generadores.js', 'practica.js', 'videopoker-datos.js', 'casino.js', 'ampliacion.js', 'formas-nuevas.js', 'premium.js']) vm.runInContext(fs.readFileSync(D + f, 'utf8'), ctx, { filename: f });
+for (const f of ['cursos.js', 'blackjack.js', 'poker.js', 'mus.js', 'blackjack-extra.js', 'poker-extra.js', 'mus-extra.js', 'ordenar-extra.js', 'interactivos-extra.js', 'variedad-extra.js', 'ayuda.js', 'generadores.js', 'practica.js', 'videopoker-datos.js', 'casino.js', 'ampliacion.js', 'formas-nuevas.js', 'variedad-generada.js', 'premium.js']) vm.runInContext(fs.readFileSync(D + f, 'utf8'), ctx, { filename: f });
 const CURSOS = vm.runInContext('CURSOS', ctx);
 const AYUDA = vm.runInContext('AYUDA', ctx);
 const CURSOS_ORO = vm.runInContext('CURSOS_ORO', ctx);
@@ -596,7 +647,7 @@ for (const c of CURSOS.concat(CURSOS_ORO)) {
         nEj++;
         if (ids.has(e.id)) mal(e.id, 'id repetido'); ids.add(e.id);
         if (!e.pregunta || !e.explicacion) mal(e.id, 'falta pregunta o explicación');
-        if (['clasificar', 'deslizador', 'rellenar'].includes(e.tipo)) { verificarNuevos(e); continue; }
+        if (['clasificar', 'deslizador', 'rellenar', 'relampago'].includes(e.tipo)) { verificarNuevos(e); continue; }
         if (c.id === 'baccarat' || c.id === 'videopoker') { verificarCasino(e); continue; }
         if (['seleccionar', 'numero', 'emparejar', 'ordenar'].includes(e.tipo)) {
           verificarInteractivo(e);

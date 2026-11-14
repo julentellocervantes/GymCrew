@@ -23,6 +23,80 @@ function iniciarRepasoGlobal(tipo) {
   });
 }
 
+
+// ---------- estadísticas: aciertos por juego, puntos débiles y entrenamiento por tema ----------
+const NOMBRE_TIPO = {
+  opcion_unica: 'Elegir respuesta', seleccionar: 'Tocar cartas', numero: 'Escribir cifra', ordenar: 'Ordenar', emparejar: 'Emparejar', accion: 'Elegir jugada',
+  cuenta_corriente: 'Cuenta corriente', clasificar: 'Clasificar en cajones', deslizador: 'Deslizador', rellenar: 'Rellenar huecos', relampago: 'Relámpago',
+};
+function iniciarEntrenoTema(cursoId, ui) {
+  const real = CURSOS.find((c) => c.id === cursoId);
+  const unidad = real && real.unidades[ui];
+  if (!unidad) return mostrarEstadisticas('atras');
+  const curso = { id: 'global', nombre: 'Repaso', icono: '🎯', color: '#7a5af8', unidades: [], global: true };
+  mostrarLeccion(curso, {
+    id: 'repaso-global',
+    titulo: 'Tema: ' + unidad.titulo,
+    icono: '🎯',
+    xp: 10,
+    repaso: true,
+    ejercicios: barajar(unidad.lecciones.flatMap((l) => l.ejercicios)).slice(0, 8),
+  });
+}
+function mostrarEstadisticas(entrada = 'adelante') {
+  alTeclear = null;
+  const st = progreso.stats;
+  const suma = (lista) => lista.reduce((a, x) => [a[0] + x[0], a[1] + x[1]], [0, 0]);
+  const pct = (a) => (a[0] + a[1] ? Math.round((100 * a[0]) / (a[0] + a[1])) : 0);
+  const total = suma(Object.values(st.t));
+  const barra = (a, clase = '') => el('span', { class: 'est-barra ' + clase, role: 'img', 'aria-label': `${pct(a)} % de aciertos` }, el('span', { class: 'est-relleno', style: `width:${pct(a)}%` }));
+  const { fila } = naiFila(total[0] + total[1] ? (pct(total) >= 80 ? 'feliz' : 'pensando') : 'pensando',
+    total[0] + total[1] ? `Llevas ${pct(total)} % de aciertos en ${total[0] + total[1]} respuestas.` : 'Todavía no hay datos. Juega algún nivel y aquí verás cómo vas.');
+  const cabecera = el('header', { class: 'cabecera' }, el('button', { class: 'volver', type: 'button', 'aria-label': 'Volver a los juegos', onclick: () => mostrarInicio('atras') }, '←'), marcador());
+  if (!(total[0] + total[1])) return pintar(entrada, cabecera, el('main', { class: 'contenido' }, el('h1', {}, 'Mis estadísticas'), fila));
+
+  // por juego
+  const porJuego = CURSOS.map((c) => ({ c, a: suma(Object.entries(st.u).filter(([k]) => k.startsWith(c.id + '|')).map(([, v]) => v)) })).filter((x) => x.a[0] + x.a[1] > 0);
+  // puntos débiles: los temas con más fallos relativos (mínimo 5 respuestas)
+  const temas = Object.entries(st.u).map(([k, a]) => { const [cid, ui] = k.split('|'); const c = CURSOS.find((x) => x.id === cid); return c && c.unidades[Number(ui)] ? { c, ui: Number(ui), a, titulo: c.unidades[Number(ui)].titulo } : null; })
+    .filter((t) => t && t.a[0] + t.a[1] >= 5);
+  const debiles = temas.filter((t) => pct(t.a) < 85).sort((x, y) => pct(x.a) - pct(y.a) || y.a[1] - x.a[1]).slice(0, 3);
+  const fuertes = temas.filter((t) => pct(t.a) >= 85).sort((x, y) => pct(y.a) - pct(x.a)).slice(0, 2);
+  // por tipo
+  const tipos = Object.entries(st.t).filter(([k]) => NOMBRE_TIPO[k]).sort((x, y) => y[1][0] + y[1][1] - (x[1][0] + x[1][1]));
+  // últimos 7 días
+  const dias = Array.from({ length: 7 }, (_, i) => fechaLocal(new Date(Date.now() - (6 - i) * 86400000)));
+  const maxDia = Math.max(1, ...dias.map((d) => (st.d[d] ? st.d[d][0] + st.d[d][1] : 0)));
+
+  pintar(
+    entrada,
+    cabecera,
+    el('main', { class: 'contenido estadisticas' },
+      el('h1', {}, 'Mis estadísticas'),
+      fila,
+      el('div', { class: 'est-resumen' },
+        el('div', { class: 'est-dato' }, el('strong', {}, String(total[0] + total[1])), el('span', {}, 'respuestas')),
+        el('div', { class: 'est-dato' }, el('strong', {}, pct(total) + ' %'), el('span', {}, 'aciertos')),
+        el('div', { class: 'est-dato' }, el('strong', {}, String(Object.keys(st.d).length)), el('span', {}, 'días jugados'))),
+      el('h2', { class: 'est-titulo' }, 'Por juego'),
+      el('div', { class: 'est-lista' }, porJuego.map(({ c, a }) => el('div', { class: 'est-fila', style: `--acento:${c.color}` }, el('span', { class: 'est-nombre' }, c.icono + ' ' + c.nombre), barra(a), el('span', { class: 'est-pct' }, pct(a) + ' %')))),
+      el('h2', { class: 'est-titulo' }, 'Tus puntos débiles'),
+      debiles.length
+        ? el('div', { class: 'est-lista' }, debiles.map((t) => el('div', { class: 'est-debil', 'data-tema': t.c.id + '|' + t.ui },
+            el('div', { class: 'est-debil-texto' }, el('strong', {}, t.titulo), el('span', { class: 'juego-desc' }, `${t.c.nombre} · ${pct(t.a)} % de aciertos en ${t.a[0] + t.a[1]} respuestas`), barra(t.a, 'mala')),
+            el('button', { class: 'boton mini-boton', type: 'button', onclick: () => iniciarEntrenoTema(t.c.id, t.ui) }, 'Entrenar'))))
+        : el('p', { class: 'est-vacio' }, temas.length ? '¡Sin puntos débiles! Todos tus temas están por encima del 85 %.' : 'Aún no hay suficientes respuestas para detectar tus puntos débiles (hacen falta 5 por tema).'),
+      fuertes.length ? el('p', { class: 'est-fuertes' }, 'Lo que mejor llevas: ' + fuertes.map((t) => `${t.titulo} (${pct(t.a)} %)`).join(', ') + '.') : null,
+      el('h2', { class: 'est-titulo' }, 'Por tipo de pregunta'),
+      el('div', { class: 'est-lista' }, tipos.map(([k, a]) => el('div', { class: 'est-fila' }, el('span', { class: 'est-nombre' }, NOMBRE_TIPO[k]), barra(a), el('span', { class: 'est-pct' }, pct(a) + ' %')))),
+      el('h2', { class: 'est-titulo' }, 'Últimos 7 días'),
+      el('div', { class: 'est-dias', role: 'img', 'aria-label': 'Respuestas de los últimos 7 días' },
+        dias.map((d) => { const a = st.d[d] || [0, 0]; const n = a[0] + a[1];
+          return el('div', { class: 'est-dia' }, el('span', { class: 'est-col', title: `${n} respuestas` }, el('span', { class: 'est-col-mal', style: `height:${(a[1] / maxDia) * 100}%` }), el('span', { class: 'est-col-bien', style: `height:${(a[0] / maxDia) * 100}%` })), el('span', { class: 'est-dia-n' }, new Date(d + 'T12:00:00').toLocaleDateString('es', { weekday: 'narrow' }))); }))
+    )
+  );
+}
+
 // ---------- ajustes, copia de seguridad y ayuda ----------
 function descargarCopia() {
   const datos = { app: 'entrenador-cartas', version: 3, fecha: hoy(), progreso };

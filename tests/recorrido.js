@@ -13,7 +13,7 @@ const esc = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) fallos.push(m.text()); });
   await page.goto(URL);
   // los niveles normales y, a continuación, los niveles Oro de la ruta dorada
-  let lecciones = await page.evaluate(() => CURSOS.flatMap((c) => niveles(c).concat(niveles(c).map((l) => ORO[l.id]).filter(Boolean)).map((l) => ({ curso: c.id, id: l.id, n: l.ejercicios.length, nueva: l.ejercicios.some((e) => ['clasificar', 'deslizador', 'rellenar'].includes(e.tipo)) }))));
+  let lecciones = await page.evaluate(() => CURSOS.flatMap((c) => niveles(c).concat(niveles(c).map((l) => ORO[l.id]).filter(Boolean)).map((l) => ({ curso: c.id, id: l.id, n: l.ejercicios.length, nueva: l.ejercicios.some((e) => ['clasificar', 'deslizador', 'rellenar', 'relampago'].includes(e.tipo)) }))));
   if (process.env.SOLO_CURSO) lecciones = lecciones.filter((l) => l.curso === process.env.SOLO_CURSO);
   if (process.env.SOLO_NUEVAS) lecciones = lecciones.filter((l) => l.nueva); // node tests/recorrido.js con SOLO_NUEVAS=1
   const porTipo = {};
@@ -55,6 +55,13 @@ const esc = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       } else if (ej.tipo === 'deslizador') {
         await page.locator('.desliz-control').evaluate((c, v) => { c.value = v; c.dispatchEvent(new Event('input', { bubbles: true })); }, String(ej.respuesta));
         await page.getByRole('button', { name: 'Comprobar' }).click();
+      } else if (ej.tipo === 'relampago') {
+        while (!(await page.locator('.feedback').count())) {
+          await page.waitForSelector('.feedback, .rel-opcion:not([disabled])');
+        if (await page.locator('.feedback').count()) break;
+        const i = Number(await page.locator('.rel-item').getAttribute('data-rel'));
+          await page.locator('.rel-opcion').nth(ej.items[i][1]).click();
+        }
       } else if (ej.tipo === 'rellenar') {
         for (const h of ej.huecos) await page.locator('.rell-palabra:not(:disabled)', { hasText: new RegExp('^\\s*' + esc(h) + '\\s*$') }).click();
         await page.getByRole('button', { name: 'Comprobar' }).click();

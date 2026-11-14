@@ -21,6 +21,7 @@ const progresoNuevo = () => ({
   meta: 20,                       // XP que quieres ganar cada día
   xpHoy: { dia: null, xp: 0 },    // XP ganado en el día indicado
   congeladores: 0,                // protegen la racha si fallas un día (máx. 2)
+  stats: { u: {}, t: {}, d: {} }, // estadísticas: aciertos y fallos por tema, tipo de pregunta y día ([aciertos, fallos])
   srs: {},                        // repetición espaciada: id del ejercicio -> { caja, prox, fallos }
   conteo: { sesiones: 0, mejor: 0 }, // entrenador de conteo
   ajustes: { letra: 'normal', calma: false, sonido: true },
@@ -49,6 +50,9 @@ function normalizarProgreso(datos) {
   p.completadas = obj(p.completadas, {});
   p.logros = obj(p.logros, {});
   p.srs = obj(p.srs, {});
+  const st = obj(p.stats, {});
+  const pares = (o, max) => { const r = {}; for (const k of Object.keys(obj(o, {})).slice(-max)) { const a = o[k]; if (Array.isArray(a) && a.length === 2 && a.every((x) => Number.isFinite(x) && x >= 0)) r[String(k).slice(0, 40)] = [Math.floor(a[0]), Math.floor(a[1])]; } return r; };
+  p.stats = { u: pares(st.u, 80), t: pares(st.t, 20), d: pares(st.d, 31) };
   p.xpHoy = Object.assign({ dia: null, xp: 0 }, obj(p.xpHoy, {}));
   p.conteo = Object.assign({ sesiones: 0, mejor: 0 }, obj(p.conteo, {}));
   p.ajustes = Object.assign({ letra: 'normal', calma: false, sonido: true }, obj(p.ajustes, {}));
@@ -130,7 +134,23 @@ function registrarActividad(xp) {
 // ---------- repetición espaciada (cajas de Leitner) ----------
 // Cada ejercicio que respondes se apunta: si aciertas sube de caja y tarda más en volver; si fallas, vuelve hoy.
 const INTERVALOS_DIAS = [0, 1, 2, 4, 8, 16];
+const META_EJERCICIOS = {}; // id de ejercicio -> { curso, u (índice de unidad), tipo }, incluye los niveles Oro
+CURSOS.forEach((c) => c.unidades.forEach((u, ui) => u.lecciones.forEach((l) => {
+  const lista = l.ejercicios.concat(typeof ORO !== 'undefined' && ORO[l.id] ? ORO[l.id].ejercicios : []);
+  lista.forEach((e) => (META_EJERCICIOS[e.id] = { curso: c.id, u: ui, tipo: e.tipo }));
+})));
+function registrarEstadistica(id, acierto) {
+  const m = META_EJERCICIOS[id];
+  if (!m) return;
+  const suma = (o, k) => { const a = o[k] || [0, 0]; a[acierto ? 0 : 1] += 1; o[k] = a; };
+  suma(progreso.stats.u, m.curso + '|' + m.u);
+  suma(progreso.stats.t, m.tipo);
+  suma(progreso.stats.d, hoy());
+  const dias = Object.keys(progreso.stats.d).sort();
+  while (dias.length > 31) delete progreso.stats.d[dias.shift()];
+}
 function registrarRespuesta(id, acierto) {
+  registrarEstadistica(id, acierto);
   const s = progreso.srs[id] || { caja: 0, prox: hoy(), fallos: 0 };
   if (acierto) s.caja = Math.min(INTERVALOS_DIAS.length - 1, s.caja + 1);
   else {
@@ -193,6 +213,7 @@ function preparar(e) {
     return Object.assign({}, e, { opciones: [], correcta: 0, mezcla });
   }
   if (e.tipo === 'rellenar') return Object.assign({}, e, { opciones: [], correcta: 0, mezcla: barajar(e.banco.map((_, i) => i)) });
+  if (e.tipo === 'relampago') return Object.assign({}, e, { respuestas: e.opciones, opciones: [], correcta: 0, mezcla: barajar(e.items.map((_, i) => i)) });
   if (e.tipo === 'accion' || e.opciones.length < 2) return e;
   const correcta = e.opciones[e.correcta];
   const opciones = e.opciones.every(esCifra)
@@ -209,6 +230,7 @@ function respuestaTexto(e) {
   if (e.tipo === 'emparejar') return e.pares.map((p) => `${p[0]} = ${p[1]}`).join(' · ');
   if (e.tipo === 'clasificar') return e.categorias.map((c, k) => `${c}: ${e.elementos.filter((x) => x[1] === k).map((x) => x[0]).join(', ')}`).join(' · ');
   if (e.tipo === 'deslizador') return `${e.respuesta}${e.unidad ? ' ' + e.unidad : ''}` + (e.tolerancia ? ` (vale de ${e.respuesta - e.tolerancia} a ${e.respuesta + e.tolerancia})` : '');
+  if (e.tipo === 'relampago') return e.items.map(([t, k, et]) => `${et ? et + ': ' : ''}${t} → ${e.respuestas ? e.respuestas[k] : e.opciones[k]}`).join(' · ');
   if (e.tipo === 'rellenar') { let k = 0; return e.texto.replace(/\{\}/g, () => e.huecos[k++]); }
   return e.opciones[e.correcta];
 }
@@ -629,6 +651,7 @@ function mostrarInicio(entrada = 'fundido') {
       el('h1', {}, 'Elige un juego'),
       tarjetas,
       filaRepaso('conteo', '⏱️', 'Entrena el conteo', 'Cartas a toda velocidad con el sistema Hi-Lo', () => mostrarConteo()),
+      filaRepaso('conteo', '📊', 'Mis estadísticas', 'Tus aciertos por juego y tus puntos débiles', () => mostrarEstadisticas()),
       puedeInstalar() ? crearBotonInstalar() : null,
       el('p', { class: 'aviso' }, 'Contenido educativo. Sin dinero real. Solo para mayores de 18 años. Si el juego te preocupa, mira «Ayuda» en la pestaña Ajustes.')
     )
@@ -938,6 +961,8 @@ function mostrarLeccion(curso, leccion) {
   let valorNum = ''; // ejercicios "numero": lo que escribiste
   let par = { izq: null, unidos: [], fallos: 0, error: null }; // ejercicios "emparejar"
   let clas = { i: 0, fallos: 0, error: false, puestas: [] }; // ejercicios "clasificar"
+  let rel = { i: 0, fallos: 0, flash: null, bloqueado: false }; // ejercicios "relampago"
+  let relTimer = null;
   let valorDes = null; // ejercicios "deslizador": posición del control
   let huecos = []; // ejercicios "rellenar": palabra puesta en cada hueco (índice del banco o null)
   let comprobar = null; // acción del botón «Comprobar» de la pantalla actual
@@ -982,6 +1007,8 @@ function mostrarLeccion(curso, leccion) {
     valorNum = '';
     par = { izq: null, unidos: [], fallos: 0, error: null };
     clas = { i: 0, fallos: 0, error: false, puestas: [] };
+    clearTimeout(relTimer);
+    rel = { i: 0, fallos: 0, flash: null, bloqueado: false };
     valorDes = null;
     huecos = [];
     dibujar('ejercicio');
@@ -990,6 +1017,7 @@ function mostrarLeccion(curso, leccion) {
   function dibujar(entrada) {
     const ejercicio = cola[idx];
     barajaEspanola = curso.id === 'mus' || /^(oro-)?ms-/.test(ejercicio.id);
+    clearTimeout(relTimer);
     const respondido = elegida !== null;
     const acierto = respondido && elegida === ejercicio.correcta;
 
@@ -997,6 +1025,7 @@ function mostrarLeccion(curso, leccion) {
     const estadoNai = !respondido ? 'pensando' : acierto ? 'feliz' : 'triste';
     const { fila, parrafo } = naiFila(estadoNai, ejercicio.pregunta, 'pequena', respondido);
     parrafo.className = 'pregunta';
+    if (ejercicio.id) parrafo.dataset.id = ejercicio.id;
 
     // Ejercicio de ordenar: pulsa las fichas en orden; pulsa una colocada para quitarla
     let tablero = null;
@@ -1303,6 +1332,49 @@ function mostrarLeccion(curso, leccion) {
       );
     }
 
+    // Relámpago: una serie de decisiones rápidas con cuenta atrás (se permite 1 fallo de 5; sin cuenta atrás en modo calma)
+    if (ejercicio.tipo === 'relampago') {
+      const n = ejercicio.items.length;
+      const dueno = ejercicio;
+      const permitidos = n >= 5 ? 1 : 0;
+      const sinPrisa = document.documentElement.dataset.calma === 'si';
+      const actual = rel.i < n ? ejercicio.mezcla[rel.i] : null;
+      const responderRel = (k) => {
+        if (respondido || rel.bloqueado || actual === null || cola[idx] !== dueno) return;
+        clearTimeout(relTimer);
+        const bien = k === ejercicio.items[actual][1];
+        if (!bien) rel.fallos += 1;
+        sonido(bien ? 'unir' : 'error');
+        rel.flash = k < 0 ? 'tarde' : bien ? 'bien' : 'mal';
+        rel.bloqueado = true;
+        dibujar('sin');
+        setTimeout(() => {
+          if (cola[idx] !== dueno || elegida !== null) return;
+          rel.i += 1;
+          rel.flash = null;
+          rel.bloqueado = false;
+          if (rel.i >= n || rel.fallos > permitidos) return elegir(rel.fallos <= permitidos ? 0 : -1);
+          dibujar('sin');
+        }, 320);
+      };
+      if (actual !== null && !rel.bloqueado && !sinPrisa) relTimer = setTimeout(() => responderRel(-1), (ejercicio.segundos || 8) * 1000);
+      const [texto, , etiqueta] = actual === null ? ['', 0, ''] : ejercicio.items[actual];
+      const trozos = texto.split(/ [·+] | /).filter(Boolean);
+      const sonCartas = trozos.length > 0 && trozos.length <= 5 && trozos.every((t) => (barajaEspanola ? esCartaMus(t) : /^(10|[2-9AJQK])[♠♥♦♣]$/.test(t)));
+      tablero = el(
+        'div',
+        { class: 'relampago' },
+        el('p', { class: 'ordenar-etiqueta' }, `Relámpago · ${Math.min(rel.i + 1, n)} de ${n}` + (sinPrisa ? ' · sin cuenta atrás' : ` · ${ejercicio.segundos || 8} s por pregunta`) + (permitidos ? ' · vale 1 fallo' : '')),
+        sinPrisa ? null : el('div', { class: 'rel-barra', 'aria-hidden': 'true' }, el('span', { class: rel.bloqueado ? 'parada' : '', style: `--s:${ejercicio.segundos || 8}s` })),
+        el('div', { class: 'rel-item' + (rel.flash ? ' ' + rel.flash : ''), 'data-rel': actual === null ? '' : String(actual), role: 'group', 'aria-label': `${etiqueta ? etiqueta + ': ' : ''}${texto}` },
+          etiqueta ? el('span', { class: 'rel-etiqueta' }, etiqueta) : null,
+          sonCartas ? el('div', { class: 'fila rel-cartas' }, trozos.map((t, i) => carta(t, i))) : el('strong', { class: 'rel-texto' }, texto)
+        ),
+        el('div', { class: 'rel-opciones' + (ejercicio.respuestas && ejercicio.respuestas.length > 2 ? ' tres' : '') },
+          ejercicio.respuestas.map((o, k) => el('button', { class: 'rel-opcion', type: 'button', 'data-k': String(k), style: `--k:${k}`, disabled: respondido || rel.bloqueado ? '' : null, onclick: () => responderRel(k) }, el('span', { class: 'tecla' }, String(k + 1)), o)))
+      );
+    }
+
     const opciones = ejercicio.opciones.map((texto, i) => {
       let clase = 'opcion';
       if (respondido && i === ejercicio.correcta) clase += ' bien';
@@ -1365,7 +1437,10 @@ function mostrarLeccion(curso, leccion) {
     else relleno.style.transform = `scaleX(${objetivo})`;
 
     alTeclear = (e) => {
-      if (!respondido && ejercicio.tipo === 'clasificar' && /^[1-9]$/.test(e.key) && Number(e.key) <= ejercicio.categorias.length) {
+      if (!respondido && ejercicio.tipo === 'relampago' && /^[1-9]$/.test(e.key) && Number(e.key) <= ejercicio.respuestas.length) {
+        const b = raiz.querySelector(`.rel-opcion[data-k="${Number(e.key) - 1}"]`);
+        if (b && !b.disabled) b.click();
+      } else if (!respondido && ejercicio.tipo === 'clasificar' && /^[1-9]$/.test(e.key) && Number(e.key) <= ejercicio.categorias.length) {
         const cajon = raiz.querySelector(`.clas-cajon[data-cajon="${Number(e.key) - 1}"]`);
         if (cajon) cajon.click();
       } else if (!respondido && /^[1-9]$/.test(e.key) && Number(e.key) <= ejercicio.opciones.length) {

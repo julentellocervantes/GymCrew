@@ -5,7 +5,7 @@ aplicarCosmeticos();
 // Cada pantalla principal enciende su pestaña en la barra inferior; el resto (niveles, resultados,
 // entrenador) la ocultan para que el contenido ocupe toda la pantalla.
 {
-  const pestanaDe = { mostrarInicio: 'juegos', mostrarMapa: 'juegos', mostrarLogros: 'juegos', mostrarUtil: 'util', mostrarTienda: 'tienda', mostrarAjustes: 'ajustes' };
+  const pestanaDe = { mostrarInicio: 'juegos', mostrarMapa: 'juegos', mostrarLogros: 'juegos', mostrarEstadisticas: 'juegos', mostrarUtil: 'util', mostrarTienda: 'tienda', mostrarAjustes: 'ajustes' };
   for (const [nombre, pestana] of Object.entries(pestanaDe)) {
     const original = window[nombre];
     window[nombre] = function (...args) {
