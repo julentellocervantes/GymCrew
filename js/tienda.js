@@ -188,7 +188,8 @@ function mostrarCofre(curso, id, volver) {
     lista.replaceChildren(...premios.map((p, i) => el('li', { class: 'cofre-premio aparece', style: `--i:${i}` }, el('span', { class: 'cofre-premio-icono', 'aria-hidden': 'true' }, p.icono), p.texto)));
     boton.textContent = 'Continuar';
     document.querySelector('.contenido').append(confeti(60));
-    sonido('logro');
+    sonido('ficha');
+    sonido('logro', 260);
   };
   pintar(
     'adelante',
@@ -290,7 +291,7 @@ function mostrarTienda(entrada = 'fundido') {
       if (mio) { equiparArticulo(tipo, a.id); sonido('toque'); return recargar(); }
       const error = comprarArticulo(tipo, a.id);
       if (error) { mensaje.textContent = error; return; }
-      sonido('logro');
+      sonido('ficha');
       recargar();
     } }, puesto ? 'Equipado' : mio ? 'Equipar' : `${a.precio} 🪙`);
     return el('div', { class: 'articulo' + (puesto ? ' puesto' : ''), 'data-articulo': tipo + ':' + a.id }, vistaArticulo(tipo, a), el('strong', {}, a.nombre), boton);

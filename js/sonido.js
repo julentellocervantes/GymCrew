@@ -56,6 +56,17 @@
       ruido(c, d, t, 0, 0.09, 2400, 0.5);
       nota(c, d, t, 180, 0, 0.05, { tipo: 'sine', vol: 0.08, hasta: 120 });
     },
+    // ficha de mesa: dos golpes metálicos muy cortos
+    ficha: (c, d, t) => {
+      nota(c, d, t, 2637, 0, 0.09, { tipo: 'triangle', vol: 0.12, hasta: 2300 });
+      nota(c, d, t, 3520, 0.045, 0.13, { tipo: 'triangle', vol: 0.1, hasta: 3100 });
+      ruido(c, d, t, 0, 0.03, 5200, 0.25);
+    },
+    // reparto: tres cartas seguidas
+    reparto: (c, d, t) => [0, 0.09, 0.18].forEach((i, k) => {
+      ruido(c, d, t, i, 0.08, 2200 + k * 350, 0.45);
+      nota(c, d, t, 170, i, 0.05, { tipo: 'sine', vol: 0.06, hasta: 120 });
+    }),
     nivel: (c, d, t) => [523, 659, 784, 1047].forEach((f, i) => nota(c, d, t, f, i * 0.11, i === 3 ? 0.5 : 0.2, { tipo: 'triangle', vol: 0.2 })),
     meta: (c, d, t) => [784, 988, 1175, 1568].forEach((f, i) => nota(c, d, t, f, i * 0.08, 0.28, { tipo: 'sine', vol: 0.18 })),
     logro: (c, d, t) => {
@@ -88,8 +99,22 @@
 
   const activo = () => !(typeof progreso === 'object' && progreso && progreso.ajustes && progreso.ajustes.sonido === false);
 
+  // Vibración corta del móvil que acompaña a cada sonido (se apaga en Ajustes o con «Menos movimiento»)
+  const HAPTICA = {
+    toque: [4], unir: [8], carta: [6], acierto: [14], error: [40, 50, 40], ficha: [10, 40, 10], reparto: [6, 80, 6, 80, 6],
+    nivel: [20, 50, 20, 50, 70], meta: [30, 40, 30], logro: [20, 40, 60], rango: [40, 60, 40, 60, 120],
+  };
+  const hapticaActiva = () => !(typeof progreso === 'object' && progreso && progreso.ajustes && (progreso.ajustes.vibracion === false || progreso.ajustes.calma));
+  function vibrar(nombre) {
+    if (!HAPTICA[nombre] || !hapticaActiva() || typeof navigator === 'undefined' || !navigator.vibrate) return;
+    try { navigator.vibrate(HAPTICA[nombre]); } catch (e) { /* sin vibración */ }
+  }
+  vibrar.registro = [];
+
   function sonido(nombre, retraso) {
-    if (!SONIDOS[nombre] || !activo()) return;
+    if (!SONIDOS[nombre]) return;
+    if (hapticaActiva() && HAPTICA[nombre]) { vibrar.registro.push(nombre); if (vibrar.registro.length > 200) vibrar.registro.shift(); if (retraso) setTimeout(() => vibrar(nombre), retraso); else vibrar(nombre); }
+    if (!activo()) return;
     sonido.registro.push(nombre); // lo leen las pruebas automáticas
     if (sonido.registro.length > 200) sonido.registro.shift();
     const reproducir = () => {
@@ -107,5 +132,6 @@
   sonido.registro = [];
   sonido.generar = (nombre, c, destino) => SONIDOS[nombre](c, destino, 0); // para pruebas con OfflineAudioContext
   sonido.nombres = Object.keys(SONIDOS);
+  sonido.vibrar = vibrar;
   window.sonido = sonido;
 })();

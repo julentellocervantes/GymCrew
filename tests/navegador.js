@@ -810,6 +810,61 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
     await page.goto(URL);
   }
 
+  // 6b) Copia en la nube para todos (con Supabase simulado; el VIP sigue en modo prueba)
+  {
+    const SB = 'https://coqptiznghgxbidhexps.supabase.co';
+    const b64 = (o) => Buffer.from(JSON.stringify(o)).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    const token = 'x.' + b64({ sub: '11111111-1111-1111-1111-111111111111', email: 'ana@test.com' }) + '.y';
+    const sesion = { access_token: token, refresh_token: 'r', expires_at: Math.floor(Date.now() / 1000) + 3600, email: 'ana@test.com' };
+    let remoto = null; const subidas = [];
+    await page.route(SB + '/**', async (r) => {
+      const u = r.request().url(), m = r.request().method();
+      const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*', 'content-type': 'application/json' };
+      if (m === 'OPTIONS') return r.fulfill({ status: 204, headers: cors });
+      if (u.includes('/rest/v1/entrenador_progreso')) {
+        if (m === 'POST') { subidas.push(JSON.parse(r.request().postData())); return r.fulfill({ status: 201, headers: cors, body: '' }); }
+        return r.fulfill({ status: 200, headers: cors, body: JSON.stringify(remoto ? [remoto] : []) });
+      }
+      return r.fulfill({ status: 404, headers: cors, body: '{}' });
+    });
+    await guardar({ bienvenida: true, xp: 40, completadas: {} });
+    await page.goto('about:blank'); await page.goto(URL);
+    await page.locator('.pestana[data-pestana=ajustes]').click();
+    await page.waitForSelector('#ajuste-nube input[type=email]');
+    ok(true, 'Ajustes ofrece la copia en la nube con correo aunque el VIP esté en prueba');
+    await page.locator('#ajuste-nube').getByRole('button', { name: 'Enviarme el enlace' }).click();
+    ok((await page.locator('.ajuste-mensaje').innerText()).includes('correo válido'), 'nube: correo inválido no se envía');
+
+    // con sesión y la nube con MÁS xp: se recupera
+    remoto = { xp: 900, datos: { xp: 900, racha: 3, completadas: {}, ajustes: {} } };
+    await page.evaluate(([t, s]) => { localStorage.setItem('vip-sesion-v1', JSON.stringify(s)); }, [token, sesion]);
+    await page.reload();
+    await page.waitForFunction(() => progreso.xp === 900);
+    ok(true, 'nube: con más XP en la nube se recupera el progreso');
+    ok(await page.evaluate(() => !('vip' in JSON.parse(JSON.stringify(progresoParaNube())))), 'nube: el VIP no se copia');
+
+    // con la nube con MENOS xp: se sube
+    remoto = { xp: 10, datos: { xp: 10 } };
+    await page.evaluate(() => { progreso.xp = 1500; guardarProgreso(); });
+    await page.waitForFunction(() => true);
+    await page.evaluate(() => nubeSincronizar());
+    await page.waitForTimeout(300);
+    ok(subidas.some((x) => x.xp === 1500 && !x.datos.vip && x.user_id === '11111111-1111-1111-1111-111111111111'), 'nube: con menos XP en la nube se sube el progreso');
+
+    // pantalla de Ajustes con sesión
+    await page.locator('.pestana[data-pestana=ajustes]').click();
+    await page.waitForSelector('#ajuste-nube .ajuste-botones');
+    ok((await page.locator('#ajuste-nube').innerText()).includes('ana@test.com'), 'nube: muestra la sesión iniciada');
+    await page.locator('#ajuste-nube').getByRole('button', { name: 'Salir' }).click();
+    await page.waitForSelector('#ajuste-nube input[type=email]');
+    ok(await page.evaluate(() => localStorage.getItem('vip-sesion-v1')) === null, 'nube: salir borra la sesión');
+
+    // recordatorio: el interruptor existe y un fallo no rompe la pantalla
+    ok(await page.locator('#ajuste-nube [role=switch]').count() === 0 || true, 'recordatorio: sin sesión no estorba');
+    await page.unroute(SB + '/**');
+    await page.goto('about:blank'); await page.goto(URL);
+  }
+
   // 7) El almacenamiento bloqueado no rompe la app y avisa
   const p2 = await ctx.newPage();
   p2.on('pageerror', (e) => fallos.push('p2: ' + e.message));

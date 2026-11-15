@@ -190,3 +190,15 @@ Cuidado con las comas entre elementos y con las comillas.
 - **Pulido visual**: la barra inferior lleva una píldora que se desliza entre pestañas; los bloques de cada pantalla suben escalonados (reglas con especificidad cero al final de `css/estilos.css`, así lo que ya tiene su animación la conserva); estados de respuesta y botones con transiciones suaves; `text-wrap: balance` en títulos. El aviso de racha urgente anima solo el icono (un botón que late no se puede pulsar bien).
 - La pantalla del VIP enseña «Todas las chuletas» con una etiqueta dorada por cada chuleta de Útil.
 - **Identidad «Tapete»** (bloque final de `css/estilos.css`): mesa de entrenamiento con fieltro verde arriba y abajo, cartón de baraja, latón y tinta roja. Cabecera y barra inferior sobre fieltro con el dibujo del reverso de una carta (rombos); tarjetas de juego con doble filete y el palo del juego en la esquina (`data-curso`); botón principal como ficha verde con aro de puntos; cada nivel del mapa es una ficha con marcas en el borde; títulos con serifa de imprenta (pila de fuentes del sistema, sin descargas). Los colores están al principio del bloque (`--fieltro`, `--laton`, `--tinta`…, y `--marca` para el acento de la interfaz); modo oscuro = azul de noche.
+
+## Sonido y vibración con carácter
+Sonidos nuevos `ficha` (compras, cofres, fichas) y `reparto` (al abrir una lección) y vibraciones distintas por evento (acierto, error, ficha, reparto…). En Ajustes hay un interruptor «Vibración»; «Menos movimiento» también la apaga.
+
+## Icono y bienvenida «Tapete»
+Icono de la app (SVG + PNG) y pantalla de bienvenida con una mano de cartas sobre fieltro. Baccarat y mus generan ahora ejercicios con las cartas dibujadas.
+
+## Copia en la nube (para todos)
+`js/nube.js`: en Ajustes, «Copia en la nube» (acceso por correo sin contraseña, el mismo de Supabase que usará el VIP). El progreso se sube solo unos segundos después de cada cambio a la tabla `entrenador_progreso` (cada persona solo ve la suya). Al entrar o abrir la app se compara con la nube y gana quien tenga más XP. El VIP nunca se copia. Funciona aunque `PREMIUM.modoPrueba` siga en `true`.
+
+## Recordatorio de racha (notificación push)
+Interruptor «Recordatorio de racha» en Ajustes (necesita Chrome/Firefox o, en iPhone 16.4+, la app añadida a la pantalla de inicio). La función `supabase/functions/entrenador-push` guarda la suscripción (solo el aviso, sin datos personales) y un pg_cron diario a las 18:00 UTC avisa a quien tiene racha y hoy no ha practicado. Las claves VAPID se crean solas y viven en `entrenador_config`.

@@ -25,7 +25,7 @@ const progresoNuevo = () => ({
   srs: {},                        // repetición espaciada: id del ejercicio -> { caja, prox, fallos }
   conteo: { sesiones: 0, mejor: 0 }, // entrenador de conteo
   rapida: { partidas: 0, mejor: 0 }, // partida rápida de 60 segundos
-  ajustes: { letra: 'normal', calma: false, sonido: true },
+  ajustes: { letra: 'normal', calma: false, sonido: true, vibracion: true },
   bienvenida: false,              // true cuando ya has visto la pantalla de bienvenida
   vip: { hasta: 0 },              // membresía VIP: instante (ms) hasta el que está activa
   fichas: 20,                     // moneda de la tienda
@@ -59,7 +59,7 @@ function normalizarProgreso(datos) {
   p.rapida = Object.assign({ partidas: 0, mejor: 0 }, obj(p.rapida, {}));
   p.rapida.partidas = num(p.rapida.partidas, 0);
   p.rapida.mejor = num(p.rapida.mejor, 0);
-  p.ajustes = Object.assign({ letra: 'normal', calma: false, sonido: true }, obj(p.ajustes, {}));
+  p.ajustes = Object.assign({ letra: 'normal', calma: false, sonido: true, vibracion: true }, obj(p.ajustes, {}));
   p.vip = { hasta: p.vip && Number.isFinite(p.vip.hasta) && p.vip.hasta > 0 ? Math.floor(p.vip.hasta) : 0 };
   p.fichas = num(p.fichas, 20);
   const en = obj(p.energia, {});
@@ -97,6 +97,8 @@ function guardarProgreso() {
   } catch (e) {
     almacenamientoFallo = true;
   }
+  if (typeof nubeProgramar === 'function') nubeProgramar();
+  if (typeof pushActualizar === 'function') pushActualizar();
 }
 
 let progreso = cargarProgreso();
@@ -976,6 +978,7 @@ function mostrarIntro(curso, leccion) {
 // PANTALLA 4: la lección (ejercicios)
 // ============================================================
 function mostrarLeccion(curso, leccion) {
+  sonido('reparto');
   let cola = leccion.ejercicios.map(preparar);
   let idx = 0;
   let elegida = null;
@@ -1612,6 +1615,7 @@ function mostrarResultado(curso, leccion, precision, extra) {
 
   // Sonidos del resultado: fanfarria, y luego meta, logros y rango si los hay
   sonido(precision >= 67 || extra.cursoCompleto ? 'nivel' : 'toque');
+  if (extra.fichas) sonido('ficha', 450);
   if (act.metaCumplida) sonido('meta', 700);
   if (extra.logros && extra.logros.length) sonido('logro', act.metaCumplida ? 1300 : 700);
   if (extra.rangoNuevo) sonido('rango', 1500);

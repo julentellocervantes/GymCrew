@@ -142,6 +142,63 @@ function leerCopia(texto) {
   return normalizarProgreso(crudo);
 }
 
+// Sección de Ajustes: copia en la nube (acceso por correo) y recordatorio de racha
+function seccionNube(avisar) {
+  const caja = el('section', { class: 'ajuste', id: 'ajuste-nube' });
+  const pintarCaja = async () => {
+    caja.replaceChildren();
+    if (!nubeDisponible()) return;
+    const ses = leerSesion();
+    caja.append(el('h2', {}, '☁️ Copia en la nube'));
+    if (!ses) {
+      const campo = el('input', { type: 'email', class: 'campo-email', placeholder: 'tu@correo.com', autocomplete: 'email', 'aria-label': 'Tu correo' });
+      caja.append(
+        el('p', {}, 'Entra con tu correo (sin contraseña) y tu progreso se guarda solo en la nube. Así lo recuperas si cambias de móvil.'),
+        campo,
+        el('button', { class: 'boton secundario', type: 'button', onclick: async (ev) => {
+          const email = campo.value.trim();
+          if (!/^\S+@\S+\.\S+$/.test(email)) { avisar('Escribe un correo válido.'); return; }
+          ev.target.disabled = true;
+          try { await pedirEnlace(email); avisar('Te hemos enviado un enlace. Ábrelo desde este mismo móvil.'); }
+          catch (e) { avisar(e.message); }
+          ev.target.disabled = false;
+        } }, 'Enviarme el enlace')
+      );
+    } else {
+      caja.append(
+        el('p', {}, 'Sesión iniciada como ' + (ses.email || 'tu cuenta') + '. ' + (nubeEstado || 'Tu progreso se guarda solo.')),
+        el('div', { class: 'ajuste-botones' },
+          el('button', { class: 'boton secundario', type: 'button', onclick: async () => {
+            avisar('Sincronizando…');
+            const r = await nubeSincronizar();
+            if (r === 'bajado') { aplicarAjustes(); mostrarAjustes('Progreso recuperado de la nube.'); return; }
+            avisar(r === 'error' ? 'No se ha podido sincronizar. Revisa tu conexión.' : 'Listo: tu progreso está en la nube.');
+            pintarCaja();
+          } }, 'Sincronizar ahora'),
+          el('button', { class: 'boton secundario', type: 'button', onclick: () => { nubeSalir(); avisar('Has salido de tu cuenta. Tu progreso sigue en este móvil.'); pintarCaja(); } }, 'Salir')
+        )
+      );
+    }
+    if (pushSoportado()) {
+      const sub = await suscripcionPush();
+      caja.append(
+        interruptorNube('Recordatorio de racha', 'Un aviso por la tarde si tienes racha y hoy no has practicado', !!sub, async (v) => {
+          const e = await pushActivar(v);
+          avisar(e || (v ? 'Recordatorio activado.' : 'Recordatorio desactivado.'));
+          pintarCaja();
+        })
+      );
+    }
+  };
+  pintarCaja();
+  return caja;
+}
+function interruptorNube(texto, desc, activo, alCambiar) {
+  return el('button', { class: 'interruptor' + (activo ? ' on' : ''), type: 'button', role: 'switch', 'aria-checked': String(activo), onclick: () => alCambiar(!activo) },
+    el('span', { class: 'juego-texto' }, el('strong', {}, texto), el('span', { class: 'juego-desc' }, desc)),
+    el('span', { class: 'palanca', 'aria-hidden': 'true' }, el('span', {})));
+}
+
 function mostrarAjustes(aviso = '', animacion = 'fundido') {
   alTeclear = null;
   const mensaje = el('p', { class: 'ajuste-mensaje', role: 'status', 'aria-live': 'polite' }, aviso);
@@ -224,6 +281,12 @@ function mostrarAjustes(aviso = '', animacion = 'fundido') {
           recargar();
           sonido('acierto'); // si lo acabas de activar, suena una muestra
         }),
+        interruptor('Vibración', 'Una vibración corta al acertar, fallar y ganar fichas (si tu móvil la tiene)', progreso.ajustes.vibracion !== false, (v) => {
+          progreso.ajustes.vibracion = v;
+          guardarProgreso();
+          recargar();
+          if (v && typeof sonido === 'function') sonido.vibrar('acierto');
+        }),
         interruptor('Menos movimiento', 'Quita animaciones, confeti y chispas', !!progreso.ajustes.calma, (v) => {
           progreso.ajustes.calma = v;
           guardarProgreso();
@@ -243,6 +306,7 @@ function mostrarAjustes(aviso = '', animacion = 'fundido') {
         entrada,
         mensaje
       ),
+      seccionNube(avisar),
       el(
         'section',
         { class: 'ajuste' },
@@ -442,6 +506,14 @@ function resultadoConteo(cartas, total, dicho) {
 // ============================================================
 // BIENVENIDA
 // ============================================================
+// Cabecera de la bienvenida: un trozo de mesa con cuatro cartas en abanico y dos fichas
+function heroMesa() {
+  const carta = (a, rango, palo, rojo, i) => `<g class="hero-carta" style="--a:${a}deg;--i:${i}"><rect x="-25" y="-100" width="50" height="72" rx="6" fill="#fffdf5" stroke="#17241d" stroke-width="1.6"/><text x="-19" y="-82" font-size="14" font-weight="800" font-family="Georgia,serif" fill="${rojo ? '#c93a3a' : '#17241d'}">${rango}</text><text x="-19" y="-68" font-size="13" fill="${rojo ? '#c93a3a' : '#17241d'}">${palo}</text><text x="0" y="-48" font-size="26" text-anchor="middle" fill="${rojo ? '#c93a3a' : '#17241d'}">${palo}</text></g>`;
+  const ficha = (x, y, c) => `<g class="hero-ficha" transform="translate(${x} ${y})"><ellipse cy="5" rx="19" ry="8" fill="rgba(0,0,0,.28)"/><circle r="18" fill="${c}"/><circle r="16.5" fill="${c}" stroke="#fff6df" stroke-width="3" stroke-dasharray="6 6"/><circle r="10" fill="${c}" stroke="#fff6df" stroke-width="1.4"/></g>`;
+  const nodo = el('div', { class: 'hero-mesa', 'aria-hidden': 'true' });
+  nodo.innerHTML = `<svg viewBox="0 0 320 150" focusable="false"><defs><pattern id="hero-ro" width="16" height="16" patternUnits="userSpaceOnUse"><path d="M8 0 L16 8 L8 16 L0 8Z" fill="none" stroke="#fff4d2" stroke-opacity=".08" stroke-width="1.2"/></pattern><linearGradient id="hero-fe" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#16795a"/><stop offset="1" stop-color="#083427"/></linearGradient></defs><rect width="320" height="150" rx="24" fill="url(#hero-fe)"/><rect width="320" height="150" rx="24" fill="url(#hero-ro)"/><rect x="5" y="5" width="310" height="140" rx="20" fill="none" stroke="#d4a548" stroke-width="2.5"/>${carta(-27, 'A', '♠', false, 0)}${carta(-9, 'K', '♥', true, 1)}${carta(9, 'Q', '♦', true, 2)}${carta(27, '10', '♣', false, 3)}${ficha(52, 118, '#c93a3a')}${ficha(268, 118, '#2f6fd6')}${ficha(268, 108, '#2f6fd6')}</svg>`;
+  return nodo;
+}
 function mostrarBienvenida(repetida = false) {
   const { fila } = naiFila('celebrando', repetida ? '¡Hola otra vez! Esto es lo que puedes hacer aquí.' : '¡Hola! Soy Nai y voy a ser tu entrenador de cartas.', 'hero');
   const empezar = (destino) => {
@@ -460,6 +532,7 @@ function mostrarBienvenida(repetida = false) {
   pintar(
     'fundido',
     el('main', { class: 'contenido bienvenida' },
+      heroMesa(),
       fila,
       almacenamientoFallo ? el('p', { class: 'alerta', role: 'alert' }, 'Tu navegador no deja guardar el progreso (¿modo privado?). Puedes seguir, pero al cerrar se perderá.') : null,
       el('h1', { class: 'bienvenida-titulo' }, 'Bienvenido al Entrenador de cartas'),

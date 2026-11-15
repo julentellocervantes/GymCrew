@@ -36,7 +36,7 @@ function emailDelToken(token) {
 
 // Al abrir el enlace del correo, Supabase vuelve a la app con la sesión en el «#» de la dirección.
 function capturarEnlace() {
-  if (!nubeActiva() || !location.hash) return false;
+  if (!nubeDisponible() || !location.hash) return false;
   const p = new URLSearchParams(location.hash.slice(1));
   if (p.get('error_description')) {
     history.replaceState(null, '', location.pathname + location.search);

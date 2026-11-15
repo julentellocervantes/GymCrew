@@ -119,7 +119,9 @@
       const rs = Array.from({ length: 4 }, () => g.uno(Object.keys(catMus)));
       const v = (r) => (catMus[r] === 0 ? 10 : catMus[r] === 1 ? 1 : Number(r));
       const total = rs.reduce((a, r) => a + v(r), 0);
-      return DE(id, `Tu mano es ${rs.slice(0, -1).join(', ')} y ${rs[3]}. ¿Cuántos puntos tienes?`, 4, 40, total, 0, '', `Suma de valores: ${rs.map((r) => `${r} (${v(r)})`).join(' + ')} = ${total}.`, { mus: rs });
+      const e = DE(id, '¿Cuántos puntos suman estas cuatro cartas en el mus?', 4, 40, total, 0, '', `Suma de valores: ${rs.map((r) => `${r} (${v(r)})`).join(' + ')} = ${total}.`, { mus: rs });
+      e.situacion = { filas: [{ etiqueta: 'Tu mano', cartas: rs }] };
+      return e;
     },
     msJuego(id, g) {
       const v = (r) => (catMus[r] === 0 ? 10 : catMus[r] === 1 ? 1 : Number(r));
@@ -159,7 +161,9 @@
       const n = g.uno([2, 3]);
       const rs = Array.from({ length: n }, () => g.uno(RANGOS));
       const total = rs.reduce((a, r) => a + val(r), 0) % 10;
-      return DE(id, `Tienes ${rs.slice(0, -1).join(', ')} y ${rs[n - 1]}. ¿Cuánto vale el total en el bacarrá?`, 0, 9, total, 0, '', `Suma de valores (el 10 y las figuras valen 0, el As vale 1) = ${rs.reduce((a, r) => a + val(r), 0)}; solo cuenta la cifra de las unidades: ${total}.`, { bacTotal: rs });
+      const e = DE(id, '¿Cuánto vale el total de esta mano en el bacarrá?', 0, 9, total, 0, '', `Suma de valores (el 10 y las figuras valen 0, el As vale 1) = ${rs.reduce((a, r) => a + val(r), 0)}; solo cuenta la cifra de las unidades: ${total}.`, { bacTotal: rs });
+      e.situacion = { filas: [{ etiqueta: 'Tu mano', cartas: rs.map((r) => r + g.uno(PALOS)) }] };
+      return e;
     },
     vpPaga(id, g) {
       const paga = ['Pareja de J o mejor', 'Doble pareja', 'Trío', 'Escalera', 'Color', 'Full'];

@@ -29,8 +29,13 @@ if (nubeActiva() && (volvioDelEnlace || vuelta)) {
   mostrarPremium(() => mostrarTienda('atras'), aviso);
   // el webhook de Stripe tarda un poco: se consulta varias veces
   if (vuelta === 'ok') [3000, 8000, 15000].forEach((t) => setTimeout(() => sincronizarVip().then((c) => { if (c && document.querySelector('.premium')) mostrarPremium(() => mostrarTienda('atras'), '👑 ¡VIP activado!'); }), t));
+} else if (volvioDelEnlace && nubeDisponible()) {
+  nubeSincronizar().then((r) => mostrarAjustes(r === 'bajado' ? 'Sesión iniciada. Hemos recuperado tu progreso de la nube.' : r === 'error' ? 'Sesión iniciada, pero no se pudo sincronizar.' : 'Sesión iniciada. Tu progreso se guarda en la nube.'));
 } else if (nubeActiva() && leerSesion()) {
   sincronizarVip(); // se actualiza en segundo plano
+  nubeSincronizar();
+} else if (nubeDisponible() && leerSesion()) {
+  nubeSincronizar();
 }
 
 // Sin conexión: el service worker guarda la app. En tu ordenador (localhost) no se activa para que

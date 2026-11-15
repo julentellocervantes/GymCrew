@@ -98,6 +98,10 @@ function verificarNuevos(e) {
       esperado = respuesta;
     } else if (ch.mus) esperado = ch.mus.reduce((a, c) => a + valMus(c), 0);
     else if (ch.bacTotal) esperado = ch.bacTotal.reduce((a, c) => a + (['10', 'J', 'Q', 'K'].includes(c) ? 0 : c === 'A' ? 1 : Number(c)), 0) % 10;
+    if ((ch.mus || ch.bacTotal) && /-v1$/.test(e.id)) {
+      const dib = (e.situacion && e.situacion.filas && e.situacion.filas[0] ? e.situacion.filas[0].cartas : []).map((c) => String(c).replace(/[♠♥♦♣]$/, ''));
+      if (dib.join() !== (ch.mus || ch.bacTotal).join()) return mal(e.id, 'deslizador: las cartas dibujadas no son las de la comprobación');
+    }
     if (esperado === null) definicion();
     else { calculado(); if (esperado !== respuesta) mal(e.id, `deslizador: se esperaba ${esperado} y el ejercicio dice ${respuesta}`); }
     return;

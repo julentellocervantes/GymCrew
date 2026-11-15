@@ -1863,3 +1863,15 @@ h1, .bienvenida-titulo { font-weight: 800; letter-spacing: -0.015em; }
 .pie { background: linear-gradient(to top, var(--fondo) 68%, transparent); }
 .pestana-tienda.activa { background: var(--laton); border-color: var(--laton-osc); color: #2a1c00; }
 .pestana-tienda { font-family: var(--serif); }
+
+/* Bienvenida: mesa con cartas en abanico */
+.hero-mesa { margin: 0 0 14px; border-radius: 24px; box-shadow: 0 14px 24px -16px rgba(5, 40, 28, 0.8); }
+.hero-mesa svg { display: block; width: 100%; height: auto; }
+.hero-carta { transform: translate(160px, 170px) rotate(var(--a)); animation: abanico 0.8s var(--rebote) backwards; animation-delay: calc(0.15s + var(--i) * 0.08s); }
+@keyframes abanico { from { transform: translate(160px, 170px) rotate(0deg); } }
+.hero-ficha { animation: ficha-cae 0.5s var(--rebote) backwards 0.7s; }
+@keyframes ficha-cae { from { opacity: 0; translate: 0 -16px; } }
+html[data-calma="si"] .hero-carta, html[data-calma="si"] .hero-ficha { animation: none; }
+@media (prefers-reduced-motion: reduce) { .hero-carta, .hero-ficha { animation: none; } }
+
+.campo-email { width: 100%; box-sizing: border-box; margin: 0 0 10px; padding: 12px 14px; border-radius: 12px; border: 1.5px solid var(--borde, #c9d3e3); background: var(--tarjeta, #fff); color: inherit; font: inherit; }
