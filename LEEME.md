@@ -66,7 +66,7 @@ Si la web está publicada (https), el navegador te ofrece **instalarla** en el m
 ## Pruebas
 
 - `node tests/validar.js`: comprueba la estructura de todos los datos y recalcula con código independiente las respuestas de estrategia básica, Hi-Lo, cuenta verdadera, mus y póker. No necesita instalar nada. Ejecútalo cada vez que añadas ejercicios.
-- `node tests/recorrido.js`: juega los 150 niveles respondiendo bien cada pregunta (todos los tipos) y comprueba que cada nivel mezcla al menos 3 tipos. Tarda unos minutos.
+- `node tests/recorrido.js`: juega los 600 niveles (y sus niveles Oro) respondiendo bien cada pregunta (todos los tipos) y comprueba que cada nivel mezcla al menos 3 tipos. Tarda unos minutos.
 - `node tests/navegador.js`: abre la app en un navegador real (Playwright) y prueba pantallas, repetición espaciada, rachas, ajustes, copia de seguridad y conteo. Necesita `npm i playwright` y la carpeta servida, por ejemplo con `python3 -m http.server 8123`.
 
 ## Cómo añadir ejercicios o niveles
@@ -151,7 +151,7 @@ Cuidado con las comas entre elementos y con las comillas.
 **Límites que conviene saber**
 - Los niveles Oro viajan dentro del código de la web, así que alguien con conocimientos podría saltarse el bloqueo. Para protegerlos de verdad habría que servirlos desde el servidor solo a los VIP.
 - El proyecto de Supabase es el mismo que el de «Gym social»: comparten el sistema de cuentas (los usuarios son los mismos) y la plantilla de los correos de acceso.
-- `tests/recorrido.js` juega ahora también los 150 niveles Oro. `tests/webhook.mjs` prueba la firma de Stripe y la lógica del VIP.
+- `tests/recorrido.js` juega ahora también los niveles Oro. `tests/webhook.mjs` prueba la firma de Stripe y la lógica del VIP.
 
 ## Más juegos y más lecciones (noviembre)
 
@@ -212,3 +212,9 @@ Interruptor «Recordatorio de racha» en Ajustes (necesita Chrome/Firefox o, en 
 
 ## Inicio en dos secciones
 Debajo de la meta, el reto y los repasos, el inicio tiene dos pestañas: **Juegos** (los seis juegos) y **Practicar** (partida rápida, entrena el conteo, ranking con amigos y mis estadísticas). Al volver de una de esas herramientas se reabre «Practicar»; la vez siguiente vuelve a verse «Juegos».
+
+## 100 niveles por juego
+- Cada uno de los seis juegos llega a **100 niveles normales** (600 en total) y cada nivel tiene su nivel Oro para el VIP.
+- `data/mas-niveles.js` crea los niveles 31–100 (en ruleta, del 9 al 100): retoma los temas de cada juego en versiones **avanzado, experto, maestro, leyenda y mítico**, con situaciones nuevas generadas por código (misma semilla = mismos ejercicios). Cada nivel nuevo se apunta en `AMPLIACION` y `data/premium.js` le crea su nivel Oro.
+- **Carga perezosa** (`data/perezoso.js`): los ejercicios de un nivel generado se crean la primera vez que se abre. La app arranca en medio segundo en vez de generar miles de ejercicios al abrirla. Por eso `INDICE_EJERCICIOS` y `metaEjercicio` buscan por id sin recorrerlo todo, y los repasos y partidas rápidas salen de los niveles ya alcanzados (`nivelesAlcanzados`).
+- La ruleta tiene nueve generadores nuevos (docenas, columnas, quién gana, dos apuestas a la vez, mitos, presupuesto…) con su cálculo independiente en `tests/validar.js`.

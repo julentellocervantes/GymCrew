@@ -1,4 +1,4 @@
-// AMPLIACIÓN: más niveles para que cada juego tenga 30 niveles normales.
+// AMPLIACIÓN: más niveles para cada juego (data/mas-niveles.js los lleva después hasta 100).
 // Se generan con data/generadores.js y data/casino.js (semilla fija por nivel, respuestas calculadas y validadas).
 // Los niveles «Examen» y «Torneo» usan las situaciones difíciles; el resto, la versión fácil (blackjack, póker y mus).
 // AMPLIACION[curso] = [[id, icono, título, resumen, receta], ...]  (data/premium.js crea el nivel Oro de cada uno)
@@ -154,11 +154,10 @@ const AMPLIACION = {};
         lecciones: u.niveles.map(([id, icono, titulo, resumen, receta]) => {
           AMPLIACION[curso.id].push([id, icono, titulo, resumen, receta]);
           const dificil = /^(Examen|Torneo)/.test(titulo);
-          return {
+          return GEN.perezoso({
             id, icono, titulo, xp: dificil ? 40 : 30,
             intro: `${resumen} Cada situación es nueva: no se repiten las de otros niveles.`,
-            ejercicios: GEN.construir(id, receta, cfg.tabla, !dificil),
-          };
+          }, () => GEN.construir(id, receta, cfg.tabla, !dificil));
         }),
       });
     }

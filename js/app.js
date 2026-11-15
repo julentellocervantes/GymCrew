@@ -152,13 +152,18 @@ function registrarActividad(xp) {
 // ---------- repetición espaciada (cajas de Leitner) ----------
 // Cada ejercicio que respondes se apunta: si aciertas sube de caja y tarda más en volver; si fallas, vuelve hoy.
 const INTERVALOS_DIAS = [0, 1, 2, 4, 8, 16];
-const META_EJERCICIOS = {}; // id de ejercicio -> { curso, u (índice de unidad), tipo }, incluye los niveles Oro
-CURSOS.forEach((c) => c.unidades.forEach((u, ui) => u.lecciones.forEach((l) => {
-  const lista = l.ejercicios.concat(typeof ORO !== 'undefined' && ORO[l.id] ? ORO[l.id].ejercicios : []);
-  lista.forEach((e) => (META_EJERCICIOS[e.id] = { curso: c.id, u: ui, tipo: e.tipo }));
-})));
+// Datos de un ejercicio para las estadísticas (juego, unidad y tipo), incluidos los niveles Oro. Se resuelve al vuelo: no genera niveles de más.
+const META_CACHE = {};
+function metaEjercicio(id) {
+  if (META_CACHE[id]) return META_CACHE[id];
+  const m = /^(oro-)?([a-z]{2}-u?\d+-\d+)-/.exec(id);
+  const n = m && INDICE_NIVELES[m[2]];
+  const nivel = n && (m[1] ? (typeof ORO !== 'undefined' ? ORO[m[2]] : null) : n.nivel);
+  const e = nivel && nivel.ejercicios.find((x) => x.id === id);
+  return e ? (META_CACHE[id] = { curso: n.curso.id, u: n.u, tipo: e.tipo }) : undefined;
+}
 function registrarEstadistica(id, acierto) {
-  const m = META_EJERCICIOS[id];
+  const m = metaEjercicio(id);
   if (!m) return;
   const suma = (o, k) => { const a = o[k] || [0, 0]; a[acierto ? 0 : 1] += 1; o[k] = a; };
   suma(progreso.stats.u, m.curso + '|' + m.u);
@@ -195,8 +200,24 @@ const niveles = (curso) => curso.unidades.flatMap((u) => u.lecciones);
 const hechosDe = (curso) => niveles(curso).filter((l) => progreso.completadas[l.id]).length;
 const siguienteNivel = (curso) => niveles(curso).find((l) => !progreso.completadas[l.id]) || null;
 // id de ejercicio -> el ejercicio y su curso (para armar repasos que mezclan juegos)
-const INDICE_EJERCICIOS = {};
-CURSOS.forEach((c) => niveles(c).forEach((l) => l.ejercicios.forEach((e) => (INDICE_EJERCICIOS[e.id] = { ejercicio: e, curso: c }))));
+// Los niveles generados se crean al usarlos, así que el índice se resuelve por id sin generar nada de más.
+const INDICE_NIVELES = {};
+CURSOS.forEach((c) => c.unidades.forEach((u, ui) => u.lecciones.forEach((l) => (INDICE_NIVELES[l.id] = { nivel: l, curso: c, u: ui }))));
+const INDICE_CACHE = {};
+function buscarEjercicio(id) {
+  if (typeof id !== 'string') return undefined;
+  if (INDICE_CACHE[id]) return INDICE_CACHE[id];
+  const m = /^([a-z]{2}-u?\d+-\d+)-/.exec(id);
+  const n = m && INDICE_NIVELES[m[1]];
+  const e = n && n.nivel.ejercicios.find((x) => x.id === id);
+  return e ? (INDICE_CACHE[id] = { ejercicio: e, curso: n.curso }) : undefined;
+}
+const INDICE_EJERCICIOS = new Proxy({}, { get: (_, id) => buscarEjercicio(id), has: (_, id) => !!buscarEjercicio(id) });
+// Niveles ya alcanzados (hechos y los siguientes): de ahí salen los repasos y las partidas rápidas, sin generar los 600 niveles
+function nivelesAlcanzados(extra = 3) {
+  return CURSOS.flatMap((c) => { const l = niveles(c); let ult = -1; l.forEach((x, i) => { if (progreso.completadas[x.id]) ult = i; }); return l.slice(0, Math.max(extra, ult + 1 + extra)); });
+}
+const ejerciciosAlcanzados = () => nivelesAlcanzados().flatMap((l) => l.ejercicios);
 const listaSrs = (filtro) =>
   Object.keys(progreso.srs).filter((id) => INDICE_EJERCICIOS[id] && filtro(progreso.srs[id]));
 const pendientesHoy = () => listaSrs((s) => s.prox <= hoy());

@@ -302,7 +302,7 @@ function verificarInteractivo(e) {
 }
 
 
-for (const f of ['cursos.js', 'blackjack.js', 'poker.js', 'mus.js', 'blackjack-extra.js', 'poker-extra.js', 'mus-extra.js', 'ordenar-extra.js', 'interactivos-extra.js', 'variedad-extra.js', 'ayuda.js', 'generadores.js', 'practica.js', 'videopoker-datos.js', 'casino.js', 'ruleta.js', 'ampliacion.js', 'formas-nuevas.js', 'variedad-generada.js', 'premium.js']) vm.runInContext(fs.readFileSync(D + f, 'utf8'), ctx, { filename: f });
+for (const f of ['cursos.js', 'blackjack.js', 'poker.js', 'mus.js', 'blackjack-extra.js', 'poker-extra.js', 'mus-extra.js', 'ordenar-extra.js', 'interactivos-extra.js', 'variedad-extra.js', 'ayuda.js', 'generadores.js', 'practica.js', 'videopoker-datos.js', 'perezoso.js', 'casino.js', 'ruleta.js', 'ampliacion.js', 'mas-niveles.js', 'formas-nuevas.js', 'variedad-generada.js', 'premium.js']) vm.runInContext(fs.readFileSync(D + f, 'utf8'), ctx, { filename: f });
 const CURSOS = vm.runInContext('CURSOS', ctx);
 const AYUDA = vm.runInContext('AYUDA', ctx);
 const CURSOS_ORO = vm.runInContext('CURSOS_ORO', ctx);
@@ -629,6 +629,30 @@ function verificarCasino(e) {
     case 'rlPago': igual(ch.total ? (ch.pago + 1) * ch.m : ch.pago * ch.m, e.respuesta, 'cobro de la ruleta'); break;
     case 'rlProb': { igual(((100 * ch.cubre) / 37).toFixed(1).replace('.', ',') + ' %', resp, 'probabilidad k/37'); if (e.opciones.some((o, i) => o !== ((100 * ch.opciones[i]) / 37).toFixed(1).replace('.', ',') + ' %')) mal(e.id, 'opciones de probabilidad'); break; }
     case 'rlColor': { const rojos = new Set([1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]); igual(rojos.has(ch.n) ? 'Rojo' : 'Negro', resp, 'color'); if (rojos.size !== 18) mal(e.id, 'hacen falta 18 rojos'); break; }
+    case 'rlDocena': { igual(Math.ceil(ch.n / 12) - 1, e.correcta, 'docena'); if (!e.pregunta.includes(`el ${ch.n}?`)) mal(e.id, 'ruleta: número distinto en la pregunta'); break; }
+    case 'rlColumna': { igual(ch.n % 3 === 1 ? 0 : ch.n % 3 === 2 ? 1 : 2, e.correcta, 'columna'); break; }
+    case 'rlGana': {
+      const R = new Set([1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]);
+      const gana = { 'Rojo': (n) => R.has(n), 'Negro': (n) => n >= 1 && !R.has(n), 'Par': (n) => n % 2 === 0, 'Impar': (n) => n % 2 === 1, 'Falta (1–18)': (n) => n >= 1 && n <= 18, 'Pasa (19–36)': (n) => n >= 19, '1.ª docena': (n) => n >= 1 && n <= 12, '2.ª docena': (n) => n >= 13 && n <= 24, '3.ª docena': (n) => n >= 25 && n <= 36 };
+      const ok = e.opciones.map((o) => gana[o](ch.n));
+      if (ok.filter(Boolean).length !== 1 || !ok[e.correcta]) mal(e.id, 'ruleta: debe ganar exactamente la opción marcada');
+      if (!e.pregunta.includes(`Sale el ${ch.n}.`)) mal(e.id, 'ruleta: número distinto en la pregunta');
+      break;
+    }
+    case 'rlNeto': {
+      const R = new Set([1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]);
+      const pago = { Pleno: 35, Calle: 11, Línea: 5, Docena: 2, Rojo: 1, Negro: 1, Par: 1, Impar: 1, Falta: 1 };
+      const cubre = { Pleno: (x, a) => x === a, Calle: (x, a) => x >= a && x <= a + 2, Línea: (x, a) => x >= (a - 1) * 3 + 1 && x <= (a - 1) * 3 + 6, Docena: (x, a) => x >= (a - 1) * 12 + 1 && x <= a * 12, Rojo: (x) => R.has(x), Negro: (x) => x >= 1 && !R.has(x), Par: (x) => x >= 1 && x % 2 === 0, Impar: (x) => x % 2 === 1, Falta: (x) => x >= 1 && x <= 18 };
+      if (ch.ap.length !== 2) mal(e.id, 'ruleta: dos apuestas');
+      igual(ch.ap.reduce((t, a) => t + (cubre[a.n](ch.sale, a.arg) ? (pago[a.n] + 1) * a.m : 0), 0), e.respuesta, 'dinero recibido con dos apuestas');
+      if (!e.pregunta.includes(`Sale el ${ch.sale}.`) || !ch.ap.every((a) => e.pregunta.includes(`${a.m} €`))) mal(e.id, 'ruleta: la pregunta no coincide con las apuestas');
+      break;
+    }
+    case 'rlMito': { igual('48,6 %', resp, 'probabilidad de una apuesta simple (18/37)'); if (((18 / 37) * 100).toFixed(1).replace('.', ',') + ' %' !== '48,6 %') mal(e.id, '18/37'); break; }
+    case 'rlMasProb': { const cub = { Pleno: 1, Caballo: 2, Calle: 3, Cuadro: 4, 'Línea': 5 + 1, Docena: 12, Rojo: 18 }; const v = e.opciones.map((o) => cub[o]); if (v.some((x) => x === undefined) || v[e.correcta] !== Math.max(...v)) mal(e.id, 'ruleta: no es la apuesta más probable'); break; }
+    case 'rlOrdProb': { const cub = { Pleno: 1, Caballo: 2, Calle: 3, Cuadro: 4, 'Línea': 6, Docena: 12, Rojo: 18 }; const v = e.elementos.map((o) => cub[o]); if (v.some((x, i) => x === undefined || (i && x <= v[i - 1]))) mal(e.id, 'ruleta: orden de probabilidad incorrecto'); break; }
+    case 'rlBanca': { if (ch.B % ch.m) mal(e.id, 'ruleta: presupuesto no divisible'); igual(ch.B / ch.m, e.respuesta, 'tiradas posibles'); if (!e.pregunta.includes(`${ch.B} €`) || !e.pregunta.includes(`${ch.m} €`)) mal(e.id, 'ruleta: cifras distintas en la pregunta'); break; }
+    case 'rlRojos': { const R = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]; let c = 0; for (let x = 1; x <= ch.n; x++) if (R.includes(x)) c++; igual(c, e.respuesta, 'rojos hasta N'); break; }
     case 'rlOrd': { const pagos = { Pleno: 35, Caballo: 17, Calle: 11, Cuadro: 8, 'Línea': 5, Docena: 2, Rojo: 1 }; const v = e.elementos.map((x) => pagos[x]); if (v.some((x) => x === undefined) || v.some((x, i) => i && x <= v[i - 1])) mal(e.id, 'ruleta: las apuestas no van de menos a más pago'); break; }
     case 'rlEm': { const pagos = { Pleno: '35 a 1', Caballo: '17 a 1', Calle: '11 a 1', Cuadro: '8 a 1', 'Línea': '5 a 1', Docena: '2 a 1', Rojo: '1 a 1' }; e.pares.forEach(([a, b]) => { if (pagos[a] !== b) mal(e.id, `${a} paga ${pagos[a]}, no ${b}`); }); break; }
     case 'rlPerdida': igual(37 * ch.m - 36 * ch.m, e.respuesta, 'pérdida de 37 tiradas a pleno'); break;

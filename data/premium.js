@@ -130,11 +130,10 @@ const CURSOS_ORO = [];
       const normal = base[idBase];
       if (!normal) continue;
       const id = 'oro-' + idBase;
-      const nivel = {
+      const nivel = GEN.perezoso({
         id, oro: true, base: idBase, titulo, icono: '👑', xp: normal.xp * 2,
         intro: `Nivel Oro de «${normal.titulo}»: las mismas ideas, pero con situaciones más difíciles y sin pistas fáciles. Si fallas no pasa nada: la explicación te dice por qué.`,
-        ejercicios: GEN.construir(id, receta, TABLAS[curso.id] || GEN.BJ),
-      };
+      }, () => GEN.construir(id, receta, TABLAS[curso.id] || GEN.BJ), false);
       ORO[idBase] = nivel;
       lecciones.push(nivel);
     }

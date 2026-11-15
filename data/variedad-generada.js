@@ -209,15 +209,16 @@
     baccarat: ['baJugador', 'baNatural', 'baTotal'],
     videopoker: ['vpPaga', 'vpRelampago'],
   };
-  for (const curso of CURSOS) {
-    const rot = ROTACION[curso.id];
-    if (!rot) continue;
-    curso.unidades.flatMap((u) => u.lecciones).forEach((l, i) => {
-      const nombre = rot[i % rot.length];
-      let ej, intento = 0;
-      do { ej = G[nombre](l.id + '-v1', GEN(semilla(l.id + nombre + (intento || '')))); intento++; }
-      while (ej.tipo === 'relampago' && ej.opciones.some((_, k) => !ej.items.some((x) => x[1] === k)) && intento < 200);
-      l.ejercicios.splice(Math.ceil(l.ejercicios.length / 2), 0, ej);
-    });
-  }
+  // Posición de cada nivel dentro de su juego (decide qué ejercicio de variedad le toca)
+  const POS = new Map(), CURSO_DE = new Map();
+  for (const curso of CURSOS) curso.unidades.flatMap((u) => u.lecciones).forEach((l, i) => { POS.set(l.id, i); CURSO_DE.set(l.id, curso.id); });
+  GENERADORES.aplicar((l) => {
+    const rot = ROTACION[CURSO_DE.get(l.id)];
+    if (!rot || !POS.has(l.id)) return;
+    const nombre = rot[POS.get(l.id) % rot.length];
+    let ej, intento = 0;
+    do { ej = G[nombre](l.id + '-v1', GEN(semilla(l.id + nombre + (intento || '')))); intento++; }
+    while (ej.tipo === 'relampago' && ej.opciones.some((_, k) => !ej.items.some((x) => x[1] === k)) && intento < 200);
+    l.ejercicios.splice(Math.ceil(l.ejercicios.length / 2), 0, ej);
+  });
 })();

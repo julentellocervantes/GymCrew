@@ -69,6 +69,60 @@ const RULETA = (function () {
       const a = pick(r, [APUESTAS[0], APUESTAS[1], APUESTAS[3], APUESTAS[4]]), fichas = pick(r, [2, 3, 5]);
       return { tipo: 'numero', pregunta: `Pones ${fichas} apuestas de 1 € cada una, todas ${a.txt}, en casillas distintas. ¿Cuántos números cubres entre todas?`, unidad: 'números', respuesta: a.cubre * fichas, explicacion: `${fichas} × ${a.cubre} = ${a.cubre * fichas} números cubiertos de 37: cuantos más cubres, más a menudo ganas pero menos cobras.`, chequeo: { k: 'rlCuantas', cubre: a.cubre, fichas } };
     },
+    rlDocena(r) {
+      const n = pick(r, [...Array(36).keys()].map((i) => i + 1)), d = Math.ceil(n / 12);
+      const o = ['1.ª docena (1–12)', '2.ª docena (13–24)', '3.ª docena (25–36)'];
+      return { tipo: 'opcion_unica', pregunta: `¿En qué docena está el ${n}?`, opciones: o, correcta: d - 1, explicacion: `Las docenas son 1–12, 13–24 y 25–36: el ${n} está en la ${d}.ª.`, chequeo: { k: 'rlDocena', n } };
+    },
+    rlColumna(r) {
+      const n = pick(r, [...Array(36).keys()].map((i) => i + 1)), c = ((n - 1) % 3) + 1;
+      const o = ['1.ª columna (1, 4, 7…)', '2.ª columna (2, 5, 8…)', '3.ª columna (3, 6, 9…)'];
+      return { tipo: 'opcion_unica', pregunta: `¿En qué columna del tapete está el ${n}?`, opciones: o, correcta: c - 1, explicacion: `Las columnas avanzan de tres en tres: el ${n} está en la ${c}.ª columna.`, chequeo: { k: 'rlColumna', n } };
+    },
+    rlGana(r) {
+      const n = pick(r, [...Array(36).keys()].map((i) => i + 1));
+      const reglas = { 'Rojo': ROJOS.includes(n), 'Negro': !ROJOS.includes(n), 'Par': n % 2 === 0, 'Impar': n % 2 === 1, 'Falta (1–18)': n <= 18, 'Pasa (19–36)': n >= 19, '1.ª docena': n <= 12, '2.ª docena': n > 12 && n <= 24, '3.ª docena': n > 24 };
+      const gana = barajar(r, Object.keys(reglas).filter((k) => reglas[k])), pierde = barajar(r, Object.keys(reglas).filter((k) => !reglas[k]));
+      const bien = gana[0], o = barajar(r, [bien].concat(pierde.slice(0, 3)));
+      return { tipo: 'opcion_unica', pregunta: `Sale el ${n}. ¿Cuál de estas apuestas gana?`, opciones: o, correcta: o.indexOf(bien), explicacion: `El ${n} es ${ROJOS.includes(n) ? 'rojo' : 'negro'}, ${n % 2 ? 'impar' : 'par'}, ${n <= 18 ? 'de falta (1–18)' : 'de pasa (19–36)'} y está en la ${Math.ceil(n / 12)}.ª docena.`, chequeo: { k: 'rlGana', n, opciones: o.slice() } };
+    },
+    rlNeto(r) {
+      const m1 = pick(r, [2, 5, 10]), m2 = pick(r, [1, 2, 5]);
+      const plantillas = [
+        { sale: 7, ap: [{ n: 'Docena', arg: 1, m: m1, t: '1.ª docena' }, { n: 'Negro', m: m2, t: 'negro' }], c: 'El 7 es rojo y está en la 1.ª docena.' },
+        { sale: 17, ap: [{ n: 'Pleno', arg: 17, m: m1, t: 'el 17 a pleno' }, { n: 'Rojo', m: m2, t: 'rojo' }], c: 'El 17 es negro.' },
+        { sale: 30, ap: [{ n: 'Par', m: m1, t: 'par' }, { n: 'Docena', arg: 3, m: m2, t: 'la 3.ª docena' }], c: 'El 30 es par y está en la 3.ª docena.' },
+        { sale: 22, ap: [{ n: 'Falta', m: m1, t: 'falta (1–18)' }, { n: 'Impar', m: m2, t: 'impar' }], c: 'El 22 es de pasa y par.' },
+        { sale: 5, ap: [{ n: 'Línea', arg: 1, m: m1, t: 'la línea 1–6' }, { n: 'Rojo', m: m2, t: 'rojo' }], c: 'El 5 está en la línea 1–6 y es rojo.' },
+        { sale: 9, ap: [{ n: 'Pleno', arg: 8, m: m1, t: 'el 8 a pleno' }, { n: 'Calle', arg: 7, m: m2, t: 'la calle 7-8-9' }], c: 'El 9 está en la calle 7-8-9, pero no es el 8.' },
+      ];
+      const q = pick(r, plantillas);
+      const cubre = (a) => ({ Pleno: [a.arg], Rojo: ROJOS, Negro: [...Array(36).keys()].map((i) => i + 1).filter((x) => !ROJOS.includes(x)), Par: [...Array(18).keys()].map((i) => 2 * i + 2), Impar: [...Array(18).keys()].map((i) => 2 * i + 1), Falta: [...Array(18).keys()].map((i) => i + 1), Docena: [...Array(12).keys()].map((i) => 12 * (a.arg - 1) + i + 1), Línea: [1, 2, 3, 4, 5, 6], Calle: [a.arg, a.arg + 1, a.arg + 2] }[a.n]);
+      const pago = { Pleno: 35, Calle: 11, Línea: 5, Docena: 2, Rojo: 1, Negro: 1, Par: 1, Impar: 1, Falta: 1 };
+      const recibes = q.ap.reduce((s, a) => s + (cubre(a).includes(q.sale) ? (pago[a.n] + 1) * a.m : 0), 0);
+      return { tipo: 'numero', pregunta: `Apuestas ${q.ap[0].m} € a ${q.ap[0].t} y ${q.ap[1].m} € a ${q.ap[1].t}. Sale el ${q.sale}. ¿Cuántos euros recibes en total (las apuestas que ganan, con su apuesta devuelta)?`, unidad: '€', respuesta: recibes, explicacion: `${q.c} Solo cobran las apuestas ganadoras: ${q.ap.map((a) => (cubre(a).includes(q.sale) ? `${a.t}: ${(pago[a.n] + 1) * a.m} €` : `${a.t}: 0 €`)).join('; ')}.`, chequeo: { k: 'rlNeto', sale: q.sale, ap: q.ap.map((a) => ({ n: a.n, arg: a.arg, m: a.m })), tiene: q.ap.map((a) => a.t) } };
+    },
+    rlMito(r) {
+      const n = pick(r, [3, 4, 5, 6, 7, 8, 9, 10, 12]), c = pick(r, ['rojo', 'negro']);
+      const o = barajar(r, ['48,6 %', 'Menos de 48,6 %', 'Más de 48,6 %', '50 %']);
+      return { tipo: 'opcion_unica', pregunta: `Ha salido ${c} ${n} veces seguidas. ¿Qué probabilidad hay de que la siguiente tirada sea ${c}?`, opciones: o, correcta: o.indexOf('48,6 %'), explicacion: `La rueda no tiene memoria: cada tirada es nueva y ${c} siempre tiene 18/37 ≈ 48,6 %. Ni «ya toca» ni «está de racha».`, chequeo: { k: 'rlMito', n } };
+    },
+    rlMasProb(r) {
+      const as = barajar(r, DISTINTAS).slice(0, 4), mejor = as.reduce((a, b) => (b.cubre > a.cubre ? b : a));
+      return { tipo: 'opcion_unica', pregunta: 'De estas apuestas, ¿cuál gana más a menudo?', opciones: as.map((a) => a.n), correcta: as.indexOf(mejor), explicacion: `${mejor.n} cubre ${mejor.cubre} de 37 casillas: es la que más veces acierta, aunque sea la que menos paga.`, chequeo: { k: 'rlMasProb', opciones: as.map((a) => a.n) } };
+    },
+    rlOrdProb(r) {
+      const as = barajar(r, DISTINTAS).slice(0, 4).sort((x, y) => x.cubre - y.cubre);
+      return { tipo: 'ordenar', pregunta: 'Ordena estas apuestas de la que gana menos a menudo a la que gana más.', elementos: as.map((x) => x.n), explicacion: as.map((x) => `${x.n} cubre ${x.cubre}`).join('; ') + ' casillas de 37.', chequeo: { k: 'rlOrdProb' } };
+    },
+    rlBanca(r) {
+      const m = pick(r, [1, 2, 5]), t = pick(r, [10, 20, 25, 40]), B = m * t;
+      return { tipo: 'numero', pregunta: `Tienes ${B} € para esta noche y apuestas ${m} € en cada tirada. ¿Cuántas tiradas puedes jugar como máximo?`, unidad: 'tiradas', respuesta: t, explicacion: `${B} ÷ ${m} = ${t} tiradas. Con la ventaja de la casa, de media perderás unos ${coma(B / 37, 1)} € en ese tiempo.`, chequeo: { k: 'rlBanca', m, B } };
+    },
+    rlRojos(r) {
+      const n = pick(r, [6, 12, 18, 24, 30, 36]), c = ROJOS.filter((x) => x <= n).length;
+      return { tipo: 'numero', pregunta: `¿Cuántos números rojos hay entre el 1 y el ${n}?`, unidad: 'números', respuesta: c, explicacion: `Rojos hasta el ${n}: ${ROJOS.filter((x) => x <= n).join(', ')}. En total hay 18 rojos y 18 negros.`, chequeo: { k: 'rlRojos', n } };
+    },
   };
 
   const def = { k: 'def' };
@@ -108,14 +162,37 @@ const RULETA = (function () {
       reglas: 'Ruleta europea de 37 casillas (0–36). Cada apuesta cubre unos números y paga según cuántos cubra; el cero verde da a la casa un 2,7 % de ventaja.',
       unidades: UNIDADES.map((u) => ({
         id: u.id, titulo: u.titulo, descripcion: u.descripcion,
-        lecciones: u.lecciones.map(([id, icono, titulo, xp, intro, fijos, receta]) => ({
+        lecciones: u.lecciones.map(([id, icono, titulo, xp, intro, fijos, receta]) => GEN.perezoso({
           id, titulo, icono, xp, intro,
-          ejercicios: fijos.map(([p, o, c, ex], i) => op(`${id}-e${i + 1}`, p, o, c, ex)).concat(construir(id, receta, T)),
-        })),
+        }, () => fijos.map(([p, o, c, ex], i) => op(`${id}-e${i + 1}`, p, o, c, ex)).concat(construir(id, receta, T)))),
       })),
     };
   }
 
+  // Temas extra para los niveles 9 a 100 (data/mas-niveles.js): [titulo, icono, resumen, receta]
+  const TEMAS = [
+    ['Docenas y columnas', '📐', 'En qué docena y en qué columna del tapete está cada número.', 'rlDocena rlColumna rlDocena rlCuantas rlEm'],
+    ['¿Quién gana?', '✅', 'Con el número que sale, di qué apuestas cobran.', 'rlGana rlGana rlColor rlCuantas rlOrd'],
+    ['Dos apuestas a la vez', '🧮', 'Cuánto recibes cuando juegas dos apuestas en la misma tirada.', 'rlNeto rlNeto rlGana rlPagoTotal rlEm'],
+    ['Rachas y falacias', '🔁', 'La rueda no tiene memoria: rachas, números «calientes» y sistemas.', 'rlMito rlMito rlProb rlEsperada rlOrd'],
+    ['La apuesta más probable', '🎲', 'Compara apuestas por la frecuencia con la que ganan.', 'rlMasProb rlOrdProb rlProb rlCuantas rlEm'],
+    ['Presupuesto por noche', '👛', 'Cuántas tiradas aguantas con tu presupuesto y cuánto pierdes de media.', 'rlBanca rlMito rlEsperada rlPerdida rlOrd'],
+    ['Contar rojos', '🔴', 'Cuántos números rojos hay en cada tramo del tapete.', 'rlRojos rlRojos rlColor rlCuantas rlEm'],
+    ['Cobros con varias fichas', '💵', 'Pleno, caballo, calle o cuadro: cuánto recibes en cada caso.', 'rlPagoGana rlPagoTotal rlPagoGana rlPagoTotal rlOrd rlEm'],
+    ['Ventaja al detalle', '🔍', 'La ventaja de 1/37 en euros y en porcentaje.', 'rlEsperada rlPerdida rlProb rlMito rlEm'],
+    ['Mesa completa I', '🎡', 'Colores, docenas, cobros y probabilidades mezclados.', 'rlColor rlDocena rlCubre rlPagoGana rlProb rlOrd'],
+    ['Mesa completa II', '🎰', 'Dos apuestas, probabilidades y mitos en el mismo nivel.', 'rlNeto rlMasProb rlMito rlEsperada rlEm rlColumna'],
+    ['Decisiones con cabeza', '🧊', 'Presupuesto, mitos y ventaja de la casa para jugar con límites.', 'rlBanca rlMito rlEsperada rlPerdida rlEm'],
+    ['Torneo de ruleta', '🏁', 'Cálculo rápido con varias apuestas y presupuestos.', 'rlNeto rlNeto rlPagoTotal rlBanca rlOrdProb rlEm'],
+    ['Examen final de ruleta', '🎓', 'El examen completo: mesa, pagos, probabilidades y juego responsable.', 'rlColor rlDocena rlGana rlNeto rlProb rlEsperada rlMito rlOrd rlEm'],
+  ];
+  // Los 8 niveles de las unidades base también sirven de tema para repetirlos en versión más difícil
+  const BASE = UNIDADES.flatMap((u) => u.lecciones).map(([, icono, titulo, , intro, , receta]) => {
+    const ks = receta.split(' '); // en los niveles base una parte de las preguntas era fija: aquí se completa con generadas
+    for (const k of ['rlProb', 'rlPagoGana', 'rlCubre', 'rlEsperada']) if (ks.length < 5 && !ks.includes(k)) ks.push(k);
+    return [titulo, icono, intro.split('. ')[0] + '.', ks.join(' ')];
+  });
+
   CURSOS.push(curso());
-  return { T, APUESTAS };
+  return { T, APUESTAS, TEMAS: BASE.concat(TEMAS) };
 })();

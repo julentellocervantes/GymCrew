@@ -42,7 +42,7 @@ function planSesionHoy(n = 10) {
     .sort((x, y) => y[1][1] / (y[1][0] + y[1][1]) - x[1][1] / (x[1][0] + x[1][1]));
   if (flojas.length) {
     const [clave] = flojas[0];
-    tomar('de ' + SITUACIONES[clave].nombre.replace(/^(jugadas|preguntas) (con|de) /, ''), barajar(Object.entries(INDICE_EJERCICIOS).filter(([, x]) => situacionesDe(x.ejercicio).includes(clave)).map(([id]) => id)), 3);
+    tomar('de ' + SITUACIONES[clave].nombre.replace(/^(jugadas|preguntas) (con|de) /, ''), barajar(ejerciciosAlcanzados().filter((e) => situacionesDe(e).includes(clave)).map((e) => e.id)), 3);
   }
   // 3) tu tema más flojo
   const temas = Object.entries(st.u).map(([k, a]) => { const [cid, ui] = k.split('|'); const c = CURSOS.find((x) => x.id === cid); return c && c.unidades[Number(ui)] ? { c, u: c.unidades[Number(ui)], a } : null; })
@@ -55,7 +55,7 @@ function planSesionHoy(n = 10) {
   // 5) relleno: errores y, si hace falta, cualquier pregunta ya vista
   tomar('de tus errores', barajar(misErrores()), n);
   tomar('de práctica', barajar(Object.keys(progreso.srs)), n);
-  tomar('de práctica', barajar(Object.keys(INDICE_EJERCICIOS)), n);
+  tomar('de práctica', barajar(ejerciciosAlcanzados().map((e) => e.id)), n);
   const ids = partes.flatMap((p) => p.ids);
   return { ids, partes, resumen: partes.map((p) => `${p.ids.length} ${p.etiqueta}`).join(' · ') };
 }
@@ -87,13 +87,13 @@ function iniciarEntrenoTema(cursoId, ui) {
 }
 // Partida rápida: 60 segundos seguidos de preguntas de todos los juegos; cuenta los aciertos y guarda tu récord
 function iniciarPartidaRapida() {
-  const pool = Object.values(INDICE_EJERCICIOS).map((x) => x.ejercicio).filter((e) => (e.tipo === 'opcion_unica' || e.tipo === 'accion') && e.opciones && e.opciones.length >= 2);
+  const pool = ejerciciosAlcanzados().filter((e) => (e.tipo === 'opcion_unica' || e.tipo === 'accion') && e.opciones && e.opciones.length >= 2);
   const curso = { id: 'global', nombre: 'Partida rápida', icono: '⚡', color: '#f5a524', unidades: [], global: true };
   mostrarLeccion(curso, { id: 'partida-rapida', titulo: 'Partida rápida', icono: '⚡', xp: 10, repaso: true, rapida: true, ejercicios: barajar(pool).slice(0, 80) });
 }
 // Repaso de 8 preguntas que comparten una situación concreta (p. ej. «12-16 contra 7 o más»)
 function iniciarEntrenoSituacion(clave) {
-  const pool = Object.values(INDICE_EJERCICIOS).map((x) => x.ejercicio).filter((e) => situacionesDe(e).includes(clave));
+  const pool = ejerciciosAlcanzados().filter((e) => situacionesDe(e).includes(clave));
   if (!pool.length) return mostrarEstadisticas('atras');
   const curso = { id: 'global', nombre: 'Repaso', icono: '🎯', color: '#3a7be0', unidades: [], global: true };
   mostrarLeccion(curso, { id: 'repaso-global', titulo: 'Entreno: ' + SITUACIONES[clave].nombre.replace(/^(jugadas|preguntas) (con|de) /, ''), icono: '🎯', xp: 10, repaso: true, ejercicios: barajar(pool).slice(0, 8) });

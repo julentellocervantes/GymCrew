@@ -15,9 +15,11 @@ const esc = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   // los niveles normales y, a continuación, los niveles Oro de la ruta dorada
   let lecciones = await page.evaluate(() => CURSOS.flatMap((c) => niveles(c).concat(niveles(c).map((l) => ORO[l.id]).filter(Boolean)).map((l) => ({ curso: c.id, id: l.id, n: l.ejercicios.length, nueva: l.ejercicios.some((e) => ['clasificar', 'deslizador', 'rellenar', 'relampago'].includes(e.tipo)) }))));
   if (process.env.SOLO_CURSO) lecciones = lecciones.filter((l) => l.curso === process.env.SOLO_CURSO);
+  if (process.env.SOLO_ID) lecciones = lecciones.filter((l) => new RegExp(process.env.SOLO_ID).test(l.id)); // p. ej. SOLO_ID='^oro-pk-5-'
   if (process.env.SOLO_NUEVAS) lecciones = lecciones.filter((l) => l.nueva); // node tests/recorrido.js con SOLO_NUEVAS=1
   const porTipo = {};
   for (const lec of lecciones) {
+    if (process.env.PROGRESO) console.log('nivel', lec.id);
     await page.evaluate(([cid, id]) => { const c = CURSOS.find((x) => x.id === cid); mostrarLeccion(c, niveles(c).concat(Object.values(ORO)).find((l) => l.id === id)); }, [lec.curso, lec.id]);
     await page.waitForTimeout(150);
     if (await page.getByRole('button', { name: '¡Vamos!' }).count()) await page.getByRole('button', { name: '¡Vamos!' }).click();
