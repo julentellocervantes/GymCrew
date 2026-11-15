@@ -26,6 +26,7 @@ async function nubeSubir() {
       headers: { ...cabecerasNube(s.access_token), Prefer: 'resolution=merge-duplicates,return=minimal' },
       body: JSON.stringify({ user_id: id, datos: progresoParaNube(), xp: progreso.xp, actualizado: new Date().toISOString() }),
     });
+    if (r.ok && typeof amigosSubirXp === 'function') amigosSubirXp();
     if (r.ok) nubeEstado = 'Guardado en la nube hoy a las ' + new Date().toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' });
     return r.ok;
   } catch (e) {

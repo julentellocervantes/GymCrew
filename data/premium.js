@@ -94,6 +94,16 @@ const CURSOS_ORO = [];
       ['ba-3-1', 'Ventaja al detalle', 'mej edO perd perd pag emP'],
       ['ba-3-2', 'Disciplina de oro', 'bank bank edO perd mej bank'],
     ],
+    ruleta: [
+      ['ru-1-1', 'Mesa sin pistas', 'rlColor rlCubre rlColor rlEm rlOrd'],
+      ['ru-1-2', 'Pagos de memoria', 'rlEm rlOrd rlPagoGana rlPagoTotal rlEm'],
+      ['ru-1-3', 'Cubrir números', 'rlCubre rlCuantas rlCubre rlEm rlCuantas'],
+      ['ru-2-1', 'Probabilidades al instante', 'rlProb rlProb rlCuantas rlOrd rlProb'],
+      ['ru-2-2', 'Cobros de élite', 'rlPagoGana rlPagoTotal rlProb rlPagoTotal rlOrd'],
+      ['ru-2-3', 'La casa siempre gana', 'rlPerdida rlEsperada rlCubre rlEsperada rlEm'],
+      ['ru-3-1', 'Mitos al descubierto', 'rlProb rlEsperada rlColor rlPerdida rlOrd'],
+      ['ru-3-2', 'Disciplina de oro', 'rlEsperada rlPerdida rlPagoTotal rlCubre rlEm'],
+    ],
     videopoker: [
       ['vp-1-1', 'Primeras manos de élite', 'vpMano vpMano vpPago vpOrd vpEm vpMano'],
       ['vp-1-2', 'Pagos de memoria', 'vpEm vpPago vpPago vpOrd vpMano vpPago'],
@@ -107,7 +117,7 @@ const CURSOS_ORO = [];
     ],
   };
 
-  const TABLAS = { blackjack: GEN.BJ, poker: GEN.PK, mus: GEN.MS, baccarat: CASINO.BAC, videopoker: CASINO.VP };
+  const TABLAS = { blackjack: GEN.BJ, poker: GEN.PK, mus: GEN.MS, baccarat: CASINO.BAC, videopoker: CASINO.VP, ruleta: RULETA.T };
 
   for (const curso of CURSOS) {
     const extra = (typeof AMPLIACION !== 'undefined' ? AMPLIACION[curso.id] || [] : []).map(([id, , titulo, , receta]) => [id, 'Oro · ' + titulo, receta]);

@@ -1814,6 +1814,7 @@ h1, .bienvenida-titulo { font-weight: 800; letter-spacing: -0.015em; }
 .juego[data-curso="mus"] { --glifo: "●"; --indice: var(--laton-osc); }
 .juego[data-curso="baccarat"] { --glifo: "♣"; --indice: var(--tinta); }
 .juego[data-curso="videopoker"] { --glifo: "♦"; --indice: var(--rojo); }
+.juego[data-curso="ruleta"] { --glifo: "●"; --indice: var(--rojo); }
 @media (prefers-color-scheme: dark) {
   .juego[data-curso="blackjack"], .juego[data-curso="baccarat"] { --indice: #f2ead3; }
   .juego[data-curso="poker"], .juego[data-curso="videopoker"] { --indice: #ff8a84; }
@@ -1875,3 +1876,21 @@ html[data-calma="si"] .hero-carta, html[data-calma="si"] .hero-ficha { animation
 @media (prefers-reduced-motion: reduce) { .hero-carta, .hero-ficha { animation: none; } }
 
 .campo-email { width: 100%; box-sizing: border-box; margin: 0 0 10px; padding: 12px 14px; border-radius: 12px; border: 1.5px solid var(--borde, #c9d3e3); background: var(--tarjeta, #fff); color: inherit; font: inherit; }
+
+.reto { display: flex; align-items: center; gap: 14px; width: 100%; box-sizing: border-box; margin: 0 0 12px; padding: 14px 16px; border-radius: 18px; border: 2px solid var(--laton, #d4a548); background: var(--tarjeta, #fff); color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.reto-icono { font-size: 1.7rem; line-height: 1; }
+.reto.listo { background: linear-gradient(135deg, rgba(212,165,72,.22), rgba(212,165,72,.08)); animation: reto-pulso 1.8s ease-in-out infinite; }
+.reto.cobrado { opacity: .78; cursor: default; }
+@keyframes reto-pulso { 50% { box-shadow: 0 0 0 5px rgba(212,165,72,.28); } }
+@media (prefers-reduced-motion: reduce) { .reto.listo { animation: none; } }
+.repasos-mini .sesion-hoy { grid-column: 1 / -1; }
+
+.ranking { list-style: none; margin: 0 0 14px; padding: 0; display: grid; gap: 8px; }
+.ranking-fila { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 14px; background: var(--tarjeta, #fff); border: 1.5px solid var(--borde, #c9d3e3); }
+.ranking-fila.yo { border-color: var(--laton, #d4a548); background: linear-gradient(135deg, rgba(212,165,72,.18), rgba(212,165,72,.05)); }
+.ranking-puesto { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; background: var(--fieltro, #0f5a3f); color: #fff; flex: none; }
+.ranking-fila:first-child .ranking-puesto { background: var(--laton, #d4a548); color: #3a2a00; }
+.ranking-codigo { display: flex; align-items: center; gap: 12px; margin: 0 0 14px; padding: 12px 14px; border-radius: 14px; border: 1.5px dashed var(--laton, #d4a548); }
+.ranking-anadir { display: grid; gap: 8px; }
+.reto strong { font-size: 1rem; line-height: 1.25; }
+.reto { padding: 12px 14px; }

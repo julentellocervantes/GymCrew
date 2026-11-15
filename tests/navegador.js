@@ -590,7 +590,7 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
   await page.evaluate(() => mostrarInicio('sin'));
   await page.waitForSelector('.juego');
   ok(await page.locator('.pestana[data-pestana=juegos]').getAttribute('aria-current') === 'page', 'Juegos es la pestaña activa');
-  ok(await page.locator('.juego').count() === 5, 'los cinco juegos están en la misma pestaña');
+  ok(await page.locator('.juego').count() === 6, 'los seis juegos están en la misma pestaña');
   await page.reload();
   ok(await page.locator('.bienvenida').count() === 0, 'la bienvenida no vuelve a salir');
   await foto('12-juegos-barra');
@@ -680,7 +680,7 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
   ok((await page.locator('.nodo-oro').first().getAttribute('aria-label')).includes('solo para VIP'), 'sin VIP el nivel Oro avisa de que es solo VIP');
   await page.locator('.nodo-oro').first().click();
   await page.waitForSelector('.premium');
-  ok((await page.locator('main').innerText()).includes('150 niveles Oro') && await page.locator('#barra').isHidden(), 'pantalla VIP con 150 niveles Oro y sin barra');
+  ok((await page.locator('main').innerText()).includes('158 niveles Oro') && await page.locator('#barra').isHidden(), 'pantalla VIP con 158 niveles Oro y sin barra');
   await foto('16-vip');
   await page.locator('.cerrar').click();
   await page.waitForSelector('.nodo');
@@ -863,6 +863,115 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
     ok(await page.locator('#ajuste-nube [role=switch]').count() === 0 || true, 'recordatorio: sin sesión no estorba');
     await page.unroute(SB + '/**');
     await page.goto('about:blank'); await page.goto(URL);
+  }
+
+  // 6c) Sesión de hoy, reto semanal, logros nuevos y ruleta
+  {
+    await inicio({ xp: 120, racha: 2, ultimoDia: dia(-1), completadas: { 'bj-1-1': true, 'bj-1-2': true }, srs: { 'bj-1-1-e1': { caja: 0, prox: dia(0), fallos: 2 }, 'bj-1-1-e2': { caja: 0, prox: dia(0), fallos: 1 }, 'bj-1-2-e1': { caja: 1, prox: dia(-1), fallos: 1 } } });
+    await page.waitForSelector('.juego');
+    ok(await page.locator('.sesion-hoy').count() === 1, 'inicio: aparece «Sesión de hoy»');
+    const plan = await page.evaluate(() => { const p = planSesionHoy(); return { n: p.ids.length, unicos: new Set(p.ids).size, resumen: p.resumen, primeros: p.ids.slice(0, 2) }; });
+    ok(plan.n === 10 && plan.unicos === 10, 'sesión de hoy: 10 preguntas sin repetir (' + plan.resumen + ')');
+    ok(plan.primeros.every((id) => id.startsWith('bj-1-')) && plan.resumen.startsWith('3 por repasar'), 'sesión de hoy: empieza por lo que toca repasar');
+    await page.locator('.sesion-hoy').click();
+    await page.waitForSelector('.pregunta');
+    ok((await page.locator('.cabecera-leccion, .cabecera').first().innerText()).length >= 0 && await page.locator('.pregunta').count() === 1, 'sesión de hoy: arranca una lección');
+    await inicio({ xp: 120, racha: 2, ultimoDia: dia(-1), completadas: { 'bj-1-1': true } });
+
+    // reto semanal
+    ok(await page.locator('.reto').count() === 1, 'inicio: aparece el reto semanal');
+    const r1 = await page.evaluate(() => { const r = retoActual(); return { id: r.def.id, meta: r.def.meta, semana: r.semana, lunes: semanaActual() }; });
+    ok(r1.semana === r1.lunes && new Date(r1.lunes + 'T12:00:00').getDay() === 1, 'reto: la semana empieza en lunes');
+    await page.evaluate(() => { const t = retoActual().def.id; for (let i = 0; i < 200; i++) retoSuma(t, t === 'rapida' ? 99 : 1); guardarProgreso(); mostrarInicio('sin'); });
+    await page.waitForSelector('.reto.listo');
+    const f0 = await page.evaluate(() => progreso.fichas);
+    await page.locator('.reto.listo').click();
+    await page.waitForSelector('.reto.cobrado');
+    const d1 = await page.evaluate((f) => ({ f: progreso.fichas - f, n: progreso.retosHechos, logro: !!progreso.logros['reto-1'] }), f0);
+    ok(d1.f === 25 && d1.n === 1 && d1.logro, 'reto: cobra 25 fichas, cuenta el reto y da el logro');
+    ok(await page.evaluate(() => { const a = progreso.fichas; retoCobrar(); return progreso.fichas === a; }), 'reto: no se cobra dos veces');
+    // los aciertos suman al reto
+    ok(await page.evaluate(() => { progreso.reto = { semana: semanaActual(), id: 'aciertos', n: 0, dias: [], cobrado: false }; registrarRespuesta('bj-1-1-e1', true); registrarRespuesta('bj-1-1-e1', false); return progreso.reto.n === 1; }), 'reto: cada acierto suma 1 y los fallos no');
+    // reto nuevo al cambiar de semana
+    ok(await page.evaluate(() => { progreso.reto.semana = '2000-01-03'; const r = retoActual(); return r.semana === semanaActual() && r.n === 0 && !r.cobrado; }), 'reto: se renueva cada semana');
+    // xp de la semana
+    ok(await page.evaluate(() => { progreso.semanaXp = { semana: null, xp: 0 }; registrarActividad(7); return xpDeLaSemana() === 7; }), 'el XP de la semana se acumula');
+    // logros
+    ok(await page.evaluate(() => { progreso.xp = 600; progreso.repasos = 10; progreso.perfectos = 5; progreso.rapida.mejor = 21; const n = calcularLogros().map((l) => l.id); return ['xp-500', 'repasos-10', 'perfectos-5', 'rapida-20'].every((x) => n.includes(x)); }), 'logros nuevos: 500 XP, repasos, puntería y rayo');
+    ok(await page.evaluate(() => LOGROS.length >= 23), 'hay al menos 23 logros');
+    // normalización del progreso nuevo
+    ok(await page.evaluate(() => { const p = normalizarProgreso({ xp: 5, reto: { semana: 'mal', id: 3 }, social: { alias: '<b>Ana</b> López!!', amigos: -4 }, semanaXp: 'x' }); return p.reto === null && p.social.alias === 'bAna' + 'b López'.replace('b López', 'b López') && p.social.amigos === 0 && p.semanaXp.xp === 0; }), 'progreso importado: reto, alias y XP semanal se limpian');
+
+    // ruleta
+    await inicio({ xp: 10 });
+    await page.waitForSelector('.juego[data-curso=ruleta]');
+    await page.locator('.juego[data-curso=ruleta]').click();
+    await page.waitForSelector('.nodo');
+    ok(await page.locator('.nodo').count() >= 8, 'ruleta: el mapa tiene sus niveles');
+    await page.evaluate(() => mostrarInicio('sin'));
+  }
+
+  // 6d) Ranking con amigos (Supabase simulado)
+  {
+    const SB = 'https://coqptiznghgxbidhexps.supabase.co';
+    const b64 = (o) => Buffer.from(JSON.stringify(o)).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    const token = 'x.' + b64({ sub: '22222222-2222-2222-2222-222222222222', email: 'ana@test.com' }) + '.y';
+    const sesion = { access_token: token, refresh_token: 'r', expires_at: Math.floor(Date.now() / 1000) + 3600, email: 'ana@test.com' };
+    const llamadas = []; let amigos = []; let perfilOk = false;
+    await page.route(SB + '/**', async (r) => {
+      const u = r.request().url(), m = r.request().method();
+      const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*', 'content-type': 'application/json' };
+      if (m === 'OPTIONS') return r.fulfill({ status: 204, headers: cors });
+      const rpc = (u.match(/\/rpc\/(\w+)/) || [])[1];
+      if (!rpc) return r.fulfill({ status: m === 'POST' ? 201 : 200, headers: cors, body: m === 'POST' ? '' : '[]' });
+      const cuerpo = r.request().postData() ? JSON.parse(r.request().postData()) : {};
+      llamadas.push({ rpc, cuerpo });
+      const error = (msg) => r.fulfill({ status: 400, headers: cors, body: JSON.stringify({ message: msg }) });
+      if (rpc === 'entrenador_perfil_guardar') { if (!/^[\p{L}\p{N} ._-]{2,20}$/u.test(cuerpo.p_alias)) return error('alias_invalido'); perfilOk = true; return r.fulfill({ status: 200, headers: cors, body: '"AB12CD34"' }); }
+      if (rpc === 'entrenador_amigo_agregar') { if (cuerpo.p_codigo === 'AB12CD34') return error('es_tu_codigo'); if (cuerpo.p_codigo !== 'ZZ99YY88') return error('codigo_no_existe'); amigos = [{ alias: 'Beto', xp_semana: 300, codigo: 'ZZ99YY88', yo: false }]; return r.fulfill({ status: 200, headers: cors, body: '"Beto"' }); }
+      if (rpc === 'entrenador_amigo_quitar') { amigos = []; return r.fulfill({ status: 204, headers: cors, body: '' }); }
+      if (rpc === 'entrenador_ranking') return r.fulfill({ status: 200, headers: cors, body: JSON.stringify([{ alias: 'Ana', xp_semana: 40, codigo: 'AB12CD34', yo: true }].concat(amigos).sort((a, b) => b.xp_semana - a.xp_semana)) });
+      return error('desconocida');
+    });
+    // sin sesión: pide entrar
+    await inicio({ xp: 40 });
+    await page.waitForSelector('.juego');
+    await page.getByRole('button', { name: /Ranking con amigos/ }).click();
+    await page.waitForSelector('.amigos');
+    ok((await page.locator('.amigos').innerText()).includes('Ir a Ajustes'), 'amigos: sin sesión se pide entrar con el correo');
+    // con sesión, sin nombre
+    await page.evaluate((s) => localStorage.setItem('vip-sesion-v1', JSON.stringify(s)), sesion);
+    await page.reload();
+    await page.getByRole('button', { name: /Ranking con amigos/ }).click();
+    await page.waitForSelector('.amigos input');
+    await page.locator('.amigos input').fill('<b>');
+    await page.getByRole('button', { name: 'Crear mi perfil' }).click();
+    await page.waitForFunction(() => document.querySelector('.ajuste-mensaje').textContent.includes('nombre debe tener'));
+    ok(await page.evaluate(() => progreso.social.alias === ''), 'amigos: un nombre inválido se rechaza y no se guarda');
+    await page.locator('.amigos input').fill('Ana');
+    await page.getByRole('button', { name: 'Crear mi perfil' }).click();
+    await page.waitForSelector('.ranking');
+    ok((await page.locator('.ranking-codigo').innerText()).includes('AB12CD34'), 'amigos: se muestra mi código');
+    ok(llamadas.some((c) => c.rpc === 'entrenador_perfil_guardar' && c.cuerpo.p_alias === 'Ana' && typeof c.cuerpo.p_xp === 'number' && /^\d{4}-\d{2}-\d{2}$/.test(c.cuerpo.p_semana)), 'amigos: se sube el nombre y el XP semanal');
+    // añadir amigo: errores y éxito
+    await page.locator('.ranking-anadir input').fill('AB12CD34');
+    await page.getByRole('button', { name: 'Añadir amigo' }).click();
+    await page.waitForFunction(() => document.querySelector('.ajuste-mensaje').textContent.includes('propio código'));
+    await page.locator('.ranking-anadir input').fill('nada');
+    await page.getByRole('button', { name: 'Añadir amigo' }).click();
+    await page.waitForFunction(() => document.querySelector('.ajuste-mensaje').textContent.includes('no existe'));
+    await page.locator('.ranking-anadir input').fill('ZZ99YY88');
+    await page.getByRole('button', { name: 'Añadir amigo' }).click();
+    await page.waitForFunction(() => document.querySelectorAll('.ranking-fila').length === 2);
+    const filas = await page.locator('.ranking-fila').allInnerTexts();
+    ok(filas[0].includes('Beto') && filas[1].includes('(tú)'), 'amigos: el ranking ordena por XP de la semana');
+    ok(await page.evaluate(() => progreso.social.amigos === 1 && !!progreso.logros.sociable), 'amigos: cuenta amigos y da el logro «Sociable»');
+    // quitar
+    await page.getByRole('button', { name: 'Quitar a Beto' }).click();
+    await page.waitForFunction(() => document.querySelectorAll('.ranking-fila').length === 1);
+    ok(true, 'amigos: se puede quitar a un amigo');
+    await page.unroute(SB + '/**');
+    await inicio({ xp: 40 });
   }
 
   // 7) El almacenamiento bloqueado no rompe la app y avisa

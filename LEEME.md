@@ -202,3 +202,10 @@ Icono de la app (SVG + PNG) y pantalla de bienvenida con una mano de cartas sobr
 
 ## Recordatorio de racha (notificación push)
 Interruptor «Recordatorio de racha» en Ajustes (necesita Chrome/Firefox o, en iPhone 16.4+, la app añadida a la pantalla de inicio). La función `supabase/functions/entrenador-push` guarda la suscripción (solo el aviso, sin datos personales) y un pg_cron diario a las 18:00 UTC avisa a quien tiene racha y hoy no ha practicado. Las claves VAPID se crean solas y viven en `entrenador_config`.
+
+## Sesión de hoy, retos, logros, ruleta y ranking con amigos
+- **Sesión de hoy (≈5 min)**: `planSesionHoy()` en `js/extras.js` arma 10 preguntas: lo que toca repasar, tu jugada y tu tema más flojos, preguntas nuevas de tu camino y, si falta, errores o práctica.
+- **Reto semanal** (`js/retos.js`): cada lunes toca uno distinto (aciertos, niveles, días, partida rápida o niveles perfectos). Al completarlo se cobran 25 fichas y 30 XP (el doble con VIP). También lleva el XP de la semana.
+- **Logros**: 10 nuevos (rachas de 7 y 30 días, 500 y 2000 XP, repasos, puntería, rayo, retos y «Sociable»).
+- **Ruleta** (`data/ruleta.js`): juego nuevo con 8 niveles (la mesa, números y dinero, mitos y juego responsable) y su ruta Oro. Los cálculos los recalcula `tests/validar.js` con fórmulas propias.
+- **Ranking con amigos** (`js/amigos.js`): con la cuenta de la nube, creas un nombre y un código; quien escriba tu código te ve en su ranking (nombre + XP de la semana, nada más). Todo pasa por funciones de Supabase (`entrenador_perfil_guardar`, `entrenador_amigo_agregar`, `entrenador_amigo_quitar`, `entrenador_ranking`) que usan `auth.uid()`; las tablas `entrenador_perfil` y `entrenador_amigos` solo las lee su dueño. Máximo 30 amigos. El XP lo manda la propia app, así que es un ranking entre amigos, no a prueba de trampas.

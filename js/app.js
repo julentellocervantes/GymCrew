@@ -31,6 +31,10 @@ const progresoNuevo = () => ({
   fichas: 20,                     // moneda de la tienda
   energia: { n: 2, t: 0, dia: null }, // niveles que puedes empezar; t = cuándo empezó a recargarse
   cofres: {},                     // cofres del mapa ya abiertos
+  reto: null,                     // reto semanal: { semana, id, n, dias, cobrado }
+  retosHechos: 0,                 // retos semanales cobrados
+  semanaXp: { semana: null, xp: 0 }, // XP de la semana en curso (ranking con amigos)
+  social: { alias: '', amigos: 0 }, // nombre en el ranking y cuántos amigos tienes
   tienda: { comprados: [], equipado: { fondo: 'clasico', baraja: 'clasica', espanola: 'clasica', nai: 'clasico' } }, // cosméticos
 });
 
@@ -65,6 +69,13 @@ function normalizarProgreso(datos) {
   const en = obj(p.energia, {});
   p.energia = { n: Math.min(6, num(en.n, 2)), t: num(en.t, 0), dia: typeof en.dia === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(en.dia) ? en.dia : null };
   p.cofres = obj(p.cofres, {});
+  const rt = obj(p.reto, null);
+  p.reto = rt && typeof rt.semana === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(rt.semana) && typeof rt.id === 'string' ? { semana: rt.semana, id: rt.id.slice(0, 20), n: num(rt.n, 0), dias: Array.isArray(rt.dias) ? rt.dias.filter((d) => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d)).slice(0, 7) : [], cobrado: !!rt.cobrado } : null;
+  p.retosHechos = num(p.retosHechos, 0);
+  const sx = obj(p.semanaXp, {});
+  p.semanaXp = { semana: typeof sx.semana === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(sx.semana) ? sx.semana : null, xp: num(sx.xp, 0) };
+  const so = obj(p.social, {});
+  p.social = { alias: typeof so.alias === 'string' ? so.alias.replace(/[^\p{L}\p{N} ._-]/gu, '').trim().slice(0, 20) : '', amigos: num(so.amigos, 0) };
   const tn = obj(p.tienda, {});
   const idOk = (s) => typeof s === 'string' && /^[a-z]{3,8}:[a-z]{3,12}$/.test(s);
   const eq = obj(tn.equipado, {});
@@ -133,6 +144,7 @@ function registrarActividad(xp) {
   const antes = xpDeHoy();
   progreso.xpHoy = { dia, xp: antes + xp };
   progreso.xp += xp;
+  if (typeof sumarXpSemana === 'function') { sumarXpSemana(xp); retoSuma('dias'); }
   res.metaCumplida = antes < progreso.meta && antes + xp >= progreso.meta;
   return res;
 }
@@ -163,6 +175,7 @@ function registrarSituacion(clave, acierto) {
 }
 function registrarRespuesta(id, acierto) {
   registrarEstadistica(id, acierto);
+  if (acierto && typeof retoSuma === 'function') retoSuma('aciertos');
   const ind = INDICE_EJERCICIOS[id];
   if (ind && ind.ejercicio.tipo !== 'relampago') situacionesDe(ind.ejercicio).forEach((c) => registrarSituacion(c, acierto)); // el relámpago apunta cada decisión por separado
   const s = progreso.srs[id] || { caja: 0, prox: hoy(), fallos: 0 };
@@ -278,6 +291,16 @@ const LOGROS = [
   { id: 'repasador', icono: '🔁', titulo: 'Repasador', desc: 'Haz tu primer repaso rápido', cumple: (p) => (p.repasos || 0) >= 1 },
   { id: 'contador', icono: '⏱️', titulo: 'Contador', desc: 'Acierta la cuenta en el entrenador de conteo', cumple: (p) => (p.conteo && p.conteo.mejor) > 0 },
   { id: 'cien-xp', icono: '⭐', titulo: '100 XP', desc: 'Llega a 100 puntos de experiencia', cumple: (p) => p.xp >= 100 },
+  { id: 'semana', icono: '📅', titulo: 'Una semana', desc: 'Consigue una racha de 7 días', cumple: () => rachaVigente() >= 7 },
+  { id: 'mes', icono: '🗓️', titulo: 'Un mes', desc: 'Consigue una racha de 30 días', cumple: () => rachaVigente() >= 30 },
+  { id: 'xp-500', icono: '🌟', titulo: '500 XP', desc: 'Llega a 500 puntos de experiencia', cumple: (p) => p.xp >= 500 },
+  { id: 'xp-2000', icono: '💫', titulo: '2000 XP', desc: 'Llega a 2000 puntos de experiencia', cumple: (p) => p.xp >= 2000 },
+  { id: 'repasos-10', icono: '🧠', titulo: 'Memoria de elefante', desc: 'Haz 10 repasos', cumple: (p) => (p.repasos || 0) >= 10 },
+  { id: 'perfectos-5', icono: '🎯', titulo: 'Puntería', desc: 'Termina 5 niveles sin fallos', cumple: (p) => (p.perfectos || 0) >= 5 },
+  { id: 'rapida-20', icono: '⚡', titulo: 'Rayo', desc: 'Consigue 20 aciertos en una partida rápida', cumple: (p) => p.rapida.mejor >= 20 },
+  { id: 'reto-1', icono: '🏅', titulo: 'Retador', desc: 'Cumple tu primer reto semanal', cumple: (p) => (p.retosHechos || 0) >= 1 },
+  { id: 'reto-5', icono: '🏆', titulo: 'Imparable', desc: 'Cumple 5 retos semanales', cumple: (p) => (p.retosHechos || 0) >= 5 },
+  { id: 'sociable', icono: '🤝', titulo: 'Sociable', desc: 'Añade a un amigo al ranking', cumple: (p) => (p.social && p.social.amigos) >= 1 },
 ].concat(
   CURSOS.map((c) => ({
     id: 'curso-' + c.id,
@@ -626,7 +649,9 @@ function mostrarInicio(entrada = 'fundido') {
       el('span', { class: 'juego-texto' }, el('strong', {}, titulo), el('span', { class: 'juego-desc' }, desc)),
       el('span', { class: 'flecha', 'aria-hidden': 'true' }, '›')
     );
+  const plan = progreso.xp > 0 && typeof planSesionHoy === 'function' ? planSesionHoy() : null;
   const repasos = [
+    plan && plan.ids.length >= 5 ? filaRepaso('sesion-hoy', '🎯', 'Sesión de hoy · 5 min', plan.resumen, () => iniciarSesionHoy()) : null,
     nPend ? filaRepaso('', '🧠', 'Repaso del día', `${nPend} ${nPend === 1 ? 'pregunta toca' : 'preguntas tocan'} repasarse hoy`, () => iniciarRepasoGlobal('pendientes')) : null,
     nErr ? filaRepaso('', '🩹', 'Mis errores', `${nErr} ${nErr === 1 ? 'pregunta' : 'preguntas'} que fallaste y aún no dominas`, () => iniciarRepasoGlobal('errores')) : null,
   ];
@@ -674,11 +699,13 @@ function mostrarInicio(entrada = 'fundido') {
         : null,
       el('div', { class: 'resumen' }, tarjetaMeta, tarjetaRango),
       avisoRacha,
+      typeof tarjetaReto === 'function' ? tarjetaReto(() => mostrarInicio('sin')) : null,
       repasos.some(Boolean) ? el('div', { class: 'repasos-mini' }, repasos) : null,
       el('h1', {}, 'Elige un juego'),
       tarjetas,
       filaRepaso('conteo', '⚡', 'Partida rápida', progreso.rapida.mejor ? `60 segundos, todas las que puedas · Récord: ${progreso.rapida.mejor}` : '60 segundos: contesta todas las que puedas', () => iniciarPartidaRapida()),
       filaRepaso('conteo', '⏱️', 'Entrena el conteo', 'Cartas a toda velocidad con el sistema Hi-Lo', () => mostrarConteo()),
+      filaRepaso('conteo', '🤝', 'Ranking con amigos', progreso.social.alias ? `Tu XP de la semana: ${typeof xpDeLaSemana === 'function' ? xpDeLaSemana() : 0}` : 'Compite cada semana con tus amigos', () => mostrarAmigos()),
       filaRepaso('conteo', '📊', 'Mis estadísticas', 'Tus aciertos por juego y tus puntos débiles', () => mostrarEstadisticas()),
       puedeInstalar() ? crearBotonInstalar() : null,
       el('p', { class: 'aviso' }, 'Contenido educativo. Sin dinero real. Solo para mayores de 18 años. Si el juego te preocupa, mira «Ayuda» en la pestaña Ajustes.')
@@ -1529,7 +1556,9 @@ function finalizarLeccion(curso, leccion, precision) {
   const cofreNuevo = !leccion.repaso && !leccion.oro && !yaHecha && idx >= 0 && (idx + 1) % CADA_COFRE === 0;
   if (leccion.repaso) progreso.repasos = (progreso.repasos || 0) + 1;
   else progreso.completadas[leccion.id] = true;
-  if (precision === 100 && !leccion.repaso) progreso.perfectos = (progreso.perfectos || 0) + 1;
+  if (precision === 100 && !leccion.repaso) { progreso.perfectos = (progreso.perfectos || 0) + 1; if (typeof retoSuma === 'function') retoSuma('perfectos'); }
+  if (!leccion.repaso && typeof retoSuma === 'function') retoSuma('niveles');
+  if (leccion.rapida && typeof retoSuma === 'function') retoSuma('rapida', leccion.rapidaAciertos || 0);
   const logros = calcularLogros();
   guardarProgreso();
 

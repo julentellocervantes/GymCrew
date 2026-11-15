@@ -24,6 +24,48 @@ function iniciarRepasoGlobal(tipo) {
 }
 
 
+// Sesión de hoy (≈5 min): 10 preguntas elegidas para ti. Primero lo que toca repasar, luego tus jugadas y temas más flojos,
+// y se completa con lo que aún no has visto o con tus errores.
+function planSesionHoy(n = 10) {
+  const usados = new Set(), partes = [];
+  const valido = (id) => INDICE_EJERCICIOS[id] && INDICE_EJERCICIOS[id].ejercicio.tipo !== 'relampago' && !usados.has(id);
+  const tomar = (etiqueta, ids, max) => {
+    const elegidos = [], limite = Math.min(max, n - usados.size);
+    for (const id of ids) { if (elegidos.length >= limite) break; if (valido(id)) { usados.add(id); elegidos.push(id); } }
+    if (elegidos.length) partes.push({ etiqueta, ids: elegidos });
+  };
+  const st = progreso.stats;
+  // 1) lo que toca repasar hoy (primero lo que más has fallado)
+  tomar('por repasar', pendientesHoy().sort((a, b) => (progreso.srs[b].fallos || 0) - (progreso.srs[a].fallos || 0)), 4);
+  // 2) tus jugadas más flojas
+  const flojas = Object.entries(st.s || {}).filter(([k, a]) => SITUACIONES[k] && a[0] + a[1] >= 4 && a[1] / (a[0] + a[1]) >= 0.3)
+    .sort((x, y) => y[1][1] / (y[1][0] + y[1][1]) - x[1][1] / (x[1][0] + x[1][1]));
+  if (flojas.length) {
+    const [clave] = flojas[0];
+    tomar('de ' + SITUACIONES[clave].nombre.replace(/^(jugadas|preguntas) (con|de) /, ''), barajar(Object.entries(INDICE_EJERCICIOS).filter(([, x]) => situacionesDe(x.ejercicio).includes(clave)).map(([id]) => id)), 3);
+  }
+  // 3) tu tema más flojo
+  const temas = Object.entries(st.u).map(([k, a]) => { const [cid, ui] = k.split('|'); const c = CURSOS.find((x) => x.id === cid); return c && c.unidades[Number(ui)] ? { c, u: c.unidades[Number(ui)], a } : null; })
+    .filter((t) => t && t.a[0] + t.a[1] >= 5 && t.a[0] / (t.a[0] + t.a[1]) < 0.85).sort((x, y) => x.a[0] / (x.a[0] + x.a[1]) - y.a[0] / (y.a[0] + y.a[1]));
+  if (temas.length) tomar('de «' + temas[0].u.titulo + '»', barajar(temas[0].u.lecciones.flatMap((l) => l.ejercicios.map((e) => e.id))), 3);
+  // 4) lo nuevo que viene en tu camino
+  const nuevas = [];
+  CURSOS.forEach((c) => { const l = siguienteNivel(c); if (l && hechosDe(c) > 0) l.ejercicios.forEach((e) => { if (!progreso.srs[e.id]) nuevas.push(e.id); }); });
+  tomar('nuevas', barajar(nuevas), 3);
+  // 5) relleno: errores y, si hace falta, cualquier pregunta ya vista
+  tomar('de tus errores', barajar(misErrores()), n);
+  tomar('de práctica', barajar(Object.keys(progreso.srs)), n);
+  tomar('de práctica', barajar(Object.keys(INDICE_EJERCICIOS)), n);
+  const ids = partes.flatMap((p) => p.ids);
+  return { ids, partes, resumen: partes.map((p) => `${p.ids.length} ${p.etiqueta}`).join(' · ') };
+}
+function iniciarSesionHoy() {
+  const plan = planSesionHoy();
+  if (!plan.ids.length) return mostrarInicio('fundido');
+  const curso = { id: 'global', nombre: 'Sesión de hoy', icono: '🎯', color: '#3a7be0', unidades: [], global: true };
+  mostrarLeccion(curso, { id: 'repaso-global', titulo: 'Sesión de hoy', icono: '🎯', xp: 15, repaso: true, ejercicios: barajar(plan.ids).map((id) => INDICE_EJERCICIOS[id].ejercicio) });
+}
+
 // ---------- estadísticas: aciertos por juego, puntos débiles y entrenamiento por tema ----------
 const NOMBRE_TIPO = {
   opcion_unica: 'Elegir respuesta', seleccionar: 'Tocar cartas', numero: 'Escribir cifra', ordenar: 'Ordenar', emparejar: 'Emparejar', accion: 'Elegir jugada',
@@ -536,7 +578,7 @@ function mostrarBienvenida(repetida = false) {
       fila,
       almacenamientoFallo ? el('p', { class: 'alerta', role: 'alert' }, 'Tu navegador no deja guardar el progreso (¿modo privado?). Puedes seguir, pero al cerrar se perderá.') : null,
       el('h1', { class: 'bienvenida-titulo' }, 'Bienvenido al Entrenador de cartas'),
-      el('p', { class: 'bienvenida-sub' }, 'Aprende blackjack, póker, mus, baccarat y vídeo póker practicando situaciones reales, poco a poco y sin dinero.'),
+      el('p', { class: 'bienvenida-sub' }, 'Aprende blackjack, póker, mus, baccarat, ruleta y vídeo póker practicando situaciones reales, poco a poco y sin dinero.'),
       el('ul', { class: 'bienvenida-lista' },
         ventaja('🎮', 'Aprende jugando', 'Niveles cortos con preguntas de todo tipo: test, ordenar, unir, tocar cartas…', 0),
         ventaja('🔁', 'Repasa lo que fallas', 'La app te vuelve a preguntar justo cuando toca para que no se te olvide.', 1),

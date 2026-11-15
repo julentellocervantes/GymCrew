@@ -302,7 +302,7 @@ function verificarInteractivo(e) {
 }
 
 
-for (const f of ['cursos.js', 'blackjack.js', 'poker.js', 'mus.js', 'blackjack-extra.js', 'poker-extra.js', 'mus-extra.js', 'ordenar-extra.js', 'interactivos-extra.js', 'variedad-extra.js', 'ayuda.js', 'generadores.js', 'practica.js', 'videopoker-datos.js', 'casino.js', 'ampliacion.js', 'formas-nuevas.js', 'variedad-generada.js', 'premium.js']) vm.runInContext(fs.readFileSync(D + f, 'utf8'), ctx, { filename: f });
+for (const f of ['cursos.js', 'blackjack.js', 'poker.js', 'mus.js', 'blackjack-extra.js', 'poker-extra.js', 'mus-extra.js', 'ordenar-extra.js', 'interactivos-extra.js', 'variedad-extra.js', 'ayuda.js', 'generadores.js', 'practica.js', 'videopoker-datos.js', 'casino.js', 'ruleta.js', 'ampliacion.js', 'formas-nuevas.js', 'variedad-generada.js', 'premium.js']) vm.runInContext(fs.readFileSync(D + f, 'utf8'), ctx, { filename: f });
 const CURSOS = vm.runInContext('CURSOS', ctx);
 const AYUDA = vm.runInContext('AYUDA', ctx);
 const CURSOS_ORO = vm.runInContext('CURSOS_ORO', ctx);
@@ -624,6 +624,16 @@ function verificarCasino(e) {
       }
       break;
     }
+    // ---- ruleta europea (37 casillas): todo se recalcula con fórmulas propias ----
+    case 'rlCubre': { igual(36 / (ch.pago + 1), ch.cubre, 'casillas = 36 ÷ (pago + 1)'); igual(String(ch.cubre), resp, 'casillas'); break; }
+    case 'rlPago': igual(ch.total ? (ch.pago + 1) * ch.m : ch.pago * ch.m, e.respuesta, 'cobro de la ruleta'); break;
+    case 'rlProb': { igual(((100 * ch.cubre) / 37).toFixed(1).replace('.', ',') + ' %', resp, 'probabilidad k/37'); if (e.opciones.some((o, i) => o !== ((100 * ch.opciones[i]) / 37).toFixed(1).replace('.', ',') + ' %')) mal(e.id, 'opciones de probabilidad'); break; }
+    case 'rlColor': { const rojos = new Set([1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]); igual(rojos.has(ch.n) ? 'Rojo' : 'Negro', resp, 'color'); if (rojos.size !== 18) mal(e.id, 'hacen falta 18 rojos'); break; }
+    case 'rlOrd': { const pagos = { Pleno: 35, Caballo: 17, Calle: 11, Cuadro: 8, 'Línea': 5, Docena: 2, Rojo: 1 }; const v = e.elementos.map((x) => pagos[x]); if (v.some((x) => x === undefined) || v.some((x, i) => i && x <= v[i - 1])) mal(e.id, 'ruleta: las apuestas no van de menos a más pago'); break; }
+    case 'rlEm': { const pagos = { Pleno: '35 a 1', Caballo: '17 a 1', Calle: '11 a 1', Cuadro: '8 a 1', 'Línea': '5 a 1', Docena: '2 a 1', Rojo: '1 a 1' }; e.pares.forEach(([a, b]) => { if (pagos[a] !== b) mal(e.id, `${a} paga ${pagos[a]}, no ${b}`); }); break; }
+    case 'rlPerdida': igual(37 * ch.m - 36 * ch.m, e.respuesta, 'pérdida de 37 tiradas a pleno'); break;
+    case 'rlEsperada': { if (ch.m % 37) mal(e.id, 'ruleta: el total apostado debe ser múltiplo de 37'); igual(ch.m / 37, e.respuesta, 'pérdida esperada'); break; }
+    case 'rlCuantas': { if (![1, 2, 4, 6].includes(ch.cubre)) mal(e.id, 'ruleta: apuesta que no existe'); if (!e.pregunta.includes(`Pones ${ch.fichas} apuestas`)) mal(e.id, 'ruleta: fichas distintas de la pregunta'); igual(ch.cubre * ch.fichas, e.respuesta, 'números cubiertos'); break; }
     default: mal(e.id, 'chequeo desconocido ' + k);
   }
 }
@@ -652,7 +662,7 @@ for (const c of CURSOS.concat(CURSOS_ORO)) {
         if (ids.has(e.id)) mal(e.id, 'id repetido'); ids.add(e.id);
         if (!e.pregunta || !e.explicacion) mal(e.id, 'falta pregunta o explicación');
         if (['clasificar', 'deslizador', 'rellenar', 'relampago'].includes(e.tipo)) { verificarNuevos(e); continue; }
-        if (c.id === 'baccarat' || c.id === 'videopoker') { verificarCasino(e); continue; }
+        if (c.id === 'baccarat' || c.id === 'videopoker' || c.id === 'ruleta') { verificarCasino(e); continue; }
         if (['seleccionar', 'numero', 'emparejar', 'ordenar'].includes(e.tipo)) {
           verificarInteractivo(e);
           continue;
