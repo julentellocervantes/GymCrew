@@ -209,3 +209,6 @@ Interruptor «Recordatorio de racha» en Ajustes (necesita Chrome/Firefox o, en 
 - **Logros**: 10 nuevos (rachas de 7 y 30 días, 500 y 2000 XP, repasos, puntería, rayo, retos y «Sociable»).
 - **Ruleta** (`data/ruleta.js`): juego nuevo con 8 niveles (la mesa, números y dinero, mitos y juego responsable) y su ruta Oro. Los cálculos los recalcula `tests/validar.js` con fórmulas propias.
 - **Ranking con amigos** (`js/amigos.js`): con la cuenta de la nube, creas un nombre y un código; quien escriba tu código te ve en su ranking (nombre + XP de la semana, nada más). Todo pasa por funciones de Supabase (`entrenador_perfil_guardar`, `entrenador_amigo_agregar`, `entrenador_amigo_quitar`, `entrenador_ranking`) que usan `auth.uid()`; las tablas `entrenador_perfil` y `entrenador_amigos` solo las lee su dueño. Máximo 30 amigos. El XP lo manda la propia app, así que es un ranking entre amigos, no a prueba de trampas.
+
+## Inicio en dos secciones
+Debajo de la meta, el reto y los repasos, el inicio tiene dos pestañas: **Juegos** (los seis juegos) y **Practicar** (partida rápida, entrena el conteo, ranking con amigos y mis estadísticas). Al volver de una de esas herramientas se reabre «Practicar»; la vez siguiente vuelve a verse «Juegos».

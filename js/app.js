@@ -592,6 +592,7 @@ window.addEventListener('appinstalled', () => {
 // ============================================================
 // PANTALLA 1: elegir juego
 // ============================================================
+let seccionInicio = 'juegos';
 function mostrarInicio(entrada = 'fundido') {
   alTeclear = null;
 
@@ -687,6 +688,27 @@ function mostrarInicio(entrada = 'fundido') {
     );
   });
 
+  // Dos secciones: los juegos y, aparte, las herramientas de práctica
+  const abrirMas = (f) => () => { seccionInicio = 'mas'; f(); };
+  const panelJuegos = el('div', { class: 'panel-inicio', id: 'panel-juegos', role: 'tabpanel', 'aria-labelledby': 'pestana-juegos' }, el('h1', {}, 'Elige un juego'), tarjetas);
+  const panelMas = el('div', { class: 'panel-inicio', id: 'panel-mas', role: 'tabpanel', 'aria-labelledby': 'pestana-mas' },
+    el('h1', {}, 'Practica y compite'),
+    filaRepaso('conteo', '⚡', 'Partida rápida', progreso.rapida.mejor ? `60 segundos, todas las que puedas · Récord: ${progreso.rapida.mejor}` : '60 segundos: contesta todas las que puedas', abrirMas(() => iniciarPartidaRapida())),
+    filaRepaso('conteo', '⏱️', 'Entrena el conteo', 'Cartas a toda velocidad con el sistema Hi-Lo', abrirMas(() => mostrarConteo())),
+    filaRepaso('conteo', '🤝', 'Ranking con amigos', progreso.social.alias ? `Tu XP de la semana: ${typeof xpDeLaSemana === 'function' ? xpDeLaSemana() : 0}` : 'Compite cada semana con tus amigos', abrirMas(() => mostrarAmigos())),
+    filaRepaso('conteo', '📊', 'Mis estadísticas', 'Tus aciertos por juego y tus puntos débiles', abrirMas(() => mostrarEstadisticas()))
+  );
+  const elegir = (cual) => {
+    panelJuegos.hidden = cual !== 'juegos';
+    panelMas.hidden = cual !== 'mas';
+    [['juegos', pestJuegos], ['mas', pestMas]].forEach(([k, b]) => { b.classList.toggle('activa', k === cual); b.setAttribute('aria-selected', String(k === cual)); b.tabIndex = k === cual ? 0 : -1; });
+  };
+  const pestJuegos = el('button', { class: 'pestana-inicio', id: 'pestana-juegos', type: 'button', role: 'tab', 'aria-controls': 'panel-juegos', onclick: () => elegir('juegos') }, 'Juegos');
+  const pestMas = el('button', { class: 'pestana-inicio', id: 'pestana-mas', type: 'button', role: 'tab', 'aria-controls': 'panel-mas', onclick: () => elegir('mas') }, 'Practicar');
+  const pestanasInicio = el('div', { class: 'pestanas-inicio', role: 'tablist', 'aria-label': 'Secciones del inicio' }, pestJuegos, pestMas);
+  elegir(seccionInicio);
+  seccionInicio = 'juegos'; // solo se recuerda la vuelta desde una de las herramientas
+
   pintar(
     entrada,
     el('header', { class: 'cabecera' }, el('span', { class: 'logo' }, el('span', { class: 'logo-palo' }, '♥'), 'Entrenador de cartas'), marcador()),
@@ -701,12 +723,9 @@ function mostrarInicio(entrada = 'fundido') {
       avisoRacha,
       typeof tarjetaReto === 'function' ? tarjetaReto(() => mostrarInicio('sin')) : null,
       repasos.some(Boolean) ? el('div', { class: 'repasos-mini' }, repasos) : null,
-      el('h1', {}, 'Elige un juego'),
-      tarjetas,
-      filaRepaso('conteo', '⚡', 'Partida rápida', progreso.rapida.mejor ? `60 segundos, todas las que puedas · Récord: ${progreso.rapida.mejor}` : '60 segundos: contesta todas las que puedas', () => iniciarPartidaRapida()),
-      filaRepaso('conteo', '⏱️', 'Entrena el conteo', 'Cartas a toda velocidad con el sistema Hi-Lo', () => mostrarConteo()),
-      filaRepaso('conteo', '🤝', 'Ranking con amigos', progreso.social.alias ? `Tu XP de la semana: ${typeof xpDeLaSemana === 'function' ? xpDeLaSemana() : 0}` : 'Compite cada semana con tus amigos', () => mostrarAmigos()),
-      filaRepaso('conteo', '📊', 'Mis estadísticas', 'Tus aciertos por juego y tus puntos débiles', () => mostrarEstadisticas()),
+      pestanasInicio,
+      panelJuegos,
+      panelMas,
       puedeInstalar() ? crearBotonInstalar() : null,
       el('p', { class: 'aviso' }, 'Contenido educativo. Sin dinero real. Solo para mayores de 18 años. Si el juego te preocupa, mira «Ayuda» en la pestaña Ajustes.')
     )

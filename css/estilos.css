@@ -1894,3 +1894,9 @@ html[data-calma="si"] .hero-carta, html[data-calma="si"] .hero-ficha { animation
 .ranking-anadir { display: grid; gap: 8px; }
 .reto strong { font-size: 1rem; line-height: 1.25; }
 .reto { padding: 12px 14px; }
+
+.pestanas-inicio { display: flex; gap: 6px; padding: 5px; margin: 6px 0 4px; border-radius: 16px; background: rgba(15, 90, 63, .12); }
+.pestana-inicio { flex: 1; padding: 11px 10px; border: 0; border-radius: 12px; background: transparent; color: inherit; font: inherit; font-weight: 800; cursor: pointer; transition: background .18s, color .18s, box-shadow .18s; }
+.pestana-inicio.activa { background: var(--fieltro, #0f5a3f); color: #fff; box-shadow: 0 2px 0 var(--fieltro-osc, #0a3b2a), inset 0 0 0 1.5px var(--laton, #d4a548); }
+.panel-inicio[hidden] { display: none; }
+.panel-inicio > .repaso { margin-bottom: 10px; }

@@ -209,6 +209,7 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
     await p3.goto(URL);
     await p3.waitForSelector('.racha-aviso');
     ok(await p3.locator('.racha-aviso').count() === 1 && /5 días/.test(await p3.locator('.racha-aviso').innerText()), 'aviso de racha en peligro con los días de racha');
+    await p3.getByRole('tab', { name: 'Practicar' }).click();
     ok(/Récord: 3/.test(await p3.locator('.repaso', { hasText: 'Partida rápida' }).innerText()), 'la fila de partida rápida enseña el récord');
     await p3.locator('.racha-aviso').click();
     await p3.waitForSelector('[data-rapida] .barra-tiempo');
@@ -343,6 +344,7 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
 
   // 6) Entrenador de conteo
   await inicio({ xp: 0 });
+  await page.getByRole('tab', { name: 'Practicar' }).click();
   await page.getByText('Entrena el conteo').click();
   await page.getByRole('button', { name: /Rápido/ }).click();
   await page.getByRole('button', { name: '10', exact: true }).click();
@@ -870,6 +872,17 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
     await inicio({ xp: 120, racha: 2, ultimoDia: dia(-1), completadas: { 'bj-1-1': true, 'bj-1-2': true }, srs: { 'bj-1-1-e1': { caja: 0, prox: dia(0), fallos: 2 }, 'bj-1-1-e2': { caja: 0, prox: dia(0), fallos: 1 }, 'bj-1-2-e1': { caja: 1, prox: dia(-1), fallos: 1 } } });
     await page.waitForSelector('.juego');
     ok(await page.locator('.sesion-hoy').count() === 1, 'inicio: aparece «Sesión de hoy»');
+    ok(await page.locator('#panel-juegos .juego').count() === 6 && await page.locator('#panel-mas').isHidden(), 'inicio: «Juegos» muestra solo los juegos');
+    await page.getByRole('tab', { name: 'Practicar' }).click();
+    const filasMas = await page.locator('#panel-mas .repaso').allInnerTexts();
+    ok(filasMas.length === 4 && ['Partida rápida', 'Entrena el conteo', 'Ranking con amigos', 'Mis estadísticas'].every((t, i) => filasMas[i].includes(t)) && await page.locator('#panel-juegos').isHidden(), 'inicio: «Practicar» agrupa las 4 herramientas');
+    await page.getByText('Mis estadísticas').click();
+    await page.waitForSelector('.estadisticas, .est-debil, main h1');
+    await page.locator('.volver').click();
+    await page.waitForSelector('#panel-mas:not([hidden])');
+    ok(true, 'al volver de una herramienta se reabre «Practicar»');
+    await page.evaluate(() => mostrarInicio('sin'));
+    ok(await page.locator('#panel-juegos').isVisible(), 'la siguiente vez se vuelve a ver «Juegos»');
     const plan = await page.evaluate(() => { const p = planSesionHoy(); return { n: p.ids.length, unicos: new Set(p.ids).size, resumen: p.resumen, primeros: p.ids.slice(0, 2) }; });
     ok(plan.n === 10 && plan.unicos === 10, 'sesión de hoy: 10 preguntas sin repetir (' + plan.resumen + ')');
     ok(plan.primeros.every((id) => id.startsWith('bj-1-')) && plan.resumen.startsWith('3 por repasar'), 'sesión de hoy: empieza por lo que toca repasar');
@@ -936,12 +949,14 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
     // sin sesión: pide entrar
     await inicio({ xp: 40 });
     await page.waitForSelector('.juego');
+    await page.getByRole('tab', { name: 'Practicar' }).click();
     await page.getByRole('button', { name: /Ranking con amigos/ }).click();
     await page.waitForSelector('.amigos');
     ok((await page.locator('.amigos').innerText()).includes('Ir a Ajustes'), 'amigos: sin sesión se pide entrar con el correo');
     // con sesión, sin nombre
     await page.evaluate((s) => localStorage.setItem('vip-sesion-v1', JSON.stringify(s)), sesion);
     await page.reload();
+    await page.getByRole('tab', { name: 'Practicar' }).click();
     await page.getByRole('button', { name: /Ranking con amigos/ }).click();
     await page.waitForSelector('.amigos input');
     await page.locator('.amigos input').fill('<b>');
