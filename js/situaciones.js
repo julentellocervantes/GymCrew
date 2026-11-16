@@ -41,6 +41,7 @@ function claveBlackjack(jugador, crupier) {
 // Lista de claves de un ejercicio. En el relámpago, una por cada situación (con `i` se pide solo la del elemento i).
 function situacionesDe(e, i = null) {
   if (!e) return [];
+  if (e.base) e = e.base; // formas nuevas: la situación es la del ejercicio original
   if (e.tipo === 'accion' && e.situacion && e.situacion.jugador) { const c = claveBlackjack(e.situacion.jugador, e.situacion.crupier); return c ? [c] : []; }
   const ch = e.chequeo || {};
   if (e.tipo === 'relampago') {

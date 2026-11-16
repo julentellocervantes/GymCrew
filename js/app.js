@@ -160,7 +160,7 @@ function metaEjercicio(id) {
   const n = m && INDICE_NIVELES[m[2]];
   const nivel = n && (m[1] ? (typeof ORO !== 'undefined' ? ORO[m[2]] : null) : n.nivel);
   const e = nivel && nivel.ejercicios.find((x) => x.id === id);
-  return e ? (META_CACHE[id] = { curso: n.curso.id, u: n.u, tipo: e.tipo }) : undefined;
+  return e ? (META_CACHE[id] = { curso: n.curso.id, u: n.u, tipo: (e.base || e).tipo }) : undefined;
 }
 function registrarEstadistica(id, acierto) {
   const m = metaEjercicio(id);
@@ -262,6 +262,19 @@ function preparar(e) {
   }
   if (e.tipo === 'rellenar') return Object.assign({}, e, { opciones: [], correcta: 0, mezcla: barajar(e.banco.map((_, i) => i)) });
   if (e.tipo === 'relampago') return Object.assign({}, e, { respuestas: e.opciones, opciones: [], correcta: 0, mezcla: barajar(e.items.map((_, i) => i)) });
+  // Formas nuevas (data/formas-interactivas.js): el ejercicio original va en `base`
+  if (e.tipo === 'vf') return Object.assign({}, e, { opciones: [], correcta: 0 });
+  if (e.tipo === 'duelo') return Object.assign({}, e, { par: barajar([e.acierto, e.falsa]), opciones: [], correcta: 0 });
+  if (e.tipo === 'eliminar') { const p = preparar(e.base); return Object.assign({}, e, { lista: p.opciones, buena: p.correcta, opciones: [], correcta: 0 }); }
+  if (e.tipo === 'reloj') return Object.assign({}, preparar(e.base), { tipo: 'reloj', id: e.id, base: e.base, segundos: e.segundos });
+  if (e.tipo === 'construir') {
+    let mezcla;
+    do mezcla = barajar(e.banco.map((_, i) => i));
+    while (mezcla.every((v, i) => e.banco[v] === e.palabras[i]));
+    return Object.assign({}, e, { mezcla, opciones: [], correcta: 0 });
+  }
+  if (e.tipo === 'memoria') return Object.assign({}, e, { mezcla: barajar(e.pares.flatMap((_, i) => [2 * i, 2 * i + 1])), opciones: [], correcta: 0 });
+  if (e.tipo === 'errata') return Object.assign({}, e, { opciones: [], correcta: 0 });
   if (e.tipo === 'accion' || e.opciones.length < 2) return e;
   const correcta = e.opciones[e.correcta];
   const opciones = e.opciones.every(esCifra)
@@ -280,6 +293,12 @@ function respuestaTexto(e) {
   if (e.tipo === 'deslizador') return `${e.respuesta}${e.unidad ? ' ' + e.unidad : ''}` + (e.tolerancia ? ` (vale de ${e.respuesta - e.tolerancia} a ${e.respuesta + e.tolerancia})` : '');
   if (e.tipo === 'relampago') return e.items.map(([t, k, et]) => `${et ? et + ': ' : ''}${t} → ${e.respuestas ? e.respuestas[k] : e.opciones[k]}`).join(' · ');
   if (e.tipo === 'rellenar') { let k = 0; return e.texto.replace(/\{\}/g, () => e.huecos[k++]); }
+  if (e.tipo === 'vf') return e.verdadero ? 'Verdadero' : `Falso (lo correcto era «${e.base.opciones[e.base.correcta]}»)`;
+  if (e.tipo === 'duelo') return e.acierto;
+  if (e.tipo === 'eliminar') return e.lista[e.buena];
+  if (e.tipo === 'construir') return e.palabras.join(' ');
+  if (e.tipo === 'memoria') return e.pares.map((p) => `${p[0]} = ${p[1]}`).join(' · ');
+  if (e.tipo === 'errata') return e.elementos.join(' → ');
   return e.opciones[e.correcta];
 }
 
@@ -1061,6 +1080,10 @@ function mostrarLeccion(curso, leccion) {
   let relTimer = null;
   let valorDes = null; // ejercicios "deslizador": posición del control
   let huecos = []; // ejercicios "rellenar": palabra puesta en cada hueco (índice del banco o null)
+  let pulsada = null; // formas nuevas de un solo toque (verdadero/falso, duelo, errata): lo que tocaste
+  let tachadas = []; // "eliminar": respuestas descartadas
+  let armado = []; // "construir": fichas del banco colocadas, en orden
+  let mem = { abiertas: [], halladas: [], fallos: 0, bloqueado: false }; // "memoria"
   let comprobar = null; // acción del botón «Comprobar» de la pantalla actual
   let rapidaTimer = null; // partida rápida: 60 s en total
   let rapidaInicio = 0;
@@ -1123,6 +1146,10 @@ function mostrarLeccion(curso, leccion) {
     rel = { i: 0, fallos: 0, flash: null, bloqueado: false };
     valorDes = null;
     huecos = [];
+    pulsada = null;
+    tachadas = [];
+    armado = [];
+    mem = { abiertas: [], halladas: [], fallos: 0, bloqueado: false };
     dibujar('ejercicio');
   }
 
@@ -1488,6 +1515,128 @@ function mostrarLeccion(curso, leccion) {
       );
     }
 
+
+    // ---------- Formas nuevas de responder (data/formas-interactivas.js) ----------
+    const dueno2 = ejercicio;
+    const sigue = () => cola[idx] === dueno2 && elegida === null && !!raiz.querySelector(`.pregunta[data-id="${dueno2.id}"]`); // sigue en esta pantalla (no saliste de la lección)
+    // ¿Verdadero o falso?: se propone una respuesta y se juzga
+    if (ejercicio.tipo === 'vf') {
+      const juzga = (dice) => { if (respondido) return; pulsada = dice; elegir(dice === ejercicio.verdadero ? 0 : -1); };
+      const boton = (dice, texto, k) => {
+        let clase = 'vf-boton ' + (dice ? 'si' : 'no');
+        if (respondido && dice === ejercicio.verdadero) clase += ' bien';
+        else if (respondido && pulsada === dice) clase += ' mal';
+        return el('button', { class: clase, type: 'button', 'data-vf': dice ? 'v' : 'f', disabled: respondido ? '' : null, onclick: () => juzga(dice) }, el('span', { class: 'tecla' }, String(k)), texto);
+      };
+      tablero = el('div', { class: 'vf' },
+        el('p', { class: 'ordenar-etiqueta' }, '¿Verdadero o falso?'),
+        el('div', { class: 'vf-propuesta' }, el('span', { class: 'vf-etiqueta' }, 'Respuesta propuesta'), el('strong', {}, ejercicio.propuesta)),
+        el('div', { class: 'vf-botones' }, boton(true, 'Verdadero', 1), boton(false, 'Falso', 2)));
+    }
+    // Duelo: dos respuestas frente a frente
+    if (ejercicio.tipo === 'duelo') {
+      const carta = (texto, k) => {
+        let clase = 'duelo-carta';
+        if (respondido && texto === ejercicio.acierto) clase += ' bien';
+        else if (respondido && pulsada === k) clase += ' mal';
+        return el('button', { class: clase, type: 'button', 'data-duelo': String(k), disabled: respondido ? '' : null,
+          onclick: () => { if (respondido) return; pulsada = k; elegir(texto === ejercicio.acierto ? 0 : -1); } }, el('span', { class: 'tecla' }, String(k + 1)), texto);
+      };
+      tablero = el('div', { class: 'duelo' },
+        el('p', { class: 'ordenar-etiqueta' }, 'Duelo: elige la correcta'),
+        el('div', { class: 'duelo-cartas' }, carta(ejercicio.par[0], 0), el('span', { class: 'duelo-vs', 'aria-hidden': 'true' }, 'VS'), carta(ejercicio.par[1], 1)));
+    }
+    // Descartar: tacha las incorrectas hasta que solo quede la buena
+    if (ejercicio.tipo === 'eliminar') {
+      const malas = ejercicio.lista.length - 1;
+      const tacha = (i) => {
+        if (respondido || tachadas.includes(i)) return;
+        if (i === ejercicio.buena) { tachadas = tachadas.concat([i]); return elegir(-1); }
+        tachadas = tachadas.concat([i]);
+        if (tachadas.length >= malas) { dibujar('sin'); return void setTimeout(() => sigue() && elegir(0), 420); }
+        dibujar('sin');
+      };
+      tablero = el('div', { class: 'eliminar' },
+        el('p', { class: 'ordenar-etiqueta' }, `Descarta las incorrectas · te faltan ${Math.max(0, malas - tachadas.filter((i) => i !== ejercicio.buena).length)}`),
+        ejercicio.lista.map((texto, i) => {
+          let clase = 'elim-opcion' + (tachadas.includes(i) ? ' tachada' : '');
+          if (respondido && i === ejercicio.buena) clase += ' bien';
+          else if (respondido && tachadas.includes(i) && i === ejercicio.buena) clase += ' mal';
+          return el('button', { class: clase, type: 'button', 'data-elim': String(i), 'aria-pressed': tachadas.includes(i) ? 'true' : 'false', disabled: respondido || tachadas.includes(i) ? '' : null, onclick: () => tacha(i) },
+            el('span', { class: 'tecla' }, tachadas.includes(i) ? '✕' : String(i + 1)), el('span', { class: 'elim-texto' }, texto));
+        }));
+    }
+    // Contrarreloj: las respuestas de siempre, con tiempo
+    if (ejercicio.tipo === 'reloj') {
+      const sinPrisa2 = document.documentElement.dataset.calma === 'si';
+      const seg = ejercicio.segundos || 12;
+      if (!respondido && !sinPrisa2) relTimer = setTimeout(() => sigue() && elegir(-1), seg * 1000);
+      tablero = el('div', { class: 'reloj' },
+        el('p', { class: 'ordenar-etiqueta' }, 'Contrarreloj' + (sinPrisa2 ? ' · sin cuenta atrás' : ` · ${seg} s`)),
+        sinPrisa2 ? null : el('div', { class: 'rel-barra', role: 'timer', 'aria-label': `Tienes ${seg} segundos` }, el('span', { class: respondido ? 'parada' : '', style: `--s:${seg}s` })));
+    }
+    // Armar la respuesta: toca las palabras en orden (sobran algunas)
+    if (ejercicio.tipo === 'construir') {
+      const hecho = armado.map((b) => ejercicio.banco[b]).join(' ');
+      const correctoC = hecho === ejercicio.palabras.join(' ');
+      const ficha = (b, colocada, k) => el('button', {
+        class: 'ficha' + (colocada ? ' colocada' : '') + (respondido ? (correctoC ? ' bien' : ' mal') : ''), type: 'button', disabled: respondido ? '' : null,
+        'aria-label': colocada ? `Quitar ${ejercicio.banco[b]}` : `Poner ${ejercicio.banco[b]}`,
+        onclick: () => { if (respondido) return; armado = colocada ? armado.filter((v) => v !== b) : armado.concat([b]); dibujar('sin'); const f = raiz.querySelector('.construir .ordenar-banco .ficha'); if (f) f.focus({ preventScroll: true }); },
+      }, ejercicio.banco[b]);
+      const bancoC = ejercicio.mezcla.filter((b) => !armado.includes(b)).map((b) => ficha(b, false, 0));
+      if (!respondido) comprobar = () => armado.length && elegir(hecho === ejercicio.palabras.join(' ') ? 0 : -1);
+      tablero = el('div', { class: 'ordenar construir' },
+        el('p', { class: 'ordenar-etiqueta' }, 'Arma la respuesta (sobran palabras)'),
+        el('div', { class: 'ordenar-lista' }, armado.length ? armado.map((b, k) => ficha(b, true, k)) : el('span', { class: 'ordenar-vacio' }, 'Toca las palabras en orden')),
+        bancoC.length ? el('p', { class: 'ordenar-etiqueta' }, 'Palabras') : null,
+        el('div', { class: 'ordenar-banco' }, bancoC),
+        !respondido && armado.length ? el('button', { class: 'boton', type: 'button', onclick: comprobar }, 'Comprobar') : null);
+    }
+    // Memoria: encuentra las parejas boca abajo
+    if (ejercicio.tipo === 'memoria') {
+      const n = ejercicio.pares.length;
+      const abre = (c) => {
+        if (respondido || mem.bloqueado || mem.abiertas.includes(c) || mem.halladas.includes(c >> 1) || mem.abiertas.length >= 2) return;
+        mem.abiertas = mem.abiertas.concat([c]);
+        if (mem.abiertas.length === 2) {
+          const [a, b] = mem.abiertas;
+          if (a >> 1 === b >> 1) {
+            sonido('unir');
+            mem.halladas = mem.halladas.concat([a >> 1]);
+            mem.abiertas = [];
+            if (mem.halladas.length === n) setTimeout(() => sigue() && elegir(mem.fallos <= 2 * n ? 0 : -1), 450);
+          } else {
+            sonido('error');
+            mem.fallos += 1;
+            mem.bloqueado = true;
+            setTimeout(() => { if (!sigue()) return; mem.abiertas = []; mem.bloqueado = false; dibujar('sin'); }, 850);
+          }
+        }
+        dibujar('sin');
+      };
+      tablero = el('div', { class: 'memoria' },
+        el('p', { class: 'ordenar-etiqueta' }, `Memoria · ${mem.halladas.length} de ${n} parejas · fallos: ${mem.fallos}`),
+        el('div', { class: 'mem-rejilla' }, ejercicio.mezcla.map((c) => {
+          const hallada = mem.halladas.includes(c >> 1), abierta = hallada || mem.abiertas.includes(c);
+          const texto = ejercicio.pares[c >> 1][c & 1];
+          return el('button', { class: 'mem-carta' + (abierta ? ' abierta' : '') + (hallada ? ' hallada' : '') + (mem.bloqueado && mem.abiertas.includes(c) ? ' mal' : ''), type: 'button', style: `--k:${c >> 1}`, 'data-mem': String(c), 'data-par': String(c >> 1),
+            'aria-label': abierta ? texto : 'Carta boca abajo', disabled: hallada || respondido ? '' : null, onclick: () => abre(c) }, abierta ? texto : '?');
+        })));
+    }
+    // Encuentra el error: una ficha está fuera de sitio
+    if (ejercicio.tipo === 'errata') {
+      tablero = el('div', { class: 'errata' },
+        el('p', { class: 'ordenar-etiqueta' }, 'Una ficha está fuera de sitio: tócala'),
+        el('div', { class: 'errata-lista' }, ejercicio.secuencia.map((v, k) => {
+          let clase = 'ficha errata-ficha';
+          if (respondido && k === ejercicio.intruso) clase += ' bien';
+          else if (respondido && pulsada === k) clase += ' mal';
+          return el('button', { class: clase, type: 'button', 'data-errata': String(k), disabled: respondido ? '' : null, onclick: () => { if (respondido) return; pulsada = k; elegir(k === ejercicio.intruso ? 0 : -1); } },
+            el('span', { class: 'ficha-n' }, String(k + 1)), ejercicio.elementos[v]);
+        })));
+    }
+
     const opciones = ejercicio.opciones.map((texto, i) => {
       let clase = 'opcion';
       if (respondido && i === ejercicio.correcta) clase += ' bien';
@@ -1509,7 +1658,9 @@ function mostrarLeccion(curso, leccion) {
             {},
             acierto
               ? elegirAlAzar(['¡Genial!', '¡Eso es!', '¡Muy bien!', '¡Correcto!'])
-              : elegirAlAzar(['¡Casi!', 'Ups, esa no era.', 'No pasa nada.'])
+              : ejercicio.tipo === 'reloj' && elegida === -1
+                ? '¡Se acabó el tiempo!'
+                : elegirAlAzar(['¡Casi!', 'Ups, esa no era.', 'No pasa nada.'])
           ),
           acierto
             ? null

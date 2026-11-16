@@ -302,7 +302,7 @@ function verificarInteractivo(e) {
 }
 
 
-for (const f of ['cursos.js', 'blackjack.js', 'poker.js', 'mus.js', 'blackjack-extra.js', 'poker-extra.js', 'mus-extra.js', 'ordenar-extra.js', 'interactivos-extra.js', 'variedad-extra.js', 'ayuda.js', 'generadores.js', 'practica.js', 'videopoker-datos.js', 'perezoso.js', 'casino.js', 'ruleta.js', 'ampliacion.js', 'mas-niveles.js', 'formas-nuevas.js', 'variedad-generada.js', 'premium.js']) vm.runInContext(fs.readFileSync(D + f, 'utf8'), ctx, { filename: f });
+for (const f of ['cursos.js', 'blackjack.js', 'poker.js', 'mus.js', 'blackjack-extra.js', 'poker-extra.js', 'mus-extra.js', 'ordenar-extra.js', 'interactivos-extra.js', 'variedad-extra.js', 'ayuda.js', 'generadores.js', 'practica.js', 'videopoker-datos.js', 'perezoso.js', 'casino.js', 'ruleta.js', 'ampliacion.js', 'mas-niveles.js', 'formas-nuevas.js', 'variedad-generada.js', 'premium.js', 'formas-interactivas.js']) vm.runInContext(fs.readFileSync(D + f, 'utf8'), ctx, { filename: f });
 const CURSOS = vm.runInContext('CURSOS', ctx);
 const AYUDA = vm.runInContext('AYUDA', ctx);
 const CURSOS_ORO = vm.runInContext('CURSOS_ORO', ctx);
@@ -670,6 +670,48 @@ const vpArrays = (cartas) => [cartas.map(vpRango), cartas.map((c) => VP_PALO[c.s
   verif.bacarraEmpate = +(BAC_EXACTO.pe * 100).toFixed(2);
 }
 
+// ---------- formas nuevas de responder (vf, duelo, eliminar, reloj, construir, memoria, errata) ----------
+function verificarForma(e) {
+  const b = e.base, t = e.tipo;
+  verif.formas = verif.formas || {};
+  verif.formas[t] = (verif.formas[t] || 0) + 1;
+  const test = (b.tipo === 'opcion_unica' || b.tipo === 'accion') && Array.isArray(b.opciones) && Number.isInteger(b.correcta) && b.correcta >= 0 && b.correcta < b.opciones.length;
+  const buena = test ? b.opciones[b.correcta] : null;
+  if (t === 'vf') {
+    if (!test) return mal(e.id, 'vf: el original no es de opciones');
+    if (!b.opciones.includes(e.propuesta)) mal(e.id, 'vf: la propuesta no es una opción');
+    if (e.verdadero !== (e.propuesta === buena)) mal(e.id, `vf: «${e.propuesta}» ${e.verdadero ? 'no es' : 'es'} la respuesta correcta («${buena}»)`);
+    if (e.falsa === buena || !b.opciones.includes(e.falsa)) mal(e.id, 'vf: respuesta falsa mal elegida');
+  } else if (t === 'duelo') {
+    if (!test || b.opciones.length < 3) return mal(e.id, 'duelo: original no válido');
+    if (e.acierto !== buena) mal(e.id, `duelo: la acertada es «${e.acierto}» y la correcta «${buena}»`);
+    if (e.falsa === buena || !b.opciones.includes(e.falsa)) mal(e.id, 'duelo: la falsa no vale');
+  } else if (t === 'eliminar') {
+    if (!test || b.opciones.length < 3) mal(e.id, 'eliminar: original no válido');
+  } else if (t === 'reloj') {
+    if (!test || !(e.segundos >= 8)) mal(e.id, 'reloj: original no válido o poco tiempo');
+  } else if (t === 'construir') {
+    if (!test || b.tipo !== 'opcion_unica') return mal(e.id, 'construir: original no válido');
+    if (e.palabras.join(' ') !== buena) mal(e.id, `construir: «${e.palabras.join(' ')}» no es la respuesta correcta «${buena}»`);
+    const falta = e.palabras.slice();
+    for (const w of e.banco) { const i = falta.indexOf(w); if (i >= 0) falta.splice(i, 1); }
+    if (falta.length) mal(e.id, 'construir: faltan palabras en el banco');
+    if (e.banco.length <= e.palabras.length) mal(e.id, 'construir: sin palabras de sobra');
+  } else if (t === 'memoria') {
+    if (b.tipo !== 'emparejar' || JSON.stringify(e.pares) !== JSON.stringify(b.pares)) mal(e.id, 'memoria: las parejas no son las del original');
+    const lados = e.pares.flatMap((p) => p);
+    if (new Set(lados).size !== lados.length || e.pares.length < 3) mal(e.id, 'memoria: cartas repetidas o pocas parejas');
+  } else if (t === 'errata') {
+    if (b.tipo !== 'ordenar' || JSON.stringify(e.elementos) !== JSON.stringify(b.elementos)) return mal(e.id, 'errata: los elementos no son los del original');
+    const n = e.elementos.length;
+    if (e.secuencia.length !== n || [...e.secuencia].sort((x, y) => x - y).some((v, i) => v !== i)) return mal(e.id, 'errata: la secuencia no es una permutación');
+    const enOrden = (a) => a.every((v, i) => i === 0 || a[i - 1] < v);
+    if (enOrden(e.secuencia)) mal(e.id, 'errata: la secuencia ya está en orden');
+    const culpables = e.secuencia.map((_, k) => k).filter((k) => enOrden(e.secuencia.filter((__, j) => j !== k)));
+    if (culpables.length !== 1 || culpables[0] !== e.intruso) mal(e.id, 'errata: la ficha fuera de sitio no es única o no coincide');
+  } else mal(e.id, 'forma nueva desconocida ' + t);
+}
+
 // ---------- recorrido ----------
 for (const c of CURSOS.concat(CURSOS_ORO)) {
   for (const campo of ['id', 'nombre', 'icono', 'color', 'descripcion', 'reglas']) if (!c[campo]) mal(c.id, `curso sin ${campo}`);
@@ -681,10 +723,12 @@ for (const c of CURSOS.concat(CURSOS_ORO)) {
       if (typeof l.intro !== 'string' || l.intro.length < 40 || l.intro.length > 420) mal(l.id, `intro rara (${(l.intro || '').length} caracteres)`);
       if (!l.icono || typeof l.xp !== 'number' || !l.titulo) mal(l.id, 'falta icono, xp o titulo');
       if (l.ejercicios.length < 4) mal(l.id, 'menos de 4 ejercicios');
-      for (const e of l.ejercicios) {
+      for (const e0 of l.ejercicios) {
         nEj++;
-        if (ids.has(e.id)) mal(e.id, 'id repetido'); ids.add(e.id);
-        if (!e.pregunta || !e.explicacion) mal(e.id, 'falta pregunta o explicación');
+        if (ids.has(e0.id)) mal(e0.id, 'id repetido'); ids.add(e0.id);
+        if (!e0.pregunta || !e0.explicacion) mal(e0.id, 'falta pregunta o explicación');
+        const e = e0.base || e0; // formas nuevas (data/formas-interactivas.js): se comprueba el ejercicio original y, aparte, la conversión
+        if (e0.base) { verificarForma(e0); if (e.id !== e0.id) mal(e0.id, 'la forma nueva cambia el id'); }
         if (['clasificar', 'deslizador', 'rellenar', 'relampago'].includes(e.tipo)) { verificarNuevos(e); continue; }
         if (c.id === 'baccarat' || c.id === 'videopoker' || c.id === 'ruleta') { verificarCasino(e); continue; }
         if (['seleccionar', 'numero', 'emparejar', 'ordenar'].includes(e.tipo)) {

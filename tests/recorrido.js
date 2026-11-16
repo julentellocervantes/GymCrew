@@ -13,7 +13,7 @@ const esc = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) fallos.push(m.text()); });
   await page.goto(URL);
   // los niveles normales y, a continuación, los niveles Oro de la ruta dorada
-  let lecciones = await page.evaluate(() => CURSOS.flatMap((c) => niveles(c).concat(niveles(c).map((l) => ORO[l.id]).filter(Boolean)).map((l) => ({ curso: c.id, id: l.id, n: l.ejercicios.length, nueva: l.ejercicios.some((e) => ['clasificar', 'deslizador', 'rellenar', 'relampago'].includes(e.tipo)) }))));
+  let lecciones = await page.evaluate(() => CURSOS.flatMap((c) => niveles(c).concat(niveles(c).map((l) => ORO[l.id]).filter(Boolean)).map((l) => ({ curso: c.id, id: l.id, n: l.ejercicios.length, nueva: l.ejercicios.some((e) => ['clasificar', 'deslizador', 'rellenar', 'relampago', 'vf', 'duelo', 'eliminar', 'reloj', 'construir', 'memoria', 'errata'].includes(e.tipo)) }))));
   if (process.env.SOLO_CURSO) lecciones = lecciones.filter((l) => l.curso === process.env.SOLO_CURSO);
   if (process.env.SOLO_ID) lecciones = lecciones.filter((l) => new RegExp(process.env.SOLO_ID).test(l.id)); // p. ej. SOLO_ID='^oro-pk-5-'
   if (process.env.SOLO_NUEVAS) lecciones = lecciones.filter((l) => l.nueva); // node tests/recorrido.js con SOLO_NUEVAS=1
@@ -67,12 +67,35 @@ const esc = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       } else if (ej.tipo === 'rellenar') {
         for (const h of ej.huecos) await page.locator('.rell-palabra:not(:disabled)', { hasText: new RegExp('^\\s*' + esc(h) + '\\s*$') }).click();
         await page.getByRole('button', { name: 'Comprobar' }).click();
+      } else if (ej.tipo === 'vf') {
+        await page.locator(`.vf-boton[data-vf="${ej.verdadero ? 'v' : 'f'}"]`).click();
+      } else if (ej.tipo === 'duelo') {
+        const t = await page.locator('.duelo-carta').evaluateAll((els) => els.map((e) => e.lastChild.textContent.trim()));
+        await page.locator('.duelo-carta').nth(t.indexOf(ej.acierto)).click();
+      } else if (ej.tipo === 'eliminar') {
+        const t = await page.locator('.elim-texto').allInnerTexts();
+        const buena = ej.base.opciones[ej.base.correcta];
+        for (let i = 0; i < t.length; i++) if (t[i].trim() !== buena) await page.locator('.elim-opcion').nth(i).click();
+        await page.waitForSelector('.feedback');
+      } else if (ej.tipo === 'construir') {
+        for (const w of ej.palabras) await page.locator('.construir .ordenar-banco .ficha', { hasText: new RegExp('^\\s*' + esc(w) + '\\s*$') }).first().click();
+        await page.getByRole('button', { name: 'Comprobar' }).click();
+      } else if (ej.tipo === 'memoria') {
+        for (let i = 0; i < ej.pares.length; i++) {
+          await page.locator(`.mem-carta[data-par="${i}"]:not(:disabled)`).nth(0).click();
+          await page.locator(`.mem-carta[data-par="${i}"]:not(.abierta):not(:disabled)`).nth(0).click();
+        }
+        await page.waitForSelector('.feedback');
+      } else if (ej.tipo === 'errata') {
+        await page.locator(`.errata-ficha[data-errata="${ej.intruso}"]`).click();
       } else {
+        const base = ej.tipo === 'reloj' ? ej.base : ej;
         const t = await page.locator('.opcion').evaluateAll((els) => els.map((e) => e.innerText.replace(/^\s*\d+\s*/, '').trim()));
-        await page.locator('.opcion').nth(t.indexOf(ej.opciones[ej.correcta])).click();
+        await page.locator('.opcion').nth(t.indexOf(base.opciones[base.correcta])).click();
       }
       if (!(await page.locator('.feedback.bien').count())) throw new Error(`${lec.id}: la respuesta correcta no se aceptó en «${q}»`);
       await page.locator('.feedback .boton').click();
+      await page.waitForFunction(() => !document.querySelector('.feedback'), null, { timeout: 5000 }).catch(() => {}); // espera a que salga la pantalla anterior (con la máquina cargada tarda)
     }
     await page.waitForSelector('.resultado-titulo', { timeout: 5000 }).catch(() => { throw new Error(lec.id + ': no llegó al resultado'); });
     if (new Set(vistos).size < 3) throw new Error(lec.id + ': menos de 3 tipos de pregunta: ' + [...new Set(vistos)]);

@@ -73,9 +73,38 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
       const orden = acertar ? ej.huecos : ej.banco.filter((w) => !ej.huecos.includes(w)).slice(0, 1).concat(ej.huecos.slice(1));
       for (const h of orden) await page.locator('.rell-palabra:not(:disabled)', { hasText: new RegExp('^\\s*' + h.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*$') }).click();
       await page.getByRole('button', { name: 'Comprobar' }).click();
+    } else if (ej.tipo === 'vf') {
+      await page.locator(`.vf-boton[data-vf="${ej.verdadero === acertar ? 'v' : 'f'}"]`).click();
+    } else if (ej.tipo === 'duelo') {
+      const t = await page.locator('.duelo-carta').evaluateAll((els) => els.map((e) => e.lastChild.textContent.trim()));
+      await page.locator('.duelo-carta').nth(acertar ? t.indexOf(ej.acierto) : t.findIndex((x) => x !== ej.acierto)).click();
+    } else if (ej.tipo === 'eliminar') {
+      const t = (await page.locator('.elim-texto').allInnerTexts()).map((x) => x.trim());
+      const buena = ej.base.opciones[ej.base.correcta];
+      if (acertar) { for (let i = 0; i < t.length; i++) if (t[i] !== buena) await page.locator('.elim-opcion').nth(i).click(); }
+      else await page.locator('.elim-opcion').nth(t.indexOf(buena)).click();
+      await page.waitForSelector('.feedback');
+    } else if (ej.tipo === 'construir') {
+      const orden = acertar ? ej.palabras : ej.palabras.slice().reverse();
+      for (const w of orden) await page.locator('.construir .ordenar-banco .ficha', { hasText: new RegExp('^\\s*' + w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*$') }).first().click();
+      await page.getByRole('button', { name: 'Comprobar' }).click();
+    } else if (ej.tipo === 'memoria') {
+      if (!acertar) { // dos cartas que no son pareja y luego todas bien: el ejercicio sale bien con pocos fallos, así que aquí se comprueba solo que se puede abrir
+        await page.locator('.mem-carta[data-par="0"]').first().click();
+      }
+      for (let i = 0; i < ej.pares.length; i++) {
+        const abiertas = await page.locator(`.mem-carta[data-par="${i}"].abierta`).count();
+        if (abiertas === 0) await page.locator(`.mem-carta[data-par="${i}"]:not(:disabled)`).nth(0).click();
+        await page.locator(`.mem-carta[data-par="${i}"]:not(.abierta):not(:disabled)`).nth(0).click();
+      }
+      await page.waitForSelector('.feedback');
+    } else if (ej.tipo === 'errata') {
+      const k = acertar ? ej.intruso : (ej.intruso + 1) % ej.secuencia.length;
+      await page.locator(`.errata-ficha[data-errata="${k}"]`).click();
     } else {
+      const base = ej.tipo === 'reloj' ? ej.base : ej;
       const t = await textosOp();
-      const buena = ej.opciones[ej.correcta];
+      const buena = base.opciones[base.correcta];
       await page.locator('.opcion').nth(acertar ? t.indexOf(buena) : t.findIndex((x) => x !== buena)).click();
     }
     return ej;
@@ -216,7 +245,7 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
     let buenas = 0;
     for (let k = 0; k < 5; k++) {
       const id = await p3.locator('.pregunta').first().getAttribute('data-id');
-      const buena = await p3.evaluate((i) => { const e = INDICE_EJERCICIOS[i].ejercicio; return e.opciones[e.correcta]; }, id);
+      const buena = await p3.evaluate((i) => { const e0 = INDICE_EJERCICIOS[i].ejercicio, e = e0.base || e0; return e.opciones[e.correcta]; }, id);
       const textos = await p3.locator('.opcion').evaluateAll((els) => els.map((x) => x.innerText.replace(/^\s*\d+\s*/, '').trim()));
       await p3.locator('.opcion').nth(textos.indexOf(buena)).click();
       buenas++;
@@ -896,7 +925,7 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
     ok(await page.locator('.reto').count() === 1, 'inicio: aparece el reto semanal');
     const r1 = await page.evaluate(() => { const r = retoActual(); return { id: r.def.id, meta: r.def.meta, semana: r.semana, lunes: semanaActual() }; });
     ok(r1.semana === r1.lunes && new Date(r1.lunes + 'T12:00:00').getDay() === 1, 'reto: la semana empieza en lunes');
-    await page.evaluate(() => { const t = retoActual().def.id; for (let i = 0; i < 200; i++) retoSuma(t, t === 'rapida' ? 99 : 1); guardarProgreso(); mostrarInicio('sin'); });
+    await page.evaluate(() => { const t = retoActual().def.id; for (let i = 0; i < 200; i++) retoSuma(t, t === 'rapida' ? 99 : 1); if (t === 'dias') progreso.reto.n = retoActual().def.meta; /* «dias» solo suma una vez al día */ guardarProgreso(); mostrarInicio('sin'); });
     await page.waitForSelector('.reto.listo');
     const f0 = await page.evaluate(() => progreso.fichas);
     await page.locator('.reto.listo').click();

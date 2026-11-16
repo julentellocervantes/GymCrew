@@ -87,7 +87,7 @@ function iniciarEntrenoTema(cursoId, ui) {
 }
 // Partida rápida: 60 segundos seguidos de preguntas de todos los juegos; cuenta los aciertos y guarda tu récord
 function iniciarPartidaRapida() {
-  const pool = ejerciciosAlcanzados().filter((e) => (e.tipo === 'opcion_unica' || e.tipo === 'accion') && e.opciones && e.opciones.length >= 2);
+  const pool = ejerciciosAlcanzados().map((e) => e.base || e).filter((e) => (e.tipo === 'opcion_unica' || e.tipo === 'accion') && e.opciones && e.opciones.length >= 2);
   const curso = { id: 'global', nombre: 'Partida rápida', icono: '⚡', color: '#f5a524', unidades: [], global: true };
   mostrarLeccion(curso, { id: 'partida-rapida', titulo: 'Partida rápida', icono: '⚡', xp: 10, repaso: true, rapida: true, ejercicios: barajar(pool).slice(0, 80) });
 }

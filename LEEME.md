@@ -218,3 +218,16 @@ Debajo de la meta, el reto y los repasos, el inicio tiene dos pestañas: **Juego
 - `data/mas-niveles.js` crea los niveles 31–100 (en ruleta, del 9 al 100): retoma los temas de cada juego en versiones **avanzado, experto, maestro, leyenda y mítico**, con situaciones nuevas generadas por código (misma semilla = mismos ejercicios). Cada nivel nuevo se apunta en `AMPLIACION` y `data/premium.js` le crea su nivel Oro.
 - **Carga perezosa** (`data/perezoso.js`): los ejercicios de un nivel generado se crean la primera vez que se abre. La app arranca en medio segundo en vez de generar miles de ejercicios al abrirla. Por eso `INDICE_EJERCICIOS` y `metaEjercicio` buscan por id sin recorrerlo todo, y los repasos y partidas rápidas salen de los niveles ya alcanzados (`nivelesAlcanzados`).
 - La ruleta tiene nueve generadores nuevos (docenas, columnas, quién gana, dos apuestas a la vez, mitos, presupuesto…) con su cálculo independiente en `tests/validar.js`.
+
+## Siete formas nuevas de responder
+Repartidas por todos los niveles (normales y Oro), unas 2 o 3 por nivel y cada una distinta (`data/formas-interactivas.js`):
+- **vf** (¿verdadero o falso?): se propone una respuesta y se juzga.
+- **duelo**: dos respuestas frente a frente.
+- **eliminar** (descartar): tacha las incorrectas; si tachas la buena, fallas.
+- **reloj** (contrarreloj): las respuestas de siempre con 12 s; con «sin prisa» (Ajustes) no hay cuenta atrás.
+- **construir** (armar la respuesta): toca las palabras en orden; sobran algunas.
+- **memoria**: encuentra las parejas boca abajo (viene de «emparejar»).
+- **errata** (fuera de sitio): una ficha está mal colocada, tócala (viene de «ordenar»).
+
+No son preguntas nuevas: cada una convierte un ejercicio que ya existía (mismo id y misma respuesta), así que la repetición espaciada, «Mis errores» y las estadísticas siguen funcionando. El original queda en `base` y `tests/validar.js` lo sigue comprobando con sus reglas independientes, además de la conversión (la propuesta del verdadero/falso, la ficha fuera de sitio única, las palabras del banco…). La partida rápida usa los ejercicios originales.
+Se aplican con `GEN.transformar` (`data/perezoso.js`), que corre sobre cada nivel cuando ya está completo (también los Oro, que se generan al abrirlos).
