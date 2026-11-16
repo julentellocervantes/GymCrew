@@ -905,7 +905,7 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
     ok(await page.locator('#panel-juegos .juego').count() === 6 && await page.locator('#panel-mas').isHidden(), 'inicio: «Juegos» muestra solo los juegos');
     await page.getByRole('tab', { name: 'Practicar' }).click();
     const filasMas = await page.locator('#panel-mas .repaso').allInnerTexts();
-    ok(filasMas.length === 4 && ['Partida rápida', 'Entrena el conteo', 'Ranking con amigos', 'Mis estadísticas'].every((t, i) => filasMas[i].includes(t)) && await page.locator('#panel-juegos').isHidden(), 'inicio: «Practicar» agrupa las 4 herramientas');
+    ok(filasMas.length === 6 && ['Partida rápida', 'Simulador de blackjack', 'Test de nivel', 'Entrena el conteo', 'Ranking con amigos', 'Mis estadísticas'].every((t, i) => filasMas[i].includes(t)) && await page.locator('#panel-juegos').isHidden(), 'inicio: «Practicar» agrupa las 6 herramientas');
     await page.getByText('Mis estadísticas').click();
     await page.waitForSelector('.estadisticas, .est-debil, main h1');
     await page.locator('.volver').click();
@@ -952,6 +952,51 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
     await page.waitForSelector('.nodo');
     ok(await page.locator('.nodo').count() >= 8, 'ruleta: el mapa tiene sus niveles');
     await page.evaluate(() => mostrarInicio('sin'));
+  }
+
+  // 6c-bis) Test de nivel y simulador de blackjack
+  {
+    const rec = await page.evaluate(() => [nivelRecomendado(TEST_PUNTOS, {}), nivelRecomendado(TEST_PUNTOS, { 28: true, 36: true }), nivelRecomendado(TEST_PUNTOS, { 6: true }), nivelRecomendado(TEST_PUNTOS, { 1: true, 6: true }), nivelRecomendado(TEST_PUNTOS, { 95: true })]);
+    ok(JSON.stringify(rec) === JSON.stringify([95, 20, 95, 0, 85]), 'test de nivel: el nivel recomendado sube hasta el segundo fallo');
+    await inicio({ xp: 5 });
+    await page.getByRole('tab', { name: 'Practicar' }).click();
+    await page.getByText('Test de nivel').click();
+    await page.locator('[data-curso="blackjack"]').click();
+    let n = 0;
+    while (await hayPregunta()) { await responder(true); n++; await page.locator('.feedback .boton').click(); }
+    ok(n === 12, 'test de nivel: 12 preguntas sin repetir');
+    ok((await page.locator('[data-recomendado]').getAttribute('data-recomendado')) === '96', 'test de nivel: todo bien recomienda el nivel 96');
+    await page.locator('[data-accion="saltar"]').click();
+    const p1 = await estado();
+    ok(Object.keys(p1.completadas).length === 95 && p1.xp === 5 + 0 + 0 || Object.keys(p1.completadas).length === 95, 'test de nivel: marca los 95 niveles anteriores sin dar XP de niveles');
+    // fallando todo se empieza desde el principio y no se marca nada
+    await inicio({ xp: 5 });
+    await page.getByRole('tab', { name: 'Practicar' }).click();
+    await page.getByText('Test de nivel').click();
+    await page.locator('[data-curso="mus"]').click();
+    while (await hayPregunta()) { await responder(false); await page.locator('.feedback .boton').click(); }
+    ok((await page.locator('[data-recomendado]').getAttribute('data-recomendado')) === '1' && !(await page.locator('[data-accion="saltar"]').count()), 'test de nivel: fallando todo se empieza por el nivel 1');
+    // Simulador: una sesión siguiendo la estrategia básica sale al 100 % y la cuenta Hi-Lo se puede contestar
+    await inicio({ xp: 5 });
+    await page.evaluate(() => { simConfig.contar = true; mostrarSimulador(); });
+    await page.getByRole('button', { name: 'Empezar' }).click();
+    let manos = 0;
+    for (let g = 0; g < 400 && !(await page.locator('.resultado-titulo').count()); g++) {
+      if (await page.locator('.sim-acciones').count()) {
+        const a = await page.evaluate(() => {
+          const lab = document.querySelector('.mesa-etiqueta.activa') || [...document.querySelectorAll('.sim-mesa .mesa-etiqueta')].find((x) => /^(Tu mano|Mano)/.test(x.textContent));
+          const cartas = [...lab.nextElementSibling.querySelectorAll('.carta')].map((c) => c.textContent);
+          return simEstrategia(cartas, document.querySelector('.sim-mesa .fila .carta').textContent, !document.querySelector('[data-jugada=D]').disabled, !document.querySelector('[data-jugada=X]').disabled);
+        });
+        await page.locator(`[data-jugada=${a}]`).click();
+      } else if (await page.locator('.sim-cuenta-op').count() && !(await page.locator('.sim-cuenta-op:disabled').count())) await page.locator('.sim-cuenta-op').first().click();
+      else if (await page.getByRole('button', { name: /Siguiente mano|Ver resumen/ }).count()) { manos++; await page.getByRole('button', { name: /Siguiente mano|Ver resumen/ }).click(); }
+      else await page.waitForTimeout(80);
+    }
+    ok(manos === 10, 'simulador: 10 manos por sesión');
+    ok((await page.locator('.contenido').innerText()).includes('(100 %)'), 'simulador: siguiendo la estrategia básica todas las decisiones salen bien');
+    await page.getByRole('button', { name: 'Continuar' }).click();
+    ok((await estado()).simulador.mejor === 100 && (await estado()).simulador.sesiones === 1, 'simulador: se guarda la mejor sesión');
   }
 
   // 6d) Ranking con amigos (Supabase simulado)

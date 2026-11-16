@@ -734,6 +734,8 @@ function mostrarInicio(entrada = 'fundido') {
   const panelMas = el('div', { class: 'panel-inicio', id: 'panel-mas', role: 'tabpanel', 'aria-labelledby': 'pestana-mas' },
     el('h1', {}, 'Practica y compite'),
     filaRepaso('conteo', '⚡', 'Partida rápida', progreso.rapida.mejor ? `60 segundos, todas las que puedas · Récord: ${progreso.rapida.mejor}` : '60 segundos: contesta todas las que puedas', abrirMas(() => iniciarPartidaRapida())),
+    filaRepaso('conteo', '🃏', 'Simulador de blackjack', progreso.simulador && progreso.simulador.mejor ? `${SIM_MANOS} manos con corrección · Mejor sesión: ${progreso.simulador.mejor} %` : `${SIM_MANOS} manos de verdad, con la estrategia básica corrigiéndote`, abrirMas(() => mostrarSimulador())),
+    filaRepaso('conteo', '🧭', 'Test de nivel', 'Responde unas preguntas y empieza en el nivel que te toca', abrirMas(() => mostrarTestNivel())),
     filaRepaso('conteo', '⏱️', 'Entrena el conteo', 'Cartas a toda velocidad con el sistema Hi-Lo', abrirMas(() => mostrarConteo())),
     filaRepaso('conteo', '🤝', 'Ranking con amigos', progreso.social.alias ? `Tu XP de la semana: ${typeof xpDeLaSemana === 'function' ? xpDeLaSemana() : 0}` : 'Compite cada semana con tus amigos', abrirMas(() => mostrarAmigos())),
     filaRepaso('conteo', '📊', 'Mis estadísticas', 'Tus aciertos por juego y tus puntos débiles', abrirMas(() => mostrarEstadisticas()))
@@ -1126,9 +1128,10 @@ function mostrarLeccion(curso, leccion) {
   function continuar() {
     const ejercicio = cola[idx];
     // Si fallas, el ejercicio vuelve al final de la lección
-    if (elegida !== ejercicio.correcta && !leccion.rapida) cola = cola.concat([preparar(ejercicio)]);
+    if (elegida !== ejercicio.correcta && !leccion.rapida && !leccion.sinReintento) cola = cola.concat([preparar(ejercicio)]);
 
     if (idx + 1 >= cola.length && leccion.rapida) return terminarRapida();
+    if (idx + 1 >= cola.length && leccion.alTerminar) return leccion.alTerminar(Object.assign({}, fallados)); // test de nivel: el resultado lo calcula quien lo pidió
     if (idx + 1 >= cola.length) {
       const total = leccion.ejercicios.length;
       const nFallados = Object.keys(fallados).length;

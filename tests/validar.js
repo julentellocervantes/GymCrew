@@ -862,6 +862,30 @@ function verificarAyuda() {
   const esp = { 'Proyecto de color': 13 - 4, 'Escalera abierta': 2 * 4, 'Dos cartas altas sin pareja': 2 * 3, 'Escalera de pulmón (gutshot)': 4, 'Pareja que busca trío': 4 - 2 };
   AYUDA.outs.forEach(([n, v]) => { if (esp[n] !== v) mal('ayuda:outs', `${n}: ${v} y debería ser ${esp[n]}`); });
 }
+// ---------- simulador de blackjack: su estrategia debe coincidir con la función independiente mejorJugada ----------
+{
+  const src = fs.readFileSync(require('path').join(__dirname, '..', 'js', 'simulador.js'), 'utf8').split('// ---------- pantalla de inicio ----------')[0];
+  vm.runInContext(src + '\nthis.__sim = { simEstrategia, simTotal, simHiLo, simEsBlackjack, SIM_NOMBRE };', ctx, { filename: 'simulador.js' });
+  const S = vm.runInContext('__sim', ctx);
+  const rangos = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'A'];
+  let n = 0;
+  for (const c1 of rangos) for (const c2 of rangos) for (const cru of ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'K', 'A']) {
+    const mano = [c1 + '♠', c2 + '♥'], esperada = mejorJugada([c1, c2], cru);
+    const real = S.SIM_NOMBRE[S.simEstrategia(mano, cru + '♦')];
+    n++;
+    if (real !== esperada) mal('simulador', `${c1},${c2} contra ${cru}: el simulador dice ${real} y la tabla ${esperada}`);
+  }
+  // manos de tres cartas (no hay pareja ni se puede doblar con más de dos, pero sí se juega con la tabla)
+  for (const m of [['5', '4', '2'], ['A', '2', '3'], ['10', '5', '2'], ['A', '3', '3']]) for (const cru of ['2', '6', '7', '10', 'A']) {
+    const real = S.SIM_NOMBRE[S.simEstrategia(m.map((c) => c + '♠'), cru + '♦', false, false)], esperada = mejorJugada(m, cru);
+    n++;
+    if (esperada === 'Doblar' ? !['Pedir', 'Plantarte'].includes(real) : real !== esperada) mal('simulador', `${m.join(',')} contra ${cru} sin doblar: ${real} y la tabla ${esperada}`);
+  }
+  // Hi-Lo y blackjack natural
+  for (const [c, v] of [['2', 1], ['6', 1], ['7', 0], ['9', 0], ['10', -1], ['K', -1], ['A', -1]]) if (S.simHiLo(c + '♠') !== v) mal('simulador', `Hi-Lo de ${c} debería ser ${v}`);
+  if (!S.simEsBlackjack(['A♠', 'K♥']) || S.simEsBlackjack(['A♠', '5♥', '5♦'])) mal('simulador', 'blackjack natural mal detectado');
+  verif.simulador = n;
+}
 errores.push(...errores_pre);
 if (errores.length) { console.log('\nERRORES:\n' + errores.map((x) => ' - ' + x).join('\n')); process.exit(1); }
 console.log('\nDATOS OK: estructura, estrategia básica, Hi-Lo, cuenta verdadera, mus (lances), póker (manos y ganador), pot odds, outs y probabilidades');

@@ -231,3 +231,10 @@ Repartidas por todos los niveles (normales y Oro), unas 2 o 3 por nivel y cada u
 
 No son preguntas nuevas: cada una convierte un ejercicio que ya existía (mismo id y misma respuesta), así que la repetición espaciada, «Mis errores» y las estadísticas siguen funcionando. El original queda en `base` y `tests/validar.js` lo sigue comprobando con sus reglas independientes, además de la conversión (la propuesta del verdadero/falso, la ficha fuera de sitio única, las palabras del banco…). La partida rápida usa los ejercicios originales.
 Se aplican con `GEN.transformar` (`data/perezoso.js`), que corre sobre cada nivel cuando ya está completo (también los Oro, que se generan al abrirlos).
+
+## Simulador de blackjack y test de nivel
+- **Simulador** (`js/simulador.js`, pestaña Practicar): 10 manos completas contra el crupier con mazo de 6 barajas que se va gastando. Pedir, plantarte, doblar o dividir (teclas P, S, D, X). Tras cada jugada la estrategia básica (la tabla de `AYUDA`) dice si acertaste y por qué; juegas lo que elegiste, no lo que marca la tabla. Opcional: cuenta Hi-Lo real, con pregunta al acabar cada mano. Al final, resumen con decisiones correctas, fichas y las jugadas a repasar; da XP de repaso según el porcentaje.
+  Reglas: apuesta fija de 10, el crupier se planta con 17 (también blando), blackjack paga 3 a 2, un solo split (con ases una carta cada uno), sin seguro ni rendición.
+  `tests/validar.js` compara `simEstrategia` con la función independiente `mejorJugada` en todas las combinaciones de dos cartas contra cada carta del crupier.
+- **Test de nivel** (`js/test-nivel.js`, pestaña Practicar): 12 preguntas, una por punto de control (niveles 2, 7, 13, 21… hasta el 96), sin segundas oportunidades. Se sube mientras no falles dos; con el resultado se recomienda el nivel y, si quieres, se marcan como hechos los anteriores sin XP ni fichas.
+- **Repaso inteligente**: ya existían «Sesión de hoy» (repaso espaciado + tu jugada y tu tema más flojos + lo nuevo) y «Mis estadísticas» (puntos débiles y entrenamiento por tema); no se han tocado.

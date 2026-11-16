@@ -1952,3 +1952,31 @@ html[data-calma="si"] .hero-carta, html[data-calma="si"] .hero-ficha { animation
 
 .errata-lista { display: flex; flex-direction: column; gap: 8px; }
 .errata-ficha { width: 100%; }
+
+/* ============================================================
+   Simulador de blackjack y test de nivel
+   ============================================================ */
+.carta.dorso { background: repeating-linear-gradient(45deg, #2f6fd6 0 6px, #1f4fa0 6px 12px); color: #fff; border: 3px solid #fff; }
+.sim .mesa-etiqueta.activa { color: #fff; text-decoration: underline; text-underline-offset: 4px; }
+.sim-resultado { margin: 8px 0 0; font-weight: 800; font-size: 15px; }
+.sim-resultado.gana { color: #b9f58f; }
+.sim-resultado.pierde { color: #ffb3b3; }
+.sim-resultado.empata { color: #fff; }
+.sim-acciones { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 14px 0; }
+.sim-boton {
+  padding: 14px 10px; font-size: 17px; font-weight: 900; border-radius: 16px; background: var(--tarjeta); color: var(--texto); border: 2px solid var(--borde); box-shadow: 0 4px 0 var(--borde);
+  transition: scale 0.1s var(--suave), border-color 0.15s;
+}
+.sim-boton:not(:disabled):hover { border-color: var(--foco); }
+.sim-boton:not(:disabled):active { scale: 0.97; }
+.sim-boton:disabled { opacity: 0.4; cursor: not-allowed; }
+.sim-aviso { margin: 12px 0 0; padding: 12px 14px; border-radius: 14px; font-weight: 700; line-height: 1.35; border: 2px solid var(--borde); animation: pop 0.4s var(--rebote); }
+.sim-aviso.bien { border-color: #58cc02; background: var(--bien-fondo); }
+.sim-aviso.mal { border-color: #ff5a5a; background: var(--mal-fondo); }
+.sim-cuenta { margin: 14px 0; display: flex; flex-direction: column; gap: 10px; }
+.sim-opciones-cuenta { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.sim-cuenta-op { padding: 12px 0; font-size: 18px; font-weight: 900; border-radius: 14px; background: var(--tarjeta); color: var(--texto); border: 2px solid var(--borde); box-shadow: 0 3px 0 var(--borde); }
+.sim-cuenta-op.bien { border-color: #58cc02; background: var(--bien-fondo); box-shadow: 0 3px 0 #58cc02; }
+.sim-cuenta-op.mal { border-color: #ff5a5a; background: var(--mal-fondo); box-shadow: 0 3px 0 #ff5a5a; }
+.sim-fallos { text-align: left; margin-top: 14px; }
+.sim-fallos li { margin: 6px 0; line-height: 1.35; }
