@@ -320,27 +320,38 @@ function glosario() {
     el('dl', { class: 'glosario' }, AYUDA.glosario.flatMap(([t, d]) => [el('dt', {}, t), el('dd', {}, d)])));
 }
 
+let pestanaUtil = 'calc'; // sección abierta en Útil: calculadoras o chuletas
 function mostrarUtil(entrada = 'fundido') {
   alTeclear = null;
-  const ir = (id) => () => {
-    const t = document.getElementById(id);
-    if (!t) return;
-    t.scrollIntoView({ behavior: document.documentElement.dataset.calma === 'si' ? 'auto' : 'smooth', block: 'start' });
-    t.setAttribute('tabindex', '-1');
-    t.focus({ preventScroll: true });
+  const grupo = (id, tab, titulo, nota, ...bloques) => el('section', { class: 'util-seccion', id, role: 'tabpanel', 'aria-labelledby': tab }, el('h2', { class: 'util-grupo' }, titulo), nota ? el('p', { class: 'util-nota' }, nota) : null, el('div', { class: 'util-rejilla' }, ...bloques));
+  const secCalc = grupo('util-calc', 'util-tab-calc', 'Calculadoras', esVip() ? 'Incluidas en tu pase VIP.' : 'Exclusivas del pase VIP. Toca una para ver qué incluye.',
+    exclusivoVip(calcCuentaVerdadera()), exclusivoVip(calcOuts()), exclusivoVip(calcPotOdds()), exclusivoVip(calcPasarte()), exclusivoVip(calcApuesta()), exclusivoVip(calcRuleta()), exclusivoVip(contadorRapido()));
+  const secChu = grupo('util-chuletas', 'util-tab-chu', 'Chuletas', 'Gratis para todos.',
+    chuletaBlackjack(), chuletaConteo(), chuletaPoker(), chuletaMus(), glosario());
+  const pestanas = [['calc', 'util-tab-calc', 'Calculadoras', esVip() ? 'Tu pase VIP · 7' : 'Solo VIP · 7', secCalc], ['chu', 'util-tab-chu', 'Chuletas', 'Gratis · 5', secChu]];
+  const botones = pestanas.map(([k, id, nombre, sub, sec]) => el('button', { class: 'util-pestana', id, type: 'button', role: 'tab', 'aria-controls': sec.id, onclick: () => mostrar(k) }, el('strong', {}, nombre), el('span', {}, sub)));
+  const mostrar = (k) => {
+    pestanaUtil = k;
+    pestanas.forEach(([clave, , , , sec], i) => {
+      sec.hidden = clave !== k;
+      botones[i].classList.toggle('activa', clave === k);
+      botones[i].setAttribute('aria-selected', String(clave === k));
+      botones[i].tabIndex = clave === k ? 0 : -1;
+    });
   };
-  const grupo = (id, titulo, nota, ...bloques) => el('section', { class: 'util-seccion', 'aria-labelledby': id }, el('h2', { id, class: 'util-grupo' }, titulo), nota ? el('p', { class: 'util-nota' }, nota) : null, ...bloques);
+  mostrar(pestanaUtil);
   pintar(
     entrada,
     el('header', { class: 'cabecera' }, logoMarca(), marcador()),
     el('main', { class: 'contenido' },
       el('h1', {}, '🧰 Útil'),
-      el('p', { class: 'util-intro' }, 'Herramientas para tener a mano mientras juegas. Toca una para abrirla.'),
-      el('nav', { class: 'util-salto', 'aria-label': 'Ir a una sección' },
-        el('button', { class: 'util-salto-boton', type: 'button', onclick: ir('util-calc') }, el('strong', {}, 'Calculadoras'), el('span', {}, '7 · VIP')),
-        el('button', { class: 'util-salto-boton', type: 'button', onclick: ir('util-chuletas') }, el('strong', {}, 'Chuletas'), el('span', {}, '5 · gratis'))),
-      grupo('util-calc', 'Calculadoras', esVip() ? 'Incluidas en tu pase VIP.' : 'Exclusivas del pase VIP. Toca una para ver qué incluye.',
-        exclusivoVip(calcCuentaVerdadera()), exclusivoVip(calcOuts()), exclusivoVip(calcPotOdds()), exclusivoVip(calcPasarte()), exclusivoVip(calcApuesta()), exclusivoVip(calcRuleta()), exclusivoVip(contadorRapido())),
-      grupo('util-chuletas', 'Chuletas', 'Gratis para todos.',
-        chuletaBlackjack(), chuletaConteo(), chuletaPoker(), chuletaMus(), glosario())));
+      el('p', { class: 'util-intro' }, 'Herramientas para tener a mano mientras juegas.'),
+      el('div', { class: 'util-pestanas', role: 'tablist', 'aria-label': 'Secciones de Útil', onkeydown: (e) => {
+        if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
+        e.preventDefault();
+        const k = e.key === 'ArrowLeft' || e.key === 'Home' ? 'calc' : 'chu';
+        mostrar(k);
+        botones[k === 'calc' ? 0 : 1].focus();
+      } }, ...botones),
+      secCalc, secChu));
 }

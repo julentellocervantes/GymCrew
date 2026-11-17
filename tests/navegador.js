@@ -644,6 +644,7 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
   await page.locator('.pestana[data-pestana=util]').click();
   await page.waitForSelector('.util-bloque');
   ok(await page.locator('.pestana[data-pestana=util]').getAttribute('aria-current') === 'page', 'Útil queda marcada');
+  ok(await page.getByRole('tab', { name: /Calculadoras/ }).getAttribute('aria-selected') === 'true' && await page.locator('#util-chuletas').isHidden(), 'Útil abre en Calculadoras y las chuletas están en su pestaña');
   ok(await page.locator('.util-bloque').count() === 12 && await page.locator('.util-bloque.exclusivo-vip.bloqueada').count() === 7 && await page.locator('.util-bloque:not(.exclusivo-vip)').count() === 5, 'Útil tiene 7 calculadoras bloqueadas sin VIP y 5 chuletas gratis');
   ok(await page.locator('.util-bloque:not(.exclusivo-vip) .util-cuerpo').count() === 5, 'las chuletas se abren sin VIP');
   await page.locator('.util-bloque.exclusivo-vip').first().locator('summary').click();
@@ -687,6 +688,7 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
   ok((await cont.locator('.contador-gran').innerText()) === '0', 'reiniciar pone la cuenta a 0');
   await page.evaluate(() => { progreso.vip.hasta = 0; mostrarUtil('sin'); });
   await page.waitForSelector('.util-bloque');
+  await page.getByRole('tab', { name: /Chuletas/ }).click();
   await page.locator('.util-bloque', { hasText: 'estrategia básica' }).locator('summary').click();
   ok(await page.locator('.tabla-bj td').count() === 210, 'la tabla de estrategia tiene 21 filas x 10 columnas');
   ok(await page.locator('td[aria-label="A,7 contra 9: pedir"]').count() === 1 && await page.locator('td[aria-label="A,A contra 6: dividir"]').count() === 1, 'las celdas se leen con claridad (aria-label)');
@@ -710,7 +712,9 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
   await page.setViewportSize({ width: 320, height: 640 });
   await page.evaluate(() => { progreso.vip.hasta = Date.now() + 1e9; });
   await page.locator('.pestana[data-pestana=util]').click();
+  await page.getByRole('tab', { name: /Chuletas/ }).click();
   await page.locator('.util-bloque', { hasText: 'estrategia básica' }).locator('summary').click();
+  await page.getByRole('tab', { name: /Calculadoras/ }).click();
   for (const n of ['Contador rápido', 'Ruleta: pagos', 'Pasarte al pedir', 'Probabilidad con outs', 'Pot odds']) await page.locator('.util-bloque', { hasText: n }).first().locator('summary').click();
   await page.waitForTimeout(500);
   ok(await page.evaluate(() => document.documentElement.scrollWidth) <= 320, 'Útil sin scroll horizontal en 320 px');
@@ -923,7 +927,7 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
     ok(await page.locator('#panel-juegos .juego').count() === 6 && await page.locator('#panel-mas').isHidden(), 'inicio: «Juegos» muestra solo los juegos');
     await page.getByRole('tab', { name: 'Practicar' }).click();
     const filasMas = await page.locator('#panel-mas .herramientas .repaso').allInnerTexts();
-    ok(filasMas.length === 6 && ['Partida rápida', 'Simulador de blackjack', 'Test de nivel', 'Entrena el conteo', 'Ranking con amigos', 'Mis estadísticas'].every((t, i) => filasMas[i].includes(t)) && await page.locator('#panel-juegos').isHidden(), 'inicio: «Practicar» agrupa las 6 herramientas');
+    ok(filasMas.length === 5 && ['Partida rápida', 'Simulador de blackjack', 'Test de nivel', 'Entrena el conteo', 'Mis estadísticas'].every((t, i) => filasMas[i].includes(t)) && await page.locator('#panel-juegos').isHidden(), 'inicio: «Practicar» agrupa las 5 herramientas');
     ok(await page.locator('#panel-mas section[aria-labelledby] h2').count() >= 3 && await page.locator('#panel-mas .lista-pr li').count() >= 6, 'Practicar: secciones con títulos y listas');
     ok(await page.locator('#panel-mas .fila-pr').evaluateAll((l) => l.every((b) => b.getBoundingClientRect().height >= 48)), 'Practicar: todas las filas miden al menos 48 px de alto');
     await page.locator('#pestana-mas').focus(); await page.keyboard.press('ArrowLeft');
@@ -966,7 +970,7 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
     ok(await page.evaluate(() => { progreso.semanaXp = { semana: null, xp: 0 }; registrarActividad(7); return xpDeLaSemana() === 7; }), 'el XP de la semana se acumula');
     // logros
     ok(await page.evaluate(() => { progreso.xp = 600; progreso.repasos = 10; progreso.perfectos = 5; progreso.rapida.mejor = 21; const n = calcularLogros().map((l) => l.id); return ['xp-500', 'repasos-10', 'perfectos-5', 'rapida-20'].every((x) => n.includes(x)); }), 'logros nuevos: 500 XP, repasos, puntería y rayo');
-    ok(await page.evaluate(() => LOGROS.length >= 23), 'hay al menos 23 logros');
+    ok(await page.evaluate(() => LOGROS.length >= 22), 'hay al menos 22 logros');
     // normalización del progreso nuevo
     ok(await page.evaluate(() => { const p = normalizarProgreso({ xp: 5, reto: { semana: 'mal', id: 3 }, social: { alias: '<b>Ana</b> López!!', amigos: -4 }, semanaXp: 'x' }); return p.reto === null && p.social.alias === 'bAna' + 'b López'.replace('b López', 'b López') && p.social.amigos === 0 && p.semanaXp.xp === 0; }), 'progreso importado: reto, alias y XP semanal se limpian');
 
@@ -1022,71 +1026,6 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
     ok((await page.locator('.contenido').innerText()).includes('(100 %)'), 'simulador: siguiendo la estrategia básica todas las decisiones salen bien');
     await page.getByRole('button', { name: 'Continuar' }).click();
     ok((await estado()).simulador.mejor === 100 && (await estado()).simulador.sesiones === 1, 'simulador: se guarda la mejor sesión');
-  }
-
-  // 6d) Ranking con amigos (Supabase simulado)
-  {
-    const SB = 'https://coqptiznghgxbidhexps.supabase.co';
-    const b64 = (o) => Buffer.from(JSON.stringify(o)).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-    const token = 'x.' + b64({ sub: '22222222-2222-2222-2222-222222222222', email: 'ana@test.com' }) + '.y';
-    const sesion = { access_token: token, refresh_token: 'r', expires_at: Math.floor(Date.now() / 1000) + 3600, email: 'ana@test.com' };
-    const llamadas = []; let amigos = []; let perfilOk = false;
-    await page.route(SB + '/**', async (r) => {
-      const u = r.request().url(), m = r.request().method();
-      const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*', 'content-type': 'application/json' };
-      if (m === 'OPTIONS') return r.fulfill({ status: 204, headers: cors });
-      const rpc = (u.match(/\/rpc\/(\w+)/) || [])[1];
-      if (!rpc) return r.fulfill({ status: m === 'POST' ? 201 : 200, headers: cors, body: m === 'POST' ? '' : '[]' });
-      const cuerpo = r.request().postData() ? JSON.parse(r.request().postData()) : {};
-      llamadas.push({ rpc, cuerpo });
-      const error = (msg) => r.fulfill({ status: 400, headers: cors, body: JSON.stringify({ message: msg }) });
-      if (rpc === 'entrenador_perfil_guardar') { if (!/^[\p{L}\p{N} ._-]{2,20}$/u.test(cuerpo.p_alias)) return error('alias_invalido'); perfilOk = true; return r.fulfill({ status: 200, headers: cors, body: '"AB12CD34"' }); }
-      if (rpc === 'entrenador_amigo_agregar') { if (cuerpo.p_codigo === 'AB12CD34') return error('es_tu_codigo'); if (cuerpo.p_codigo !== 'ZZ99YY88') return error('codigo_no_existe'); amigos = [{ alias: 'Beto', xp_semana: 300, codigo: 'ZZ99YY88', yo: false }]; return r.fulfill({ status: 200, headers: cors, body: '"Beto"' }); }
-      if (rpc === 'entrenador_amigo_quitar') { amigos = []; return r.fulfill({ status: 204, headers: cors, body: '' }); }
-      if (rpc === 'entrenador_ranking') return r.fulfill({ status: 200, headers: cors, body: JSON.stringify([{ alias: 'Ana', xp_semana: 40, codigo: 'AB12CD34', yo: true }].concat(amigos).sort((a, b) => b.xp_semana - a.xp_semana)) });
-      return error('desconocida');
-    });
-    // sin sesión: pide entrar
-    await inicio({ xp: 40 });
-    await page.waitForSelector('.juego');
-    await page.getByRole('tab', { name: 'Practicar' }).click();
-    await page.getByRole('button', { name: /Ranking con amigos/ }).click();
-    await page.waitForSelector('.amigos');
-    ok((await page.locator('.amigos').innerText()).includes('Ir a Ajustes'), 'amigos: sin sesión se pide entrar con el correo');
-    // con sesión, sin nombre
-    await page.evaluate((s) => localStorage.setItem('vip-sesion-v1', JSON.stringify(s)), sesion);
-    await page.reload();
-    await page.getByRole('tab', { name: 'Practicar' }).click();
-    await page.getByRole('button', { name: /Ranking con amigos/ }).click();
-    await page.waitForSelector('.amigos input');
-    await page.locator('.amigos input').fill('<b>');
-    await page.getByRole('button', { name: 'Crear mi perfil' }).click();
-    await page.waitForFunction(() => document.querySelector('.ajuste-mensaje').textContent.includes('nombre debe tener'));
-    ok(await page.evaluate(() => progreso.social.alias === ''), 'amigos: un nombre inválido se rechaza y no se guarda');
-    await page.locator('.amigos input').fill('Ana');
-    await page.getByRole('button', { name: 'Crear mi perfil' }).click();
-    await page.waitForSelector('.ranking');
-    ok((await page.locator('.ranking-codigo').innerText()).includes('AB12CD34'), 'amigos: se muestra mi código');
-    ok(llamadas.some((c) => c.rpc === 'entrenador_perfil_guardar' && c.cuerpo.p_alias === 'Ana' && typeof c.cuerpo.p_xp === 'number' && /^\d{4}-\d{2}-\d{2}$/.test(c.cuerpo.p_semana)), 'amigos: se sube el nombre y el XP semanal');
-    // añadir amigo: errores y éxito
-    await page.locator('.ranking-anadir input').fill('AB12CD34');
-    await page.getByRole('button', { name: 'Añadir amigo' }).click();
-    await page.waitForFunction(() => document.querySelector('.ajuste-mensaje').textContent.includes('propio código'));
-    await page.locator('.ranking-anadir input').fill('nada');
-    await page.getByRole('button', { name: 'Añadir amigo' }).click();
-    await page.waitForFunction(() => document.querySelector('.ajuste-mensaje').textContent.includes('no existe'));
-    await page.locator('.ranking-anadir input').fill('ZZ99YY88');
-    await page.getByRole('button', { name: 'Añadir amigo' }).click();
-    await page.waitForFunction(() => document.querySelectorAll('.ranking-fila').length === 2);
-    const filas = await page.locator('.ranking-fila').allInnerTexts();
-    ok(filas[0].includes('Beto') && filas[1].includes('(tú)'), 'amigos: el ranking ordena por XP de la semana');
-    ok(await page.evaluate(() => progreso.social.amigos === 1 && !!progreso.logros.sociable), 'amigos: cuenta amigos y da el logro «Sociable»');
-    // quitar
-    await page.getByRole('button', { name: 'Quitar a Beto' }).click();
-    await page.waitForFunction(() => document.querySelectorAll('.ranking-fila').length === 1);
-    ok(true, 'amigos: se puede quitar a un amigo');
-    await page.unroute(SB + '/**');
-    await inicio({ xp: 40 });
   }
 
   // 7) El almacenamiento bloqueado no rompe la app y avisa

@@ -341,7 +341,6 @@ const LOGROS = [
   { id: 'rapida-20', icono: '⚡', titulo: 'Rayo', desc: 'Consigue 20 aciertos en una partida rápida', cumple: (p) => p.rapida.mejor >= 20 },
   { id: 'reto-1', icono: '🏅', titulo: 'Retador', desc: 'Cumple tu primer reto semanal', cumple: (p) => (p.retosHechos || 0) >= 1 },
   { id: 'reto-5', icono: '🏆', titulo: 'Imparable', desc: 'Cumple 5 retos semanales', cumple: (p) => (p.retosHechos || 0) >= 5 },
-  { id: 'sociable', icono: '🤝', titulo: 'Sociable', desc: 'Añade a un amigo al ranking', cumple: (p) => (p.social && p.social.amigos) >= 1 },
 ].concat(
   CURSOS.map((c) => ({
     id: 'curso-' + c.id,
@@ -741,9 +740,8 @@ function mostrarInicio(entrada = 'fundido') {
           filaRepaso('conteo', '🧭', 'Test de nivel', 'Responde unas preguntas y empieza en el nivel que te toca', abrirMas(() => mostrarTestNivel())),
           filaRepaso('conteo', '⏱️', 'Entrena el conteo', 'Cartas a toda velocidad con el sistema Hi-Lo', abrirMas(() => mostrarConteo()))
         )),
-      seccionPr('pr-tu', 'Tú y tus amigos',
+      seccionPr('pr-tu', 'Tu progreso',
         listaPr(
-          filaRepaso('conteo', '🤝', 'Ranking con amigos', progreso.social.alias ? `Tu XP de la semana: ${typeof xpDeLaSemana === 'function' ? xpDeLaSemana() : 0}` : 'Compite cada semana con tus amigos', abrirMas(() => mostrarAmigos())),
           filaRepaso('conteo', '📊', 'Mis estadísticas', 'Tus aciertos por juego y tus puntos débiles', abrirMas(() => mostrarEstadisticas()))
         )))
   );
@@ -751,7 +749,6 @@ function mostrarInicio(entrada = 'fundido') {
   const elegir = (cual) => {
     panelJuegos.hidden = cual !== 'juegos';
     panelMas.hidden = cual !== 'mas';
-    bloqueHoy.hidden = cual !== 'juegos';
     [['juegos', pestJuegos], ['mas', pestMas]].forEach(([k, b]) => { b.classList.toggle('activa', k === cual); b.setAttribute('aria-selected', String(k === cual)); b.tabIndex = k === cual ? 0 : -1; });
   };
   const pestJuegos = el('button', { class: 'pestana-inicio', id: 'pestana-juegos', type: 'button', role: 'tab', 'aria-controls': 'panel-juegos', onclick: () => elegir('juegos') }, 'Juegos');

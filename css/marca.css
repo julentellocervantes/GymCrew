@@ -343,3 +343,55 @@ html[data-contraste="alto"] :focus-visible { outline-width: 4px; outline-color: 
 .util-bloque summary { border-radius: 18px; }
 .decor { --op: 0.2; }
 .campos { align-items: end; }
+
+/* ---------- Útil: pestañas y cuadrícula de tarjetas ---------- */
+.util-pestanas { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 5px; margin: 0 0 18px; border-radius: 20px; background: rgba(12, 58, 68, 0.12); }
+.util-pestana { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; min-height: 60px; padding: 8px 10px; border-radius: 16px; border: 2px solid transparent; background: transparent; color: var(--texto); }
+.util-pestana strong { font-size: 18px; font-weight: 700; }
+.util-pestana span { font-size: 14px; font-weight: 600; color: var(--texto-suave); }
+.util-pestana.activa { background: var(--pano); color: var(--tiza); border-color: var(--laton); box-shadow: 0 3px 0 var(--pano-osc); }
+.util-pestana.activa span { color: #cfe5e3; }
+.util-seccion[hidden] { display: none; }
+.util-seccion { gap: 6px; margin: 0 0 24px; }
+.util-seccion > h2.util-grupo { font-size: 26px; }
+.util-seccion > .util-nota { margin: 0 0 10px; }
+.util-rejilla { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 12px; grid-auto-flow: row dense; align-items: stretch; padding-top: 8px; }
+.util-rejilla > .util-bloque[open] { grid-column: 1 / -1; }
+.util-rejilla > .util-bloque:last-child:nth-child(odd) { grid-column: 1 / -1; }
+/* tarjeta cerrada: icono arriba y título debajo */
+.util-rejilla > .util-bloque:not([open]) summary { flex-direction: column; align-items: flex-start; gap: 8px; min-height: 150px; padding: 14px 12px 12px; }
+.util-rejilla > .util-bloque:not([open]) summary .flecha, .util-rejilla > .util-bloque:not([open]) summary .candado-vip { position: absolute; right: 12px; bottom: 10px; }
+.util-rejilla > .util-bloque:not([open]) summary .juego-texto { width: 100%; padding-right: 22px; }
+.util-rejilla > .util-bloque:not([open]) summary strong { font-size: 17px; }
+.util-rejilla > .util-bloque:not([open]) summary .juego-desc { font-size: 14px; }
+.util-rejilla > .util-bloque:last-child:nth-child(odd):not([open]) summary { flex-direction: row; align-items: center; min-height: 84px; }
+.util-rejilla > .util-bloque:last-child:nth-child(odd):not([open]) summary .juego-texto { width: auto; flex: 1; }
+.util-bloque .etiqueta-vip { right: 10px; }
+
+/* ===== Tienda rediseñada ===== */
+.tienda { display: flex; flex-direction: column; gap: 14px; }
+.tienda > * + * { margin-top: 0; }
+.cartera { border-radius: 22px; overflow: hidden; background: linear-gradient(160deg, var(--pano-claro), var(--pano-osc)); border: 2px solid var(--laton); box-shadow: 0 4px 0 rgba(0,0,0,.25); color: var(--tiza); }
+.cartera .tienda-fichas, .cartera .tienda-tarjeta { background: transparent; border: 0; border-radius: 0; box-shadow: none; color: var(--tiza); }
+.cartera .tienda-fichas { padding: 16px 16px 12px; }
+.cartera .tienda-fichas strong { font-family: var(--serif); font-size: 30px; line-height: 1; letter-spacing: .02em; }
+.cartera .juego-desc, .cartera .juego-niveles { color: color-mix(in srgb, var(--tiza) 82%, transparent); }
+.cartera .tienda-tarjeta { padding: 12px 16px 16px; border-top: 1px dashed color-mix(in srgb, var(--laton) 55%, transparent); }
+.cartera .ficha-grande { width: 52px; height: 52px; font-size: 28px; border: 3px dashed #fff8; box-shadow: 0 3px 0 #a86a00, inset 0 0 0 3px #e0402a; }
+.cartera .tienda-compras .compra { background: transparent; border: 2px solid var(--laton); color: var(--laton); min-height: 48px; }
+.cartera .tienda-compras .compra:disabled { opacity: .45; }
+.cartera .pila { font-size: 20px; }
+.banner-oro { border-radius: 20px; min-height: 72px; }
+.pestanas-tienda { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; overflow: visible; padding: 0 0 12px; margin: 0; }
+.pestana-tienda { justify-content: center; min-height: 48px; padding: 8px 10px; font-size: 15px; text-align: center; }
+.articulos { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.articulo { position: relative; padding: 10px 10px 12px; border-radius: 20px; gap: 10px; }
+.articulo .vista { height: 112px; border-radius: 14px; }
+.articulo .vista-baraja .carta { min-width: 46px; height: 68px; font-size: 18px; }
+.articulo strong { font-family: var(--serif); font-size: 17px; letter-spacing: .02em; line-height: 1.15; min-height: 2.3em; display: flex; align-items: center; }
+.articulo .mini-boton { min-height: 48px; font-size: 15px; border-radius: 999px; }
+.articulo.puesto { border-color: var(--laton); box-shadow: 0 0 0 3px color-mix(in srgb, var(--laton) 40%, transparent); }
+.sello-puesto { position: absolute; top: 4px; left: 4px; z-index: 2; padding: 3px 10px; border-radius: 999px; background: var(--laton); color: #2a1c00; font-size: 12px; font-weight: 700; }
+@media (min-width: 560px) { .articulos { grid-template-columns: repeat(3, 1fr); } .pestanas-tienda { grid-template-columns: repeat(4, 1fr); } }
+@media (prefers-reduced-motion: no-preference) { .articulo:not(.puesto) .vista-fondo { transition: transform .25s; } .articulo:hover .vista-fondo { transform: scale(1.03); } }
+:root[data-contraste="alto"] .cartera { background: #000; border-color: #fff; }

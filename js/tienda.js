@@ -294,7 +294,7 @@ function mostrarTienda(entrada = 'fundido') {
       sonido('ficha');
       recargar();
     } }, puesto ? 'Equipado' : mio ? 'Equipar' : `${a.precio} 🪙`);
-    return el('div', { class: 'articulo' + (puesto ? ' puesto' : ''), 'data-articulo': tipo + ':' + a.id }, vistaArticulo(tipo, a), el('strong', {}, a.nombre), boton);
+    return el('div', { class: 'articulo' + (puesto ? ' puesto' : ''), 'data-articulo': tipo + ':' + a.id }, puesto ? el('span', { class: 'sello-puesto' }, 'Puesto') : null, vistaArticulo(tipo, a), el('strong', {}, a.nombre), boton);
   };
   if (!SECCIONES_TIENDA.some((x) => x.tipo === pestanaTienda)) pestanaTienda = 'fondo';
   const panel = el('div', { class: 'articulos', role: 'tabpanel', id: 'panel-tienda', 'aria-labelledby': 'tab-tienda-' + pestanaTienda }, CATALOGO[pestanaTienda].map((a) => articulo(pestanaTienda, a)));
@@ -307,9 +307,10 @@ function mostrarTienda(entrada = 'fundido') {
     el('header', { class: 'cabecera' }, el('span', { class: 'logo' }, '🛍️ Tienda'), marcador()),
     el('main', { class: 'contenido tienda' },
       fila,
-      el('div', { class: 'tienda-fichas' }, el('span', { class: 'ficha-grande', 'aria-hidden': 'true' }, '🪙'), el('span', { class: 'juego-texto' }, el('strong', {}, `${progreso.fichas} fichas`), el('span', { class: 'juego-desc' }, 'Ganas 3 por nivel nuevo (6 en los Oro), 5 por la meta diaria y más en los cofres del mapa.'))),
+      el('section', { class: 'cartera', 'aria-label': 'Tu cartera' },
+        el('div', { class: 'tienda-fichas' }, el('span', { class: 'ficha-grande', 'aria-hidden': 'true' }, '🪙'), el('span', { class: 'juego-texto' }, el('strong', {}, `${progreso.fichas} fichas`), el('span', { class: 'juego-desc' }, '3 por nivel nuevo (6 en los Oro), 5 por la meta diaria y más en los cofres.'))),
+        tarjetaEnergia),
       mensaje,
-      tarjetaEnergia,
       tarjetaVip,
       secciones,
       el('p', { class: 'aviso' }, 'Las fichas no se compran con dinero ni valen nada fuera de la app: solo sirven para personalizarla. Contenido educativo, sin dinero real.')
