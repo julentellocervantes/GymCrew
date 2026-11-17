@@ -52,6 +52,7 @@ function normalizarProgreso(datos) {
   p.meta = [10, 20, 30, 50].includes(p.meta) ? p.meta : 20;
   p.congeladores = Math.min(2, num(p.congeladores, 0));
   p.ultimoDia = typeof p.ultimoDia === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(p.ultimoDia) ? p.ultimoDia : null;
+  p.ultimoCurso = typeof p.ultimoCurso === 'string' ? p.ultimoCurso.slice(0, 40) : null;
   p.completadas = obj(p.completadas, {});
   p.logros = obj(p.logros, {});
   p.srs = obj(p.srs, {});
@@ -638,7 +639,7 @@ function mostrarInicio(entrada = 'fundido') {
 
   const saludo =
     progreso.xp === 0
-      ? `${momentoDelDia()}! Soy Nai, tu entrenador de cartas. Elige un juego y te enseño a jugarlo paso a paso, como en un videojuego.`
+      ? `${momentoDelDia()}! Soy Nai, tu crupier de bolsillo. Elige una mesa y te enseño a jugarla paso a paso.`
       : rachaVigente() > 1
       ? `¡Ya llevas ${rachaVigente()} días seguidos! ¿Qué juego practicamos hoy?`
       : `${momentoDelDia()}! Qué bien verte por aquí. ¿Qué juego practicamos hoy?`;
@@ -730,7 +731,7 @@ function mostrarInicio(entrada = 'fundido') {
 
   // Dos secciones: los juegos y, aparte, las herramientas de práctica
   const abrirMas = (f) => () => { seccionInicio = 'mas'; f(); };
-  const panelJuegos = el('div', { class: 'panel-inicio', id: 'panel-juegos', role: 'tabpanel', 'aria-labelledby': 'pestana-juegos' }, el('h1', {}, 'Elige un juego'), tarjetas);
+  const panelJuegos = el('div', { class: 'panel-inicio', id: 'panel-juegos', role: 'tabpanel', 'aria-labelledby': 'pestana-juegos' }, el('h1', {}, 'Elige tu mesa'), tarjetas);
   const panelMas = el('div', { class: 'panel-inicio', id: 'panel-mas', role: 'tabpanel', 'aria-labelledby': 'pestana-mas' },
     el('h1', {}, 'Practica y compite'),
     filaRepaso('conteo', '⚡', 'Partida rápida', progreso.rapida.mejor ? `60 segundos, todas las que puedas · Récord: ${progreso.rapida.mejor}` : '60 segundos: contesta todas las que puedas', abrirMas(() => iniciarPartidaRapida())),
@@ -753,11 +754,11 @@ function mostrarInicio(entrada = 'fundido') {
 
   pintar(
     entrada,
-    el('header', { class: 'cabecera' }, el('span', { class: 'logo' }, el('span', { class: 'logo-palo' }, '♥'), 'Entrenador de cartas'), marcador()),
+    el('header', { class: 'cabecera' }, logoMarca(), marcador()),
     el(
       'main',
       { class: 'contenido' },
-      fila,
+      heroInicio(fila),
       almacenamientoFallo
         ? el('p', { class: 'alerta', role: 'alert' }, 'Tu navegador no deja guardar el progreso (¿modo privado?). Puedes seguir, pero al cerrar se perderá.')
         : null,
@@ -782,6 +783,7 @@ const DESPLAZAMIENTOS = [0, 44, 70, 44, 0, -44, -70, -44]; // zigzag del camino,
 // recientes: ids de los niveles que acabas de completar o desbloquear (se animan al volver al mapa)
 function mostrarMapa(curso, entrada = 'adelante', recientes = []) {
   alTeclear = null;
+  if (progreso.ultimoCurso !== curso.id && !curso.global) { progreso.ultimoCurso = curso.id; guardarProgreso(); }
   const lista = niveles(curso);
   const siguiente = siguienteNivel(curso);
   const hechos = hechosDe(curso);

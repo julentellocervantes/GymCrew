@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#0f5a3f" media="(prefers-color-scheme: light)" />
-  <meta name="theme-color" content="#0a3b2a" media="(prefers-color-scheme: dark)" />
-  <title>Entrenador de cartas</title>
+  <meta name="theme-color" content="#0c3a44" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#082a32" media="(prefers-color-scheme: dark)" />
+  <title>Tapete · Entrenador de cartas</title>
   <meta name="description" content="Aprende blackjack, póker, mus, baccarat y vídeo póker con ejercicios cortos, como en Duolingo." />
   <!-- App instalable -->
   <link rel="manifest" href="manifest.webmanifest" />
@@ -14,12 +14,13 @@
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-title" content="Cartas" />
+  <meta name="apple-mobile-web-app-title" content="Tapete" />
   <!-- Tipografía redondeada (opcional: sin internet se usa la del sistema) -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Instrument+Sans:wght@500;600;700&display=swap" />
   <link rel="stylesheet" href="css/estilos.css" />
+  <link rel="stylesheet" href="css/marca.css" />
 </head>
 <body>
   <div class="decor" aria-hidden="true"><span style="--x:6%;--y:10%;--t:44px;--d:9s">♠</span><span class="r" style="--x:82%;--y:6%;--t:38px;--d:11s">♥</span><span class="r" style="--x:70%;--y:38%;--t:56px;--d:13s">♦</span><span style="--x:12%;--y:40%;--t:60px;--d:12s">♣</span><span class="r" style="--x:44%;--y:22%;--t:30px;--d:10s">♥</span><span style="--x:88%;--y:62%;--t:48px;--d:14s">♠</span><span style="--x:30%;--y:72%;--t:40px;--d:9s">♣</span><span class="r" style="--x:58%;--y:84%;--t:52px;--d:12s">♦</span><span style="--x:4%;--y:88%;--t:36px;--d:11s">♠</span><span class="r" style="--x:90%;--y:88%;--t:34px;--d:10s">♥</span><span style="--x:50%;--y:52%;--t:28px;--d:13s">♣</span><span class="r" style="--x:20%;--y:18%;--t:26px;--d:8s">♦</span></div>
@@ -54,6 +55,7 @@
   <script src="data/formas-interactivas.js"></script>
 
   <!-- 2) La mascota y la lógica -->
+  <script src="js/marca.js"></script>
   <script src="js/iconos.js"></script>
   <script src="js/baraja-espanola.js"></script>
   <script src="js/mascota.js"></script>

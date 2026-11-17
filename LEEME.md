@@ -1,4 +1,13 @@
-# Entrenador de cartas (estilo Duolingo)
+# Tapete · Entrenador de cartas (estilo Duolingo)
+
+## La marca
+
+**Tapete** es el sitio donde se aprende a jugar: un tapete de paño verde azulado, con líneas de tiza, ficha roja y latón.
+- Nombre, logo y portada: `js/marca.js` (constante `MARCA`, `logoMarca()`, `heroInicio()`).
+- Colores y tipografía: `css/marca.css` (se carga después de `estilos.css`). Titulares en Big Shoulders Display, texto en Instrument Sans.
+- La portada muestra dónde te quedaste y un botón «Seguir jugando». Los juegos son «mesas» en una rejilla de dos.
+- Iconos de la app en `icons/` (ficha roja con pica sobre el paño).
+
 
 Web app hecha solo con HTML, CSS y JavaScript. No necesita Node, Expo ni instalar paquetes: se abre con **Live Server** en Visual Studio Code.
 

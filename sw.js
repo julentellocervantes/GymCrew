@@ -2,10 +2,10 @@
 // - Al instalarse guarda todos los archivos de la app.
 // - Después, con conexión siempre usa la versión más nueva (y la guarda); sin conexión usa la guardada.
 //   Así no hace falta cambiar nada cuando editas los archivos.
-const CACHE = 'entrenador-cartas-v30';
+const CACHE = 'entrenador-cartas-v31';
 const ARCHIVOS = [
   './', 'index.html', 'manifest.webmanifest',
-  'css/estilos.css', 'js/sonido.js', 'js/situaciones.js', 'js/app.js', 'js/retos.js', 'js/util.js', 'js/cuenta.js', 'js/nube.js', 'js/amigos.js', 'js/extras.js', 'js/simulador.js', 'js/test-nivel.js',
+  'css/estilos.css', 'css/marca.css', 'js/marca.js', 'js/sonido.js', 'js/situaciones.js', 'js/app.js', 'js/retos.js', 'js/util.js', 'js/cuenta.js', 'js/nube.js', 'js/amigos.js', 'js/extras.js', 'js/simulador.js', 'js/test-nivel.js',
   'js/iconos.js', 'js/baraja-espanola.js', 'js/tienda.js', 'js/inicio.js', 'js/mascota.js',
   'data/cursos.js', 'data/blackjack.js', 'data/poker.js', 'data/mus.js',
   'data/blackjack-extra.js', 'data/poker-extra.js', 'data/mus-extra.js', 'data/ordenar-extra.js', 'data/interactivos-extra.js', 'data/variedad-extra.js', 'data/ayuda.js', 'data/generadores.js', 'data/practica.js',

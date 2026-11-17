@@ -204,7 +204,7 @@ function mostrarUtil(entrada = 'fundido') {
   alTeclear = null;
   pintar(
     entrada,
-    el('header', { class: 'cabecera' }, el('span', { class: 'logo' }, el('span', { class: 'logo-palo' }, '♥'), 'Entrenador de cartas'), marcador()),
+    el('header', { class: 'cabecera' }, logoMarca(), marcador()),
     el('main', { class: 'contenido' },
       el('h1', {}, '🧰 Útil'),
       el('p', { class: 'util-intro' }, 'Calculadoras y chuletas para tener a mano mientras juegas. Pulsa una para abrirla.'),

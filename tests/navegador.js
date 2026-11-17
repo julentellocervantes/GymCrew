@@ -311,7 +311,7 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
   await page.waitForSelector('.resultado-titulo');
   await page.getByRole('button', { name: 'Continuar' }).click();
   await page.waitForSelector('.meta');
-  ok(await page.locator('h1', { hasText: 'Elige un juego' }).count() === 1, 'el repaso global vuelve a inicio');
+  ok(await page.locator('h1', { hasText: 'Elige tu mesa' }).count() === 1, 'el repaso global vuelve a inicio');
   p = await estado();
   ok(Object.values(p.srs).some((s) => s.fallos > 0 && s.caja === 1), 'tras acertar el error sube de caja');
   ok(p.repasos === 1, 'cuenta como repaso');
@@ -557,7 +557,7 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
   await page.evaluate(() => localStorage.clear());
   await page.reload();
   await page.waitForSelector('.bienvenida');
-  ok((await page.locator('main').innerText()).includes('Bienvenido al Entrenador de cartas'), 'un usuario nuevo ve la bienvenida');
+  ok((await page.locator('main').innerText()).includes('Bienvenido a Tapete'), 'un usuario nuevo ve la bienvenida');
   ok(await page.locator('#barra').isHidden(), 'la bienvenida no muestra la barra inferior');
   await foto('11-bienvenida');
   await page.getByRole('button', { name: 'Empezar' }).click();

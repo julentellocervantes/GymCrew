@@ -103,7 +103,7 @@ function mostrarAmigos(entrada = 'adelante', aviso = '') {
         el('div', { class: 'ranking-codigo' },
           el('span', { class: 'juego-texto' }, el('strong', {}, 'Tu código: ' + (codigo || '…')), el('span', { class: 'juego-desc' }, 'Quien lo escriba aquí te verá en su ranking')),
           el('button', { class: 'boton secundario mini-boton', type: 'button', onclick: async () => {
-            const texto = `Practica cartas conmigo en el Entrenador de cartas: https://entrenador-cartas.onrender.com y añade mi código ${codigo} en «Ranking con amigos».`;
+            const texto = `Practica cartas conmigo en Tapete: https://entrenador-cartas.onrender.com y añade mi código ${codigo} en «Ranking con amigos».`;
             try { if (navigator.share) await navigator.share({ text: texto }); else { await navigator.clipboard.writeText(texto); avisar('Invitación copiada.'); } } catch (e) { /* cancelado */ }
           } }, 'Invitar')),
         (() => {

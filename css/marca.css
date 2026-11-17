@@ -1,0 +1,169 @@
+/* ============================================================
+   TAPETE: identidad visual
+   Paño verde azulado, tiza, ficha roja y latón.
+   Se carga después de estilos.css y lo sobrescribe.
+   Titulares: Big Shoulders Display (condensada, de rótulo de casino). Texto: Instrument Sans.
+   ============================================================ */
+:root {
+  --pano: #0c3a44;
+  --pano-osc: #082a32;
+  --pano-claro: #14505d;
+  --tiza: #eef1e6;
+  --ficha: #e0402a;
+  --ficha-osc: #a92612;
+  --serif: "Big Shoulders Display", "Arial Narrow", "Roboto Condensed", Impact, sans-serif;
+  --cuerpo: "Instrument Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --fieltro: var(--pano);
+  --fieltro-osc: var(--pano-osc);
+  --laton: #f3b63f;
+  --laton-osc: #b8801a;
+  --rojo: var(--ficha);
+
+  --fondo: #dde8e5;
+  --tarjeta: #f6f9f2;
+  --tarjeta-hover: #eaf1ea;
+  --borde: #b4c9c6;
+  --texto: #0a262d;
+  --texto-suave: #3d5b61;
+  --sombra: rgba(8, 42, 50, 0.22);
+  --palo: #2f6f7a;
+  --palo-rojo: #c4311d;
+  --bloqueado: #c8d8d6;
+  --bloqueado-sombra: #a9bfbc;
+  --bloqueado-texto: #66848a;
+  --estrella-off: #b4c9c6;
+  --foco: #0c6a78;
+  --marca: #0c6a78;
+  --bien-fondo: #dcf2d3;
+  --mal-fondo: #fde1dc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fondo: #072a32;
+    --tarjeta: #0d3d48;
+    --tarjeta-hover: #134e5b;
+    --borde: #22636f;
+    --texto: #eef1e6;
+    --texto-suave: #a9c8c9;
+    --sombra: rgba(0, 0, 0, 0.45);
+    --palo: #86c7c9;
+    --palo-rojo: #ff8a76;
+    --bloqueado: #0f3f4a;
+    --bloqueado-sombra: #0a2d35;
+    --bloqueado-texto: #6f9ea3;
+    --estrella-off: #22636f;
+    --foco: #f3b63f;
+    --marca: #8fdde0;
+    --bien-fondo: #17402c;
+    --mal-fondo: #4a2423;
+  }
+}
+body, button, input, select, textarea { font-family: var(--cuerpo); }
+body { font-weight: 500; }
+::selection { background: var(--laton); color: #2a1c00; }
+
+/* Titulares condensados, con presencia de rótulo */
+h1, h2, .bienvenida-titulo, .est-titulo, .resultado-titulo, #panel-juegos .juego-texto strong, .logo, .hero-titulo, .pestana-tienda {
+  font-family: var(--serif);
+  letter-spacing: 0.01em;
+}
+h1, .bienvenida-titulo, .resultado-titulo { font-weight: 800; font-size: clamp(30px, 8vw, 38px); line-height: 1.02; letter-spacing: 0.005em; }
+.juego-texto strong { font-family: var(--cuerpo); font-weight: 700; font-size: 16px; line-height: 1.2; }
+#panel-juegos .juego-texto strong { font-family: var(--serif); font-weight: 800; font-size: 26px; line-height: 1.02; }
+.est-titulo::before, main.contenido > h2::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--ficha); box-shadow: 0 0 0 2px var(--tarjeta), 0 0 0 3.5px var(--ficha); flex: none; }
+
+/* Fondo: paño con luz de lámpara */
+.decor { display: none; }
+body { background: var(--fondo); }
+body::before {
+  content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(80% 46% at 50% -8%, rgba(20, 80, 93, 0.16), transparent 72%),
+    repeating-linear-gradient(0deg, transparent 0 3px, rgba(8, 42, 50, 0.025) 3px 4px);
+}
+@media (prefers-color-scheme: dark) {
+  body::before { background: radial-gradient(80% 46% at 50% -8%, rgba(60, 170, 185, 0.18), transparent 72%), repeating-linear-gradient(0deg, transparent 0 3px, rgba(255, 255, 255, 0.015) 3px 4px); }
+}
+
+/* Cabecera y barra inferior: paño liso con filete de tiza punteada */
+.cabecera, .barra-pestanas {
+  background-color: var(--pano-osc);
+  background-image: linear-gradient(180deg, var(--pano), var(--pano-osc));
+  background-size: 100% 100%;
+}
+body .cabecera { border-bottom: 0; border-radius: 0 0 26px 26px; padding: 14px 18px 16px; position: relative; }
+.cabecera::after { content: ""; position: absolute; left: 22px; right: 22px; bottom: 7px; border-bottom: 2px dotted rgba(238, 241, 230, 0.28); pointer-events: none; }
+.logo { color: var(--tiza); font-size: 27px; font-weight: 900; gap: 8px; letter-spacing: 0.03em; }
+.logo-ficha { display: inline-flex; }
+.logo-nombre { line-height: 1; padding-top: 2px; }
+.cabecera .dato { background: rgba(238, 241, 230, 0.1); border-color: rgba(238, 241, 230, 0.26); color: var(--tiza); }
+.cabecera .volver { color: var(--tiza); }
+.barra-pestanas { border-top: 0; border-radius: 22px 22px 0 0; box-shadow: 0 -10px 22px rgba(4, 28, 34, 0.35); }
+.barra-pestanas::before { content: ""; position: absolute; left: 20px; right: 20px; top: 5px; border-top: 2px dotted rgba(238, 241, 230, 0.25); pointer-events: none; }
+.pestana { color: #9fc4c6; }
+.pestana.activa { color: var(--tiza); }
+.barra-pestanas .pildora { background: rgba(243, 182, 63, 0.2); box-shadow: inset 0 0 0 1.5px rgba(243, 182, 63, 0.7); }
+
+/* Botón principal: ficha roja con borde de puntos */
+.boton { background: linear-gradient(180deg, #ea4a31, #c93219); border-bottom: 5px solid var(--ficha-osc); color: #fff; font-family: var(--cuerpo); font-weight: 700; letter-spacing: 0.01em; }
+@media (hover: hover) { .boton:hover { background: linear-gradient(180deg, #f2583f, #d63a20); } }
+.boton.secundario { background: var(--tarjeta); color: var(--texto); border-bottom-width: 2px; }
+.boton.oro { background: linear-gradient(180deg, #f8cf6e, #f3b63f); color: #2f2000; border-bottom-color: var(--laton-osc); }
+.pestana-tienda.activa { background: var(--laton); border-color: var(--laton-osc); color: #2a1c00; }
+
+/* Pestañas Juegos/Practicar */
+.pestanas-inicio { background: rgba(12, 58, 68, 0.12); }
+.pestana-inicio { font-weight: 700; }
+.pestana-inicio.activa { background: var(--pano); color: var(--tiza); box-shadow: 0 2px 0 var(--pano-osc), inset 0 0 0 1.5px var(--laton); }
+@media (prefers-color-scheme: dark) { .pestanas-inicio { background: rgba(0, 0, 0, 0.25); } .pestana-inicio.activa { background: var(--pano-claro); } }
+
+/* Hero de inicio */
+.hero-tapete {
+  position: relative; overflow: hidden; margin: 2px 0 14px; padding: 18px 16px 12px; border-radius: 26px; color: var(--tiza);
+  background: radial-gradient(90% 120% at 85% 0%, var(--pano-claro), var(--pano) 60%, var(--pano-osc));
+  box-shadow: 0 16px 26px -16px rgba(4, 28, 34, 0.85), inset 0 0 0 2px rgba(243, 182, 63, 0.55);
+}
+.hero-lineas { position: absolute; inset: 0; color: rgba(238, 241, 230, 0.2); pointer-events: none; }
+.hero-lineas svg { width: 100%; height: 100%; display: block; }
+.hero-texto { position: relative; display: flex; flex-direction: column; gap: 6px; }
+.hero-titulo { margin: 0; font-size: clamp(34px, 10vw, 44px); font-weight: 900; line-height: 0.98; color: var(--tiza); max-width: 12em; }
+.hero-detalle { margin: 0 0 8px; color: #c4dcda; font-size: 15px; line-height: 1.35; max-width: 28em; }
+.hero-boton { align-self: flex-start; width: auto; padding: 14px 28px; font-size: 17px; }
+.hero-tapete .nai-fila { position: relative; margin: 12px 0 0; }
+.hero-tapete .globo { background: var(--tiza); color: #0a262d; border-color: transparent; box-shadow: 0 3px 0 rgba(0, 0, 0, 0.25); }
+.hero-tapete .globo::before { background: var(--tiza); border-color: transparent; }
+.hero-tapete .globo p { color: #0a262d; }
+
+/* Mesas de juego: rejilla de dos con el contorno de un tapete */
+#panel-juegos[hidden] { display: none; }
+#panel-juegos:not([hidden]) { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: stretch; }
+#panel-juegos > h1 { grid-column: 1 / -1; margin: 6px 0 0; }
+#panel-juegos .juego {
+  flex-direction: column; align-items: flex-start; gap: 8px; margin: 0; padding: 14px 14px 12px; min-height: 176px; border-radius: 22px;
+  border: 2px solid var(--borde); border-bottom: 2px solid var(--borde);
+  background: linear-gradient(160deg, color-mix(in srgb, var(--acento) 16%, var(--tarjeta)), var(--tarjeta) 70%);
+  box-shadow: inset 0 0 0 5px var(--tarjeta), inset 0 0 0 6.5px color-mix(in srgb, var(--acento) 45%, transparent), 0 12px 20px -14px var(--sombra);
+}
+@media (hover: hover) { #panel-juegos .juego:hover { background: linear-gradient(160deg, color-mix(in srgb, var(--acento) 24%, var(--tarjeta-hover)), var(--tarjeta-hover) 70%); } }
+#panel-juegos .juego-icono { width: 48px; height: 48px; border-radius: 50%; font-size: 24px; box-shadow: 0 3px 0 rgba(0, 0, 0, 0.25), 0 0 0 3px var(--tarjeta), 0 0 0 4.5px var(--acento); }
+#panel-juegos .juego-texto { width: 100%; gap: 3px; }
+#panel-juegos .juego-desc { display: none; }
+#panel-juegos .flecha { display: none; }
+#panel-juegos .juego-barra { margin-top: auto; height: 8px; }
+#panel-juegos .juego-niveles { font-size: 12.5px; font-weight: 600; }
+#panel-juegos .juego::before { top: 10px; right: 12px; }
+#panel-juegos .juego::after { font-size: 96px; right: -6px; bottom: -26px; }
+
+/* Tarjetas del inicio */
+.resumen .meta, .resumen .rango { border-radius: 18px; }
+.meta .anillo { --anillo-color: var(--ficha); }
+.reto { border-color: var(--laton); }
+.rango .juego-relleno { background: var(--laton); }
+
+/* Mapa de niveles: fichas de casino */
+.nodo, .nodo.bloqueado { --marca-a: var(--tiza); }
+.nodo.actual { --acento: var(--ficha); }
+
+/* Logo del instalable / pantalla de bienvenida */
+.bienvenida-titulo { font-size: clamp(36px, 11vw, 46px); font-weight: 900; }

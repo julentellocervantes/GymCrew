@@ -283,7 +283,7 @@ function mostrarAjustes(aviso = '', animacion = 'fundido') {
 
   pintar(
     animacion,
-    el('header', { class: 'cabecera' }, el('span', { class: 'logo' }, el('span', { class: 'logo-palo' }, '♥'), 'Entrenador de cartas'), marcador()),
+    el('header', { class: 'cabecera' }, logoMarca(), marcador()),
     el(
       'main',
       { class: 'contenido' },
@@ -557,7 +557,7 @@ function heroMesa() {
   return nodo;
 }
 function mostrarBienvenida(repetida = false) {
-  const { fila } = naiFila('celebrando', repetida ? '¡Hola otra vez! Esto es lo que puedes hacer aquí.' : '¡Hola! Soy Nai y voy a ser tu entrenador de cartas.', 'hero');
+  const { fila } = naiFila('celebrando', repetida ? '¡Hola otra vez! Esto es lo que puedes hacer aquí.' : '¡Hola! Soy Nai, tu crupier de bolsillo.', 'hero');
   const empezar = (destino) => {
     progreso.bienvenida = true;
     guardarProgreso();
@@ -577,7 +577,7 @@ function mostrarBienvenida(repetida = false) {
       heroMesa(),
       fila,
       almacenamientoFallo ? el('p', { class: 'alerta', role: 'alert' }, 'Tu navegador no deja guardar el progreso (¿modo privado?). Puedes seguir, pero al cerrar se perderá.') : null,
-      el('h1', { class: 'bienvenida-titulo' }, 'Bienvenido al Entrenador de cartas'),
+      el('h1', { class: 'bienvenida-titulo' }, 'Bienvenido a Tapete'),
       el('p', { class: 'bienvenida-sub' }, 'Aprende blackjack, póker, mus, baccarat, ruleta y vídeo póker practicando situaciones reales, poco a poco y sin dinero.'),
       el('ul', { class: 'bienvenida-lista' },
         ventaja('🎮', 'Aprende jugando', 'Niveles cortos con preguntas de todo tipo: test, ordenar, unir, tocar cartas…', 0),
