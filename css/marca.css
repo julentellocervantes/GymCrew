@@ -54,8 +54,8 @@ h1, .bienvenida-titulo, .resultado-titulo { font-weight: 800; font-size: clamp(3
 .est-titulo::before, main.contenido > h2::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--ficha); box-shadow: 0 0 0 2px var(--tarjeta), 0 0 0 3.5px var(--ficha); flex: none; }
 
 /* Fondo: paño con luz de lámpara */
-/* Fondo animado (se monta en js/marca.js) */
-.decor { background: transparent; overflow: hidden; }
+/* ---------- Fondo animado: escenas de juegos de azar (se montan en js/marca.js) ---------- */
+.decor { background: transparent; overflow: hidden; --tinta: var(--pano); --op: 0.38; }
 .decor::before, .decor::after { content: ""; position: absolute; width: 90vmax; height: 90vmax; border-radius: 50%; pointer-events: none; will-change: transform; }
 .decor::before { left: -45vmax; top: -50vmax; background: radial-gradient(closest-side, rgba(20, 80, 93, 0.22), transparent); animation: luz-a 26s ease-in-out infinite alternate; }
 .decor::after { right: -50vmax; bottom: -55vmax; background: radial-gradient(closest-side, rgba(243, 182, 63, 0.2), transparent); animation: luz-b 32s ease-in-out infinite alternate; }
@@ -64,17 +64,71 @@ h1, .bienvenida-titulo, .resultado-titulo { font-weight: 800; font-size: clamp(3
 .fondo-aro { position: absolute; right: -170px; top: 90px; width: 440px; height: 440px; color: rgba(12, 58, 68, 0.2); animation: gira 150s linear infinite; will-change: transform; }
 .fondo-aro svg { width: 100%; height: 100%; display: block; }
 @keyframes gira { to { transform: rotate(360deg); } }
-.flota { position: absolute; left: var(--x); bottom: -80px; font-size: var(--t); line-height: 1; animation: asciende var(--d) linear var(--r) infinite; will-change: transform; }
-.flota-palo, .flota-ficha { display: block; animation: vaiven var(--s) ease-in-out infinite alternate; }
-.flota-palo { color: var(--pano); opacity: 0.15; }
-.flota-palo.r { color: var(--ficha); opacity: 0.16; }
-.flota-ficha { width: var(--t); opacity: 0.3; }
-.flota-ficha svg { width: 100%; height: auto; display: block; }
-@keyframes asciende { from { transform: translateY(0) rotate(-20deg); } to { transform: translateY(-125vh) rotate(340deg); } }
+
+/* piezas sueltas: carta, ficha, dado, palo... */
+.pz { position: absolute; left: 0; top: 0; width: var(--t); font-size: var(--t); line-height: 1; opacity: var(--op); transform: translate(var(--xp), var(--yp)) rotate(var(--rot)); animation-duration: var(--d); animation-delay: var(--r); animation-iteration-count: infinite; animation-timing-function: linear; will-change: transform; }
+.pz-in { display: block; animation: vaiven var(--s) ease-in-out infinite alternate; }
+.pz svg { width: 100%; height: auto; display: block; overflow: visible; }
+.pz .glifo { display: block; text-align: center; color: var(--tinta); }
+.pz .glifo.r { color: var(--ficha); }
+.pz .glifo.oro { color: #c98a00; }
+.pz .destello { display: block; color: #e0a100; text-align: center; text-shadow: 0 0 10px #ffd23f; }
 @keyframes vaiven { from { translate: -14px 0; } to { translate: 14px 0; } }
-@media (prefers-reduced-motion: reduce) { .decor *, .decor::before, .decor::after { animation: none !important; } .flota { bottom: auto; top: calc(var(--x) * 0.9); } }
+.sube { animation-name: sube; }
+.cae { animation-name: cae; }
+.reparte { animation-name: reparte; animation-timing-function: ease-in-out; }
+.cabecea { animation-name: cabecea; animation-timing-function: ease-in-out; animation-direction: alternate; }
+.centellea { animation-name: centellea; animation-timing-function: ease-in-out; }
+.rueda { animation-name: rueda; }
+@keyframes sube { from { transform: translate(var(--xp), 112vh) rotate(-20deg); } to { transform: translate(var(--xp), -25vh) rotate(340deg); } }
+@keyframes cae { from { transform: translate(var(--xp), -22vh) rotate(-25deg); } to { transform: translate(var(--xp), 112vh) rotate(300deg); } }
+@keyframes reparte { 0% { transform: translate(-26vw, var(--yp)) rotate(-35deg); opacity: 0; } 12% { opacity: var(--op); } 88% { opacity: var(--op); } 100% { transform: translate(122vw, calc(var(--yp) + 14vh)) rotate(25deg); opacity: 0; } }
+@keyframes cabecea { from { transform: translate(var(--xp), var(--yp)) rotate(var(--rot)); } to { transform: translate(var(--xp), calc(var(--yp) - 3vh)) rotate(calc(var(--rot) + 8deg)); } }
+@keyframes centellea { 0%, 100% { opacity: 0.04; transform: translate(var(--xp), var(--yp)) scale(0.7) rotate(var(--rot)); } 50% { opacity: calc(var(--op) * 1.7); transform: translate(var(--xp), var(--yp)) scale(1.15) rotate(var(--rot)); } }
+@keyframes rueda { from { transform: translate(-20vw, var(--yp)) rotate(0deg); } to { transform: translate(120vw, var(--yp)) rotate(720deg); } }
+
+/* ruleta gigante (atardecer) */
+.ruleta { position: absolute; left: 50%; bottom: -54vmin; width: 128vmin; height: 128vmin; margin-left: -64vmin; opacity: 0.32; }
+.ruleta-rueda { position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(from 0deg, #1a0f1e 0 9.73deg, #c4311d 0 19.46deg, #1a0f1e 0 29.19deg, #c4311d 0 38.92deg, #1a0f1e 0 48.65deg, #c4311d 0 58.38deg, #1a0f1e 0 68.11deg, #c4311d 0 77.84deg, #1a0f1e 0 87.57deg, #c4311d 0 97.3deg, #1a0f1e 0 107.03deg, #c4311d 0 116.76deg, #1a0f1e 0 126.49deg, #c4311d 0 136.22deg, #1a0f1e 0 145.95deg, #c4311d 0 155.68deg, #1a0f1e 0 165.41deg, #c4311d 0 175.14deg, #1a0f1e 0 184.87deg, #c4311d 0 194.6deg, #1a0f1e 0 204.33deg, #c4311d 0 214.06deg, #1a0f1e 0 223.79deg, #c4311d 0 233.52deg, #1a0f1e 0 243.25deg, #c4311d 0 252.98deg, #1a0f1e 0 262.71deg, #c4311d 0 272.44deg, #1a0f1e 0 282.17deg, #c4311d 0 291.9deg, #1a0f1e 0 301.63deg, #c4311d 0 311.36deg, #1a0f1e 0 321.09deg, #c4311d 0 330.82deg, #1a0f1e 0 340.55deg, #1f8a4c 0 350.28deg, #1a0f1e 0 360deg); -webkit-mask: radial-gradient(circle, transparent 0 46%, #000 46.5% 80%, transparent 80.5%); mask: radial-gradient(circle, transparent 0 46%, #000 46.5% 80%, transparent 80.5%); box-shadow: 0 0 0 2.5vmin #f3b63f; animation: gira 90s linear infinite; }
+.ruleta-centro { position: absolute; inset: 36%; border-radius: 50%; background: radial-gradient(circle, #f3b63f 0 10%, #b8801a 11% 30%, #1a0f1e 31% 34%, #f3b63f 35% 100%); animation: gira 60s linear infinite reverse; }
+.ruleta-bola-pista { position: absolute; inset: 7%; border-radius: 50%; animation: gira 6s linear infinite reverse; }
+.ruleta-bola { position: absolute; left: 50%; top: 0; width: 2.4vmin; height: 2.4vmin; margin-left: -1.2vmin; border-radius: 50%; background: #fffdf5; box-shadow: 0 0 1.6vmin #fff; }
+
+/* tragaperras (neón) */
+.carretes { position: absolute; inset: 0; display: flex; justify-content: space-around; padding: 0 3vw; opacity: 0.42; }
+.carrete { width: 17vw; max-width: 90px; height: 100%; overflow: hidden; -webkit-mask: linear-gradient(transparent, #000 14%, #000 86%, transparent); mask: linear-gradient(transparent, #000 14%, #000 86%, transparent); }
+.carrete-tira { display: flex; flex-direction: column; gap: 5vh; animation: carrete var(--d) linear infinite var(--sentido); will-change: transform; filter: drop-shadow(0 0 7px rgba(54, 240, 255, 0.8)); }
+.carrete:nth-child(even) .carrete-tira { filter: drop-shadow(0 0 7px rgba(255, 79, 216, 0.85)); }
+.carrete-simbolo { display: block; width: 100%; }
+.carrete-simbolo svg { width: 100%; height: auto; display: block; }
+@keyframes carrete { from { transform: translateY(0); } to { transform: translateY(-50%); } }
+
+/* salón dorado: barrido de brillo */
+.brillo-barrido { position: absolute; inset: -20% -50%; background: linear-gradient(105deg, transparent 40%, rgba(255, 244, 190, 0.45) 50%, transparent 60%); animation: barrido 9s ease-in-out infinite; }
+@keyframes barrido { 0% { transform: translateX(-60%); } 60%, 100% { transform: translateX(60%); } }
+
+/* mesa de casino: contorno del tapete */
+.mesa-borde { position: absolute; left: -15vw; right: -15vw; bottom: -28vh; height: 62vh; border-radius: 50%; border: 3px dashed rgba(238, 241, 230, 0.2); box-shadow: inset 0 0 0 14px rgba(238, 241, 230, 0.04); }
+
+/* tonos de cada escena */
+html[data-fondo="mesa"] .decor { --tinta: #bfe9d0; --op: 0.36; }
+html[data-fondo="medianoche"] .decor { --tinta: #b9c2ff; --op: 0.26; }
+html[data-fondo="atardecer"] .decor { --tinta: #7a2d4a; --op: 0.4; }
+html[data-fondo="neon"] .decor { --tinta: #36f0ff; --op: 0.5; }
+html[data-fondo="dorado"] .decor { --tinta: #a56b00; --op: 0.55; }
+html[data-fondo="mesa"] .decor::before, html[data-fondo="medianoche"] .decor::before, html[data-fondo="neon"] .decor::before { opacity: 0.6; }
+
+@media (prefers-reduced-motion: reduce) { .decor *, .decor::before, .decor::after { animation: none !important; } .reparte, .rueda { transform: translate(var(--xp), var(--yp)) rotate(var(--rot)); } }
 html[data-calma="si"] .decor *, html[data-calma="si"] .decor::before, html[data-calma="si"] .decor::after { animation: none !important; }
-html[data-calma="si"] .flota { bottom: auto; top: calc(var(--x) * 0.9); }
+html[data-calma="si"] .reparte, html[data-calma="si"] .rueda { transform: translate(var(--xp), var(--yp)) rotate(var(--rot)); }
+
+/* Tienda: las muestras de fondo también se mueven */
+.vista-fondo { position: relative; background-size: 220% 220% !important; animation: muestra 7s ease-in-out infinite alternate; }
+.vista-fondo::after { content: attr(data-glifo); position: absolute; font-size: 34px; color: rgba(255, 255, 255, 0.55); text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3); animation: muestra-glifo 4s ease-in-out infinite alternate; }
+@keyframes muestra { from { background-position: 0% 0%; } to { background-position: 100% 100%; } }
+@keyframes muestra-glifo { from { transform: translateY(5px) rotate(-8deg); } to { transform: translateY(-5px) rotate(8deg); } }
+@media (prefers-reduced-motion: reduce) { .vista-fondo, .vista-fondo::after { animation: none; } }
+html[data-calma="si"] .vista-fondo, html[data-calma="si"] .vista-fondo::after { animation: none; }
 body { background: var(--fondo); }
 body::before {
   content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;

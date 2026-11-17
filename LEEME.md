@@ -6,7 +6,7 @@
 - Nombre, logo y portada: `js/marca.js` (constante `MARCA`, `logoMarca()`, `heroInicio()`).
 - Colores y tipografía: `css/marca.css` (se carga después de `estilos.css`). Titulares en Big Shoulders Display, texto en Instrument Sans.
 - La portada muestra dónde te quedaste y un botón «Seguir jugando». Los juegos son «mesas» en una rejilla de dos.
-- **Fondo animado** (`montarFondo()` en `js/marca.js`, estilos en `css/marca.css`): fichas y palos suben despacio, un aro de tiza gira y dos luces se desplazan. Se apaga con el modo calma de Ajustes y con «reducir movimiento» del sistema.
+- **Fondos animados de casino** (`montarFondo()` en `js/marca.js`, estilos en `css/marca.css`): cada fondo de la tienda es una escena con su propio movimiento. Tapete (cartas, fichas y dados suben), Mesa de casino (se reparten cartas y cabecean fichas), Noche de póker (cartas que caen y palos que centellean), Ruleta al atardecer (ruleta gigante con bola), Tragaperras neón (carretes con 7, BAR y cerezas) y Salón dorado (lluvia de fichas y monedas). Las muestras de la tienda también se mueven. Se apaga con el modo calma de Ajustes y con «reducir movimiento» del sistema.
 - **Modo claro único**: la app ya no tiene modo oscuro.
 - Iconos de la app en `icons/` (ficha roja con pica sobre el paño).
 

@@ -79,9 +79,9 @@ const CATALOGO = {
   fondo: [
     { id: 'clasico', nombre: 'Clásico', precio: 0, vista: 'linear-gradient(135deg,#fff6e9,#ffd9c0)' },
     { id: 'mesa', nombre: 'Mesa de casino', precio: 40, vista: 'linear-gradient(135deg,#1b8052,#0f3d2b)' },
-    { id: 'medianoche', nombre: 'Medianoche', precio: 50, vista: 'linear-gradient(135deg,#1b2a5c,#0b1030)' },
-    { id: 'atardecer', nombre: 'Atardecer', precio: 60, vista: 'linear-gradient(135deg,#ffb88a,#ff7a9c)' },
-    { id: 'neon', nombre: 'Neón', precio: 90, vista: 'linear-gradient(135deg,#7a2cff,#17d3ff)' },
+    { id: 'medianoche', nombre: 'Noche de póker', precio: 50, vista: 'linear-gradient(135deg,#1b2a5c,#0b1030)' },
+    { id: 'atardecer', nombre: 'Ruleta al atardecer', precio: 60, vista: 'linear-gradient(135deg,#ffb88a,#ff7a9c)' },
+    { id: 'neon', nombre: 'Tragaperras neón', precio: 90, vista: 'linear-gradient(135deg,#7a2cff,#17d3ff)' },
     { id: 'dorado', nombre: 'Salón dorado', precio: 120, vista: 'linear-gradient(135deg,#ffe58a,#e0a100)' },
   ],
   baraja: [
@@ -278,7 +278,7 @@ function mostrarTienda(entrada = 'fundido') {
 
   // Cosméticos
   const vistaArticulo = (tipo, a) => {
-    if (tipo === 'fondo') return el('span', { class: 'vista vista-fondo', style: `background:${a.vista}` });
+    if (tipo === 'fondo') return el('span', { class: 'vista vista-fondo', 'data-glifo': ({ clasico: '♠', mesa: '♣', medianoche: '♥', atardecer: '◉', neon: '7', dorado: '♦' })[a.id] || '♠', style: `background:${a.vista}` });
     if (tipo === 'baraja') return el('span', { class: 'vista vista-baraja', 'data-baraja': a.id }, el('span', { class: 'carta' }, 'A♠'), el('span', { class: 'carta roja' }, 'K♥'));
     if (tipo === 'espanola') return el('span', { class: 'vista vista-es', 'data-espanola': a.id }, cartaEspanola('Rey', 0), cartaEspanola('As', 2));
     const caja = el('span', { class: 'vista vista-nai' });
