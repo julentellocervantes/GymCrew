@@ -38,27 +38,7 @@
   --bien-fondo: #dcf2d3;
   --mal-fondo: #fde1dc;
 }
-@media (prefers-color-scheme: dark) {
-  :root {
-    --fondo: #072a32;
-    --tarjeta: #0d3d48;
-    --tarjeta-hover: #134e5b;
-    --borde: #22636f;
-    --texto: #eef1e6;
-    --texto-suave: #a9c8c9;
-    --sombra: rgba(0, 0, 0, 0.45);
-    --palo: #86c7c9;
-    --palo-rojo: #ff8a76;
-    --bloqueado: #0f3f4a;
-    --bloqueado-sombra: #0a2d35;
-    --bloqueado-texto: #6f9ea3;
-    --estrella-off: #22636f;
-    --foco: #f3b63f;
-    --marca: #8fdde0;
-    --bien-fondo: #17402c;
-    --mal-fondo: #4a2423;
-  }
-}
+
 body, button, input, select, textarea { font-family: var(--cuerpo); }
 body { font-weight: 500; }
 ::selection { background: var(--laton); color: #2a1c00; }
@@ -82,9 +62,7 @@ body::before {
     radial-gradient(80% 46% at 50% -8%, rgba(20, 80, 93, 0.16), transparent 72%),
     repeating-linear-gradient(0deg, transparent 0 3px, rgba(8, 42, 50, 0.025) 3px 4px);
 }
-@media (prefers-color-scheme: dark) {
-  body::before { background: radial-gradient(80% 46% at 50% -8%, rgba(60, 170, 185, 0.18), transparent 72%), repeating-linear-gradient(0deg, transparent 0 3px, rgba(255, 255, 255, 0.015) 3px 4px); }
-}
+
 
 /* Cabecera y barra inferior: paño liso con filete de tiza punteada */
 .cabecera, .barra-pestanas {
@@ -116,7 +94,7 @@ body .cabecera { border-bottom: 0; border-radius: 0 0 26px 26px; padding: 14px 1
 .pestanas-inicio { background: rgba(12, 58, 68, 0.12); }
 .pestana-inicio { font-weight: 700; }
 .pestana-inicio.activa { background: var(--pano); color: var(--tiza); box-shadow: 0 2px 0 var(--pano-osc), inset 0 0 0 1.5px var(--laton); }
-@media (prefers-color-scheme: dark) { .pestanas-inicio { background: rgba(0, 0, 0, 0.25); } .pestana-inicio.activa { background: var(--pano-claro); } }
+
 
 /* Hero de inicio */
 .hero-tapete {

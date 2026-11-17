@@ -33,30 +33,7 @@
   color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --fondo: #1f1a2b;
-    --tarjeta: #2b2539;
-    --tarjeta-hover: #353048;
-    --borde: #403852;
-    --texto: #f7efe6;
-    --texto-suave: #bdb2cb;
-    --sombra: rgba(0, 0, 0, 0.35);
-    --mezcla: #fff;
-    --palo: #b9a3d6;
-    --palo-rojo: #ff7a8e;
-    --bloqueado: #353048;
-    --bloqueado-sombra: #28233a;
-    --bloqueado-texto: #7d7391;
-    --estrella-off: #403852;
-    --bien-fondo: #1f3a2a;
-    --bien-titulo: #7be03a;
-    --mal-fondo: #432630;
-    --mal-titulo: #ff8585;
-    --foco: #a58bff;
-    color-scheme: dark;
-  }
-}
+
 
 html, body {
   margin: 0;
@@ -632,7 +609,7 @@ h1 { font-size: 28px; font-weight: 900; margin: 0 0 14px; letter-spacing: -0.01e
 .logro-desc { color: var(--texto-suave); font-size: 12px; line-height: 1.3; }
 
 .resultado-logro { color: #b37400; font-weight: 900; margin: 12px 0 0; }
-@media (prefers-color-scheme: dark) { .resultado-logro { color: #ffd23f; } }
+
 
 /* ---------- confeti ---------- */
 .confeti { position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: 20; }
@@ -1075,15 +1052,7 @@ body.con-barra .pie { bottom: calc(var(--alto-barra) + env(safe-area-inset-botto
 .glosario dt { font-weight: 900; margin-top: 10px; }
 .glosario dd { margin: 2px 0 0; color: var(--texto-suave); font-weight: 700; line-height: 1.4; font-size: 14px; }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .c-P { background: #2f5a14; color: #d8f7b8; }
-  :root:not([data-theme="light"]) .c-S { background: #6b2323; color: #ffd6d6; }
-  :root:not([data-theme="light"]) .c-D { background: #1b4a73; color: #cfe9ff; }
-  :root:not([data-theme="light"]) .c-X { background: #6b5410; color: #fff0b8; }
-  :root:not([data-theme="light"]) .tabla-simple td.pos { color: #8be04b; }
-  :root:not([data-theme="light"]) .tabla-simple td.neg { color: #ff8a8a; }
-  :root:not([data-theme="light"]) .mano-texto .roja { color: #ff7b7b; }
-}
+
 
 /* ---------- Inicio compacto: meta, rango y repasos en poco espacio ---------- */
 .resumen { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
@@ -1307,7 +1276,7 @@ html[data-baraja="retro"] .carta.roja, [data-baraja="retro"] .carta.roja { color
 .dato { padding: 4px 10px; font-size: 14px; }
 @media (max-width: 400px) { .marcador { gap: 4px; margin-left: 6px; } .dato { padding: 3px 7px; font-size: 13px; } .logo { font-size: 14px; } }
 .dato-energia { color: #b87400; }
-@media (prefers-color-scheme: dark) { .dato-energia { color: #ffd23f; } }
+
 
 /* Tienda */
 .tienda > * + * { margin-top: 14px; }
@@ -1730,26 +1699,7 @@ html[data-calma="si"] .vip-chuleta { animation: none; }
   --foco: #1f4fa8;
   --marca: #1f4fa8;
 }
-@media (prefers-color-scheme: dark) {
-  :root {
-    --fondo: #0b1a33;
-    --tarjeta: #132a50;
-    --tarjeta-hover: #1b3868;
-    --borde: #2b4d85;
-    --texto: #f7f0dc;
-    --texto-suave: #b4c6e4;
-    --sombra: rgba(0, 0, 0, 0.4);
-    --mezcla: #fff;
-    --palo: #8fb0e0;
-    --palo-rojo: #ff7d78;
-    --bloqueado: #152b52;
-    --bloqueado-sombra: #0d1f3d;
-    --bloqueado-texto: #7490c0;
-    --estrella-off: #2b4d85;
-    --foco: #f0c25c;
-    --marca: #8dbbff;
-  }
-}
+
 ::selection { background: var(--laton); color: #2a1c00; }
 
 /* Fondo: fieltro con una luz suave arriba */
@@ -1758,13 +1708,7 @@ html[data-calma="si"] .vip-chuleta { animation: none; }
     radial-gradient(70% 42% at 50% -6%, rgba(255, 255, 255, 0.55), transparent 72%),
     radial-gradient(60% 40% at 100% 100%, rgba(26, 64, 122, 0.16), transparent 70%);
 }
-@media (prefers-color-scheme: dark) {
-  .decor {
-    background:
-      radial-gradient(75% 45% at 50% -8%, rgba(120, 170, 255, 0.16), transparent 72%),
-      radial-gradient(60% 40% at 100% 100%, rgba(0, 0, 0, 0.3), transparent 70%);
-  }
-}
+
 
 /* Reverso de carta: rombos finos sobre el fieltro */
 .cabecera, .barra-pestanas {
@@ -1815,11 +1759,7 @@ h1, .bienvenida-titulo { font-weight: 800; letter-spacing: -0.015em; }
 .juego[data-curso="baccarat"] { --glifo: "♣"; --indice: var(--tinta); }
 .juego[data-curso="videopoker"] { --glifo: "♦"; --indice: var(--rojo); }
 .juego[data-curso="ruleta"] { --glifo: "●"; --indice: var(--rojo); }
-@media (prefers-color-scheme: dark) {
-  .juego[data-curso="blackjack"], .juego[data-curso="baccarat"] { --indice: #f2ead3; }
-  .juego[data-curso="poker"], .juego[data-curso="videopoker"] { --indice: #ff8a84; }
-  .juego[data-curso="mus"] { --indice: var(--laton); }
-}
+
 
 /* Botón principal: ficha verde con aro de puntos */
 .boton { background: linear-gradient(180deg, #3b7fe3, #2158b4); color: #fdf6df; border-bottom: 5px solid #123c84; text-shadow: 0 1px 0 rgba(0, 0, 0, 0.25); }
