@@ -886,6 +886,51 @@ function verificarAyuda() {
   if (!S.simEsBlackjack(['A♠', 'K♥']) || S.simEsBlackjack(['A♠', '5♥', '5♦'])) mal('simulador', 'blackjack natural mal detectado');
   verif.simulador = n;
 }
+// ---------- calculadoras de la pestaña Útil: se recalculan con métodos independientes ----------
+{
+  const src = fs.readFileSync(require('path').join(__dirname, '..', 'js', 'util.js'), 'utf8').split('const fmt =')[0];
+  vm.runInContext(src + '\nthis.__util = UTIL;', ctx, { filename: 'util.js' });
+  const U = vm.runInContext('__util', ctx);
+  const cerca = (a, b, tol, quien) => { if (Math.abs(a - b) > tol) mal('calculadoras', `${quien}: ${a} y se esperaba ${b}`); };
+  // pasarse al pedir: se cuentan las 13 cartas una a una
+  for (let total = 4; total <= 21; total++) {
+    let pasan = 0; for (let carta = 1; carta <= 13; carta++) if (total + Math.min(carta, 10) > 21) pasan++;
+    cerca(U.pasarteAlPedir(total), (pasan / 13) * 100, 1e-9, `pasarse con ${total}`);
+  }
+  // el crupier se pasa: simulación con semilla (mazo muy grande, se planta con 17 también blando)
+  let semilla = 12345; const azar = () => ((semilla = (Math.imul(semilla, 1664525) + 1013904223) >>> 0) / 4294967296);
+  const carta = () => Math.min(1 + Math.floor(azar() * 13), 10);
+  for (const up of [2, 3, 4, 5, 6, 7, 8, 9, 10, 11]) {
+    let pasados = 0; const N = 200000;
+    for (let i = 0; i < N; i++) {
+      let total = up, ases = up === 11 ? 1 : 0;
+      for (;;) {
+        if (total > 21 && ases) { total -= 10; ases--; continue; }
+        if (total > 21) { pasados++; break; }
+        if (total >= 17) break;
+        const c = carta(); if (c === 1) { total += 11; ases++; } else total += c;
+      }
+    }
+    cerca(U.crupierSePasa(up), (pasados / N) * 100, 0.7, `el crupier se pasa con ${up}`);
+  }
+  // ruleta: ventaja de la casa clásica y pagos
+  for (const [k, pago] of [[1, 35], [2, 17], [3, 11], [4, 8], [6, 5], [12, 2], [18, 1]]) {
+    cerca(U.ruleta(k, 37, 1).pago, pago, 1e-9, `pago de ${k} números`);
+    cerca(U.ruleta(k, 37, 1).casa, 100 / 37, 1e-9, `ventaja europea con ${k}`);
+    cerca(U.ruleta(k, 38, 1).casa, 200 / 38, 1e-9, `ventaja americana con ${k}`);
+  }
+  // outs: combinaciones exactas
+  const comb = (n, k) => { let r = 1; for (let i = 0; i < k; i++) r = (r * (n - i)) / (i + 1); return r; };
+  for (let o = 0; o <= 20; o++) {
+    cerca(U.outsFlop(o).exacto, (1 - comb(47 - o, 2) / comb(47, 2)) * 100, 1e-9, `outs ${o} en el flop`);
+    cerca(U.outsTurn(o).exacto, (o / 46) * 100, 1e-9, `outs ${o} en el turn`);
+  }
+  // apuestas y ventaja
+  cerca(U.ventajaJugador(2), 0.5, 1e-9, 'ventaja con +2');
+  if (U.unidadesApuesta(-3) !== 1 || U.unidadesApuesta(0.9) !== 1 || U.unidadesApuesta(4.7) !== 4 || U.unidadesApuesta(30) !== 12) mal('calculadoras', 'unidades de apuesta mal calculadas');
+  const ap = U.apuestaSugerida(1000, 3); if (ap.unidad !== 10 || ap.apuesta !== 30) mal('calculadoras', 'apuesta sugerida: 1000 con +3 debe dar 30');
+  verif.calculadoras = 18 + 10 + 21 + 20 + 4;
+}
 errores.push(...errores_pre);
 if (errores.length) { console.log('\nERRORES:\n' + errores.map((x) => ' - ' + x).join('\n')); process.exit(1); }
 console.log('\nDATOS OK: estructura, estrategia básica, Hi-Lo, cuenta verdadera, mus (lances), póker (manos y ganador), pot odds, outs y probabilidades');

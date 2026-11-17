@@ -54,7 +54,27 @@ h1, .bienvenida-titulo, .resultado-titulo { font-weight: 800; font-size: clamp(3
 .est-titulo::before, main.contenido > h2::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--ficha); box-shadow: 0 0 0 2px var(--tarjeta), 0 0 0 3.5px var(--ficha); flex: none; }
 
 /* Fondo: paño con luz de lámpara */
-.decor { display: none; }
+/* Fondo animado (se monta en js/marca.js) */
+.decor { background: transparent; overflow: hidden; }
+.decor::before, .decor::after { content: ""; position: absolute; width: 90vmax; height: 90vmax; border-radius: 50%; pointer-events: none; will-change: transform; }
+.decor::before { left: -45vmax; top: -50vmax; background: radial-gradient(closest-side, rgba(20, 80, 93, 0.22), transparent); animation: luz-a 26s ease-in-out infinite alternate; }
+.decor::after { right: -50vmax; bottom: -55vmax; background: radial-gradient(closest-side, rgba(243, 182, 63, 0.2), transparent); animation: luz-b 32s ease-in-out infinite alternate; }
+@keyframes luz-a { from { transform: translate(0, 0) scale(1); } to { transform: translate(34vmax, 22vmax) scale(1.15); } }
+@keyframes luz-b { from { transform: translate(0, 0) scale(1.1); } to { transform: translate(-30vmax, -26vmax) scale(0.95); } }
+.fondo-aro { position: absolute; right: -170px; top: 90px; width: 440px; height: 440px; color: rgba(12, 58, 68, 0.2); animation: gira 150s linear infinite; will-change: transform; }
+.fondo-aro svg { width: 100%; height: 100%; display: block; }
+@keyframes gira { to { transform: rotate(360deg); } }
+.flota { position: absolute; left: var(--x); bottom: -80px; font-size: var(--t); line-height: 1; animation: asciende var(--d) linear var(--r) infinite; will-change: transform; }
+.flota-palo, .flota-ficha { display: block; animation: vaiven var(--s) ease-in-out infinite alternate; }
+.flota-palo { color: var(--pano); opacity: 0.15; }
+.flota-palo.r { color: var(--ficha); opacity: 0.16; }
+.flota-ficha { width: var(--t); opacity: 0.3; }
+.flota-ficha svg { width: 100%; height: auto; display: block; }
+@keyframes asciende { from { transform: translateY(0) rotate(-20deg); } to { transform: translateY(-125vh) rotate(340deg); } }
+@keyframes vaiven { from { translate: -14px 0; } to { translate: 14px 0; } }
+@media (prefers-reduced-motion: reduce) { .decor *, .decor::before, .decor::after { animation: none !important; } .flota { bottom: auto; top: calc(var(--x) * 0.9); } }
+html[data-calma="si"] .decor *, html[data-calma="si"] .decor::before, html[data-calma="si"] .decor::after { animation: none !important; }
+html[data-calma="si"] .flota { bottom: auto; top: calc(var(--x) * 0.9); }
 body { background: var(--fondo); }
 body::before {
   content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
@@ -168,3 +188,18 @@ body .cabecera { border-bottom: 0; border-radius: 0 0 26px 26px; padding: 14px 1
 .bloque-hoy .reto { margin: 10px 0 0; padding: 10px 14px; border-radius: 18px; }
 .bloque-hoy .reto p, .bloque-hoy .reto .juego-niveles { font-size: 12.5px; }
 .bloque-hoy { margin-bottom: 14px; }
+
+/* ---------- calculadoras VIP: pantalla de resultado ---------- */
+.resultado-calc { margin: 10px 0 4px; padding: 11px 14px; border-radius: 14px; background: linear-gradient(180deg, var(--pano), var(--pano-osc)); color: var(--laton); font-family: var(--serif); font-size: 19px; font-weight: 800; letter-spacing: 0.02em; line-height: 1.2; box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.4), 0 0 0 2px var(--tarjeta), 0 0 0 3.5px var(--borde); font-variant-numeric: tabular-nums; }
+.calc-extra { margin: 6px 0; font-weight: 700; font-size: 14px; color: var(--texto); font-variant-numeric: tabular-nums; }
+.calc-veredicto { margin: 8px 0 4px; padding: 9px 12px; border-radius: 12px; font-weight: 700; font-size: 14.5px; border: 2px solid var(--borde); background: var(--tarjeta); }
+.calc-veredicto.si { background: var(--bien-fondo); border-color: #4fa13a; }
+.calc-veredicto.no { background: var(--mal-fondo); border-color: #d9604f; }
+.atajos { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 8px; }
+.atajo { padding: 6px 11px; border-radius: 999px; border: 2px solid var(--borde); background: var(--tarjeta); font-size: 13px; font-weight: 700; }
+@media (hover: hover) { .atajo:hover { border-color: var(--marca); } }
+.atajo:active { transform: scale(0.96); }
+.mini-tabla { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin: 6px 0 8px; }
+.mini-celda { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 2px; border-radius: 10px; background: var(--tarjeta); border: 2px solid var(--borde); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.mini-celda b { font-family: var(--serif); font-size: 18px; }
+.mini-celda .alta { color: #1f7a3a; font-weight: 800; }

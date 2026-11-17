@@ -44,3 +44,34 @@ function heroInicio() {
       el('button', { class: 'boton hero-boton', type: 'button', 'data-accion': 'seguir', onclick: alPulsar }, boton)),
     el('div', { class: 'hero-nai', 'aria-hidden': 'true' }, mascota('feliz')));
 }
+
+// FONDO ANIMADO: el tapete "vivo". Fichas y palos suben despacio, un aro de tiza gira y dos luces se desplazan.
+// Todo es CSS (transform y opacity); se apaga con el modo calma y con «reducir movimiento» del sistema.
+function montarFondo() {
+  const fondo = document.querySelector('.decor');
+  if (!fondo || fondo.dataset.vivo) return;
+  fondo.dataset.vivo = '1';
+  fondo.textContent = '';
+  const PALOS = [['♠', ''], ['♥', 'r'], ['♣', ''], ['♦', 'r']];
+  // x (%), tamaño (px), duración (s), retraso (s negativo para que ya estén repartidas), tipo
+  const FLOTANTES = [
+    [6, 34, 58, -12, 0], [18, 26, 46, -30, 1], [30, 44, 64, -5, 2], [42, 30, 52, -40, 3], [54, 40, 70, -22, 0], [66, 28, 48, -8, 1],
+    [78, 46, 62, -35, 2], [90, 32, 54, -18, 3], [12, 30, 56, -44, 'f'], [36, 26, 44, -14, 'f'], [60, 34, 66, -28, 'f'], [84, 28, 50, -2, 'f'], [24, 38, 72, -50, 'f'], [72, 24, 42, -36, 'f'],
+  ];
+  const aro = el('div', { class: 'fondo-aro' });
+  aro.innerHTML = '<svg viewBox="0 0 200 200" focusable="false"><circle cx="100" cy="100" r="96" fill="none" stroke="currentColor" stroke-width="1.4" stroke-dasharray="1.5 7" stroke-linecap="round"/><circle cx="100" cy="100" r="74" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="10 9"/><circle cx="100" cy="100" r="50" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>';
+  fondo.append(aro);
+  FLOTANTES.forEach(([x, t, d, r, tipo], i) => {
+    const cont = el('span', { class: 'flota', style: `--x:${x}%;--t:${t}px;--d:${d}s;--r:${r}s;--s:${6 + (i % 5) * 2}s` });
+    if (tipo === 'f') {
+      const ficha = el('span', { class: 'flota-ficha' });
+      ficha.innerHTML = LOGO_FICHA;
+      cont.append(ficha);
+    } else {
+      const [glifo, rojo] = PALOS[tipo];
+      cont.append(el('span', { class: 'flota-palo ' + rojo }, glifo));
+    }
+    fondo.append(cont);
+  });
+}
+document.addEventListener("DOMContentLoaded", montarFondo);

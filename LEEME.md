@@ -6,6 +6,8 @@
 - Nombre, logo y portada: `js/marca.js` (constante `MARCA`, `logoMarca()`, `heroInicio()`).
 - Colores y tipografía: `css/marca.css` (se carga después de `estilos.css`). Titulares en Big Shoulders Display, texto en Instrument Sans.
 - La portada muestra dónde te quedaste y un botón «Seguir jugando». Los juegos son «mesas» en una rejilla de dos.
+- **Fondo animado** (`montarFondo()` en `js/marca.js`, estilos en `css/marca.css`): fichas y palos suben despacio, un aro de tiza gira y dos luces se desplazan. Se apaga con el modo calma de Ajustes y con «reducir movimiento» del sistema.
+- **Modo claro único**: la app ya no tiene modo oscuro.
 - Iconos de la app en `icons/` (ficha roja con pica sobre el paño).
 
 
@@ -247,3 +249,10 @@ Se aplican con `GEN.transformar` (`data/perezoso.js`), que corre sobre cada nive
   `tests/validar.js` compara `simEstrategia` con la función independiente `mejorJugada` en todas las combinaciones de dos cartas contra cada carta del crupier.
 - **Test de nivel** (`js/test-nivel.js`, pestaña Practicar): 12 preguntas, una por punto de control (niveles 2, 7, 13, 21… hasta el 96), sin segundas oportunidades. Se sube mientras no falles dos; con el resultado se recomienda el nivel y, si quieres, se marcan como hechos los anteriores sin XP ni fichas.
 - **Repaso inteligente**: ya existían «Sesión de hoy» (repaso espaciado + tu jugada y tu tema más flojos + lo nuevo) y «Mis estadísticas» (puntos débiles y entrenamiento por tema); no se han tocado.
+
+
+## Útil: calculadoras VIP y chuletas gratis
+
+- Las **chuletas** (estrategia de blackjack, conteo Hi-Lo, ranking de póker, valores del mus y glosario) son gratis para todos.
+- Las **calculadoras** son exclusivas del pase VIP: cuenta verdadera (con apuesta sugerida y ventaja), outs (con atajos de proyectos), pot odds (con relación del bote y veredicto), riesgo de pasarte y de que se pase el crupier, tamaño de apuesta según tu banca, ruleta (pagos y ventaja de la casa) y contador rápido.
+- Las fórmulas están en `UTIL` (`js/util.js`) y `tests/validar.js` las comprueba con métodos independientes (recuento de cartas, simulación con semilla y combinatoria).
