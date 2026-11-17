@@ -12,7 +12,7 @@ function logoMarca() {
 }
 
 // Pantalla principal: el hero. Dice dónde te quedaste y te deja seguir con un toque.
-function heroInicio(filaNai) {
+function heroInicio() {
   const curso = (progreso.ultimoCurso && CURSOS.find((c) => c.id === progreso.ultimoCurso)) || null;
   const nuevo = !curso && progreso.xp === 0;
   const base = curso || CURSOS[0];
@@ -42,5 +42,5 @@ function heroInicio(filaNai) {
       el('h1', { class: 'hero-titulo' }, titulo),
       el('p', { class: 'hero-detalle' }, detalle),
       el('button', { class: 'boton hero-boton', type: 'button', 'data-accion': 'seguir', onclick: alPulsar }, boton)),
-    filaNai);
+    el('div', { class: 'hero-nai', 'aria-hidden': 'true' }, mascota('feliz')));
 }

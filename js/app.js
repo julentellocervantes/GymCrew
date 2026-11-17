@@ -637,14 +637,6 @@ let seccionInicio = 'juegos';
 function mostrarInicio(entrada = 'fundido') {
   alTeclear = null;
 
-  const saludo =
-    progreso.xp === 0
-      ? `${momentoDelDia()}! Soy Nai, tu crupier de bolsillo. Elige una mesa y te enseño a jugarla paso a paso.`
-      : rachaVigente() > 1
-      ? `¡Ya llevas ${rachaVigente()} días seguidos! ¿Qué juego practicamos hoy?`
-      : `${momentoDelDia()}! Qué bien verte por aquí. ¿Qué juego practicamos hoy?`;
-  const { fila } = naiFila('feliz', saludo);
-
   const rg = rangoDe(progreso.xp);
   const tarjetaRango = el(
     'button',
@@ -733,21 +725,31 @@ function mostrarInicio(entrada = 'fundido') {
   const abrirMas = (f) => () => { seccionInicio = 'mas'; f(); };
   const panelJuegos = el('div', { class: 'panel-inicio', id: 'panel-juegos', role: 'tabpanel', 'aria-labelledby': 'pestana-juegos' }, el('h1', {}, 'Elige tu mesa'), tarjetas);
   const panelMas = el('div', { class: 'panel-inicio', id: 'panel-mas', role: 'tabpanel', 'aria-labelledby': 'pestana-mas' },
-    el('h1', {}, 'Practica y compite'),
+    repasos.some(Boolean) || typeof tarjetaReto === 'function'
+      ? el('section', { class: 'para-hoy', 'aria-label': 'Para hoy' },
+          el('h2', {}, 'Para hoy'),
+          repasos.some(Boolean) ? el('div', { class: 'repasos-mini' }, repasos) : null,
+          typeof tarjetaReto === 'function' ? tarjetaReto(() => mostrarInicio('sin')) : null)
+      : null,
+    el('h2', { class: 'herr-titulo' }, 'Herramientas'),
+    el('div', { class: 'herramientas' },
     filaRepaso('conteo', '⚡', 'Partida rápida', progreso.rapida.mejor ? `60 segundos, todas las que puedas · Récord: ${progreso.rapida.mejor}` : '60 segundos: contesta todas las que puedas', abrirMas(() => iniciarPartidaRapida())),
     filaRepaso('conteo', '🃏', 'Simulador de blackjack', progreso.simulador && progreso.simulador.mejor ? `${SIM_MANOS} manos con corrección · Mejor sesión: ${progreso.simulador.mejor} %` : `${SIM_MANOS} manos de verdad, con la estrategia básica corrigiéndote`, abrirMas(() => mostrarSimulador())),
     filaRepaso('conteo', '🧭', 'Test de nivel', 'Responde unas preguntas y empieza en el nivel que te toca', abrirMas(() => mostrarTestNivel())),
     filaRepaso('conteo', '⏱️', 'Entrena el conteo', 'Cartas a toda velocidad con el sistema Hi-Lo', abrirMas(() => mostrarConteo())),
     filaRepaso('conteo', '🤝', 'Ranking con amigos', progreso.social.alias ? `Tu XP de la semana: ${typeof xpDeLaSemana === 'function' ? xpDeLaSemana() : 0}` : 'Compite cada semana con tus amigos', abrirMas(() => mostrarAmigos())),
     filaRepaso('conteo', '📊', 'Mis estadísticas', 'Tus aciertos por juego y tus puntos débiles', abrirMas(() => mostrarEstadisticas()))
+    )
   );
+  const bloqueHoy = el('div', { class: 'bloque-hoy' }, heroInicio(), el('div', { class: 'resumen' }, tarjetaMeta, tarjetaRango));
   const elegir = (cual) => {
     panelJuegos.hidden = cual !== 'juegos';
     panelMas.hidden = cual !== 'mas';
+    bloqueHoy.hidden = cual !== 'juegos';
     [['juegos', pestJuegos], ['mas', pestMas]].forEach(([k, b]) => { b.classList.toggle('activa', k === cual); b.setAttribute('aria-selected', String(k === cual)); b.tabIndex = k === cual ? 0 : -1; });
   };
   const pestJuegos = el('button', { class: 'pestana-inicio', id: 'pestana-juegos', type: 'button', role: 'tab', 'aria-controls': 'panel-juegos', onclick: () => elegir('juegos') }, 'Juegos');
-  const pestMas = el('button', { class: 'pestana-inicio', id: 'pestana-mas', type: 'button', role: 'tab', 'aria-controls': 'panel-mas', onclick: () => elegir('mas') }, 'Practicar');
+  const pestMas = el('button', { class: 'pestana-inicio', id: 'pestana-mas', type: 'button', role: 'tab', 'aria-controls': 'panel-mas', onclick: () => elegir('mas') }, 'Practicar', (nPend + nErr) > 0 || (plan && plan.ids.length >= 5) ? el('span', { class: 'punto-aviso', 'aria-label': 'Tienes cosas pendientes' }) : null);
   const pestanasInicio = el('div', { class: 'pestanas-inicio', role: 'tablist', 'aria-label': 'Secciones del inicio' }, pestJuegos, pestMas);
   elegir(seccionInicio);
   seccionInicio = 'juegos'; // solo se recuerda la vuelta desde una de las herramientas
@@ -758,14 +760,11 @@ function mostrarInicio(entrada = 'fundido') {
     el(
       'main',
       { class: 'contenido' },
-      heroInicio(fila),
       almacenamientoFallo
         ? el('p', { class: 'alerta', role: 'alert' }, 'Tu navegador no deja guardar el progreso (¿modo privado?). Puedes seguir, pero al cerrar se perderá.')
         : null,
-      el('div', { class: 'resumen' }, tarjetaMeta, tarjetaRango),
       avisoRacha,
-      typeof tarjetaReto === 'function' ? tarjetaReto(() => mostrarInicio('sin')) : null,
-      repasos.some(Boolean) ? el('div', { class: 'repasos-mini' }, repasos) : null,
+      bloqueHoy,
       pestanasInicio,
       panelJuegos,
       panelMas,

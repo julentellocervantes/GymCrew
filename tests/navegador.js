@@ -305,6 +305,7 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
   await foto('3-inicio-repasos');
 
   // 3) Mis errores: repaso mezclado y vuelta a inicio
+  await page.getByRole('tab', { name: /Practicar/ }).click();
   await page.getByText('Mis errores').click();
   ok(await page.locator('.pregunta').count() === 1, 'empieza el repaso de errores');
   await terminar(true);
@@ -904,7 +905,7 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
     ok(await page.locator('.sesion-hoy').count() === 1, 'inicio: aparece «Sesión de hoy»');
     ok(await page.locator('#panel-juegos .juego').count() === 6 && await page.locator('#panel-mas').isHidden(), 'inicio: «Juegos» muestra solo los juegos');
     await page.getByRole('tab', { name: 'Practicar' }).click();
-    const filasMas = await page.locator('#panel-mas .repaso').allInnerTexts();
+    const filasMas = await page.locator('#panel-mas .herramientas .repaso').allInnerTexts();
     ok(filasMas.length === 6 && ['Partida rápida', 'Simulador de blackjack', 'Test de nivel', 'Entrena el conteo', 'Ranking con amigos', 'Mis estadísticas'].every((t, i) => filasMas[i].includes(t)) && await page.locator('#panel-juegos').isHidden(), 'inicio: «Practicar» agrupa las 6 herramientas');
     await page.getByText('Mis estadísticas').click();
     await page.waitForSelector('.estadisticas, .est-debil, main h1');
@@ -916,6 +917,7 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
     const plan = await page.evaluate(() => { const p = planSesionHoy(); return { n: p.ids.length, unicos: new Set(p.ids).size, resumen: p.resumen, primeros: p.ids.slice(0, 2) }; });
     ok(plan.n === 10 && plan.unicos === 10, 'sesión de hoy: 10 preguntas sin repetir (' + plan.resumen + ')');
     ok(plan.primeros.every((id) => id.startsWith('bj-1-')) && plan.resumen.startsWith('3 por repasar'), 'sesión de hoy: empieza por lo que toca repasar');
+    await page.getByRole('tab', { name: /Practicar/ }).click();
     await page.locator('.sesion-hoy').click();
     await page.waitForSelector('.pregunta');
     ok((await page.locator('.cabecera-leccion, .cabecera').first().innerText()).length >= 0 && await page.locator('.pregunta').count() === 1, 'sesión de hoy: arranca una lección');
@@ -926,9 +928,12 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
     const r1 = await page.evaluate(() => { const r = retoActual(); return { id: r.def.id, meta: r.def.meta, semana: r.semana, lunes: semanaActual() }; });
     ok(r1.semana === r1.lunes && new Date(r1.lunes + 'T12:00:00').getDay() === 1, 'reto: la semana empieza en lunes');
     await page.evaluate(() => { const t = retoActual().def.id; for (let i = 0; i < 200; i++) retoSuma(t, t === 'rapida' ? 99 : 1); if (t === 'dias') progreso.reto.n = retoActual().def.meta; /* «dias» solo suma una vez al día */ guardarProgreso(); mostrarInicio('sin'); });
+    await page.getByRole('tab', { name: /Practicar/ }).click();
     await page.waitForSelector('.reto.listo');
     const f0 = await page.evaluate(() => progreso.fichas);
+    await page.getByRole('tab', { name: /Practicar/ }).click();
     await page.locator('.reto.listo').click();
+    await page.getByRole('tab', { name: /Practicar/ }).click();
     await page.waitForSelector('.reto.cobrado');
     const d1 = await page.evaluate((f) => ({ f: progreso.fichas - f, n: progreso.retosHechos, logro: !!progreso.logros['reto-1'] }), f0);
     ok(d1.f === 25 && d1.n === 1 && d1.logro, 'reto: cobra 25 fichas, cuenta el reto y da el logro');
