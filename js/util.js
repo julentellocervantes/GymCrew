@@ -260,6 +260,7 @@ function exclusivoVip(b) {
     return b;
   }
   b.classList.add('bloqueada');
+  b.querySelector('.util-icono').after(el('span', { class: 'etiqueta-vip' }, el('span', { class: 'ico-vip', 'aria-hidden': 'true' }, '👑'), 'Solo VIP'));
   const resumen = b.querySelector('summary');
   b.querySelector('.util-cuerpo').remove();
   resumen.querySelector('.flecha').replaceWith(el('span', { class: 'candado-vip', 'aria-hidden': 'true' }, '🔒'));
@@ -321,15 +322,25 @@ function glosario() {
 
 function mostrarUtil(entrada = 'fundido') {
   alTeclear = null;
+  const ir = (id) => () => {
+    const t = document.getElementById(id);
+    if (!t) return;
+    t.scrollIntoView({ behavior: document.documentElement.dataset.calma === 'si' ? 'auto' : 'smooth', block: 'start' });
+    t.setAttribute('tabindex', '-1');
+    t.focus({ preventScroll: true });
+  };
+  const grupo = (id, titulo, nota, ...bloques) => el('section', { class: 'util-seccion', 'aria-labelledby': id }, el('h2', { id, class: 'util-grupo' }, titulo), nota ? el('p', { class: 'util-nota' }, nota) : null, ...bloques);
   pintar(
     entrada,
     el('header', { class: 'cabecera' }, logoMarca(), marcador()),
     el('main', { class: 'contenido' },
       el('h1', {}, '🧰 Útil'),
-      el('p', { class: 'util-intro' }, 'Calculadoras y chuletas para tener a mano mientras juegas. Pulsa una para abrirla.'),
-      el('h2', { class: 'util-grupo' }, 'Calculadoras · exclusivas VIP'),
-      esVip() ? null : el('p', { class: 'util-nota' }, 'Cuenta verdadera, outs, pot odds, riesgo de pasarte, tamaño de apuesta, ruleta y un contador de cartas. Toca una calculadora para conocer el pase VIP.'),
-      exclusivoVip(calcCuentaVerdadera()), exclusivoVip(calcOuts()), exclusivoVip(calcPotOdds()), exclusivoVip(calcPasarte()), exclusivoVip(calcApuesta()), exclusivoVip(calcRuleta()), exclusivoVip(contadorRapido()),
-      el('h2', { class: 'util-grupo' }, 'Chuletas · gratis para todos'),
-      chuletaBlackjack(), chuletaConteo(), chuletaPoker(), chuletaMus(), glosario()));
+      el('p', { class: 'util-intro' }, 'Herramientas para tener a mano mientras juegas. Toca una para abrirla.'),
+      el('nav', { class: 'util-salto', 'aria-label': 'Ir a una sección' },
+        el('button', { class: 'util-salto-boton', type: 'button', onclick: ir('util-calc') }, el('strong', {}, 'Calculadoras'), el('span', {}, '7 · VIP')),
+        el('button', { class: 'util-salto-boton', type: 'button', onclick: ir('util-chuletas') }, el('strong', {}, 'Chuletas'), el('span', {}, '5 · gratis'))),
+      grupo('util-calc', 'Calculadoras', esVip() ? 'Incluidas en tu pase VIP.' : 'Exclusivas del pase VIP. Toca una para ver qué incluye.',
+        exclusivoVip(calcCuentaVerdadera()), exclusivoVip(calcOuts()), exclusivoVip(calcPotOdds()), exclusivoVip(calcPasarte()), exclusivoVip(calcApuesta()), exclusivoVip(calcRuleta()), exclusivoVip(contadorRapido())),
+      grupo('util-chuletas', 'Chuletas', 'Gratis para todos.',
+        chuletaBlackjack(), chuletaConteo(), chuletaPoker(), chuletaMus(), glosario())));
 }

@@ -553,6 +553,10 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
   ok(await page.getByRole('switch', { name: /Efectos de sonido/ }).getAttribute('aria-checked') === 'false', 'el ajuste de sonido se recuerda');
   await page.getByRole('switch', { name: /Efectos de sonido/ }).click();
   ok((await estado()).ajustes.sonido === true, 'y se puede volver a activar');
+  await page.getByRole('switch', { name: /Alto contraste/ }).click();
+  ok(await page.evaluate(() => document.documentElement.dataset.contraste === 'alto' && progreso.ajustes.contraste === true && getComputedStyle(document.querySelector('.decor')).display === 'none'), 'Alto contraste: se activa, se guarda y quita el fondo animado');
+  await page.getByRole('switch', { name: /Alto contraste/ }).click();
+  ok(await page.evaluate(() => document.documentElement.dataset.contraste === 'normal'), 'Alto contraste se puede desactivar');
 
   // 6d) Bienvenida, barra inferior y pestaña Útil
   await page.evaluate(() => localStorage.clear());
@@ -920,6 +924,12 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
     await page.getByRole('tab', { name: 'Practicar' }).click();
     const filasMas = await page.locator('#panel-mas .herramientas .repaso').allInnerTexts();
     ok(filasMas.length === 6 && ['Partida rápida', 'Simulador de blackjack', 'Test de nivel', 'Entrena el conteo', 'Ranking con amigos', 'Mis estadísticas'].every((t, i) => filasMas[i].includes(t)) && await page.locator('#panel-juegos').isHidden(), 'inicio: «Practicar» agrupa las 6 herramientas');
+    ok(await page.locator('#panel-mas section[aria-labelledby] h2').count() >= 3 && await page.locator('#panel-mas .lista-pr li').count() >= 6, 'Practicar: secciones con títulos y listas');
+    ok(await page.locator('#panel-mas .fila-pr').evaluateAll((l) => l.every((b) => b.getBoundingClientRect().height >= 48)), 'Practicar: todas las filas miden al menos 48 px de alto');
+    await page.locator('#pestana-mas').focus(); await page.keyboard.press('ArrowLeft');
+    ok(await page.evaluate(() => document.activeElement.id === 'pestana-juegos') && await page.locator('#panel-mas').isHidden(), 'las pestañas del inicio se mueven con las flechas del teclado');
+    await page.keyboard.press('ArrowRight');
+    ok(await page.evaluate(() => document.activeElement.id === 'pestana-mas') && await page.locator('#panel-juegos').isHidden(), 'la flecha derecha vuelve a Practicar');
     await page.getByText('Mis estadísticas').click();
     await page.waitForSelector('.estadisticas, .est-debil, main h1');
     await page.locator('.volver').click();

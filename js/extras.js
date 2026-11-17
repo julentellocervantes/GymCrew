@@ -6,6 +6,7 @@ function aplicarAjustes() {
   const a = progreso.ajustes || {};
   document.documentElement.dataset.letra = a.letra === 'grande' ? 'grande' : 'normal';
   document.documentElement.dataset.calma = a.calma ? 'si' : 'no';
+  document.documentElement.dataset.contraste = a.contraste ? 'alto' : 'normal';
 }
 
 // ---------- repaso del día y mis errores (mezclan ejercicios de todos los juegos) ----------
@@ -331,6 +332,12 @@ function mostrarAjustes(aviso = '', animacion = 'fundido') {
         }),
         interruptor('Menos movimiento', 'Quita animaciones, confeti y chispas', !!progreso.ajustes.calma, (v) => {
           progreso.ajustes.calma = v;
+          guardarProgreso();
+          aplicarAjustes();
+          recargar();
+        }),
+        interruptor('Alto contraste', 'Textos y bordes más marcados, y fondo liso sin dibujos', !!progreso.ajustes.contraste, (v) => {
+          progreso.ajustes.contraste = v;
           guardarProgreso();
           aplicarAjustes();
           recargar();

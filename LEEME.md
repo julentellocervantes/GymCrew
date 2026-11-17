@@ -256,3 +256,11 @@ Se aplican con `GEN.transformar` (`data/perezoso.js`), que corre sobre cada nive
 - Las **chuletas** (estrategia de blackjack, conteo Hi-Lo, ranking de póker, valores del mus y glosario) son gratis para todos.
 - Las **calculadoras** son exclusivas del pase VIP: cuenta verdadera (con apuesta sugerida y ventaja), outs (con atajos de proyectos), pot odds (con relación del bote y veredicto), riesgo de pasarte y de que se pase el crupier, tamaño de apuesta según tu banca, ruleta (pagos y ventaja de la casa) y contador rápido.
 - Las fórmulas están en `UTIL` (`js/util.js`) y `tests/validar.js` las comprueba con métodos independientes (recuento de cartas, simulación con semilla y combinatoria).
+
+
+## Accesibilidad
+
+- **Practicar** se divide en tres secciones con título (Para hoy, Entrenar, Tú y tus amigos), filas de 72 px o más con una línea de explicación y etiquetas de texto (número de pendientes, «Empezar»), nunca solo color. Si no hay nada pendiente, lo dice.
+- **Útil** tiene un acceso rápido a Calculadoras y Chuletas, secciones con título y etiquetas «VIP» / «Solo VIP» escritas (no solo un icono).
+- Objetivos táctiles de 48 px como mínimo, textos de 15 px o más, foco con doble anillo bien visible y pestañas del inicio manejables con las flechas del teclado.
+- Ajustes: **Tamaño de letra**, **Menos movimiento** y **Alto contraste** (textos y bordes más marcados, sin fondo animado). También se respeta `prefers-contrast` y `prefers-reduced-motion` del sistema.

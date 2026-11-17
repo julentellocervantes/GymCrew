@@ -257,3 +257,89 @@ body .cabecera { border-bottom: 0; border-radius: 0 0 26px 26px; padding: 14px 1
 .mini-celda { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 2px; border-radius: 10px; background: var(--tarjeta); border: 2px solid var(--borde); font-size: 12.5px; font-variant-numeric: tabular-nums; }
 .mini-celda b { font-family: var(--serif); font-size: 18px; }
 .mini-celda .alta { color: #1f7a3a; font-weight: 800; }
+
+/* ============================================================
+   ACCESIBILIDAD, PRACTICAR Y ÚTIL
+   Objetivos táctiles de 48 px, textos de 15 px o más, foco muy visible,
+   etiquetas de texto (nunca solo color o icono) y alto contraste opcional.
+   ============================================================ */
+:focus-visible { outline: 3px solid var(--foco); outline-offset: 3px; box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.85); border-radius: inherit; }
+.cabecera :focus-visible, .barra-pestanas :focus-visible, .hero-tapete :focus-visible, .pestana-inicio.activa:focus-visible { outline-color: var(--laton); box-shadow: 0 0 0 6px rgba(8, 42, 50, 0.9); }
+button, summary, .seg, .atajo, .campo-paso, .interruptor { min-height: 48px; }
+.campo-paso { width: 48px; height: 48px; font-size: 22px; }
+.campo input { min-height: 48px; font-size: 22px; }
+.seg { min-height: 48px; font-size: 15px; }
+.atajo { min-height: 44px; font-size: 14.5px; padding: 8px 14px; }
+.juego-desc, .util-nota, .campo > span:first-child, .campo label { font-size: 15px; }
+.util-nota { line-height: 1.45; color: var(--texto-suave); }
+
+/* Pestañas del inicio: grandes y con etiqueta clara */
+.pestana-inicio { min-height: 52px; font-size: 17px; }
+
+/* ---------- Practicar ---------- */
+#panel-mas { gap: 22px; }
+.seccion-pr { display: flex; flex-direction: column; gap: 10px; }
+.seccion-pr > h2 { margin: 0; font-size: 26px; font-weight: 800; display: flex; align-items: center; gap: 10px; }
+.seccion-pr > h2::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--ficha); box-shadow: 0 0 0 2px var(--fondo), 0 0 0 3.5px var(--ficha); flex: none; }
+.lista-pr { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.para-hoy { display: flex; flex-direction: column; gap: 10px; margin: 0; }
+#panel-mas .fila-pr { display: flex; align-items: center; gap: 14px; width: 100%; min-height: 72px; margin: 0; padding: 12px 14px; text-align: left; border: 2px solid var(--borde); border-radius: 20px; background: var(--tarjeta); box-shadow: 0 3px 0 var(--borde); color: var(--texto); }
+#panel-mas .fila-pr .repaso-icono { flex: none; width: 48px; height: 48px; border-radius: 14px; font-size: 24px; display: inline-flex; align-items: center; justify-content: center; background: var(--pano); box-shadow: inset 0 0 0 2px var(--laton); }
+#panel-mas .fila-pr .juego-texto { flex: 1; min-width: 0; gap: 2px; }
+#panel-mas .fila-pr .juego-texto strong { font-size: 18px; font-weight: 700; line-height: 1.2; }
+#panel-mas .fila-pr .juego-desc { display: block; font-size: 15px; line-height: 1.35; color: var(--texto-suave); }
+#panel-mas .fila-pr .flecha { flex: none; font-size: 28px; color: var(--marca); font-weight: 700; }
+@media (hover: hover) { #panel-mas .fila-pr:hover { background: var(--tarjeta-hover); border-color: var(--marca); } }
+#panel-mas .fila-pr:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--borde); }
+.fila-cuenta { flex: none; min-width: 32px; padding: 4px 10px; border-radius: 999px; background: var(--ficha); color: #fff; font-weight: 800; font-size: 15px; text-align: center; font-variant-numeric: tabular-nums; }
+/* La sesión de hoy es la recomendación principal: ocupa más y lleva la acción escrita */
+#panel-mas .fila-pr.destacada { min-height: 96px; background: linear-gradient(160deg, var(--pano-claro), var(--pano) 70%); border-color: var(--laton); box-shadow: 0 4px 0 var(--pano-osc), inset 0 0 0 2px rgba(243, 182, 63, 0.35); color: var(--tiza); }
+#panel-mas .fila-pr.destacada .repaso-icono { background: var(--ficha); box-shadow: 0 0 0 3px var(--tiza); }
+#panel-mas .fila-pr.destacada .juego-texto strong { font-size: 21px; color: var(--tiza); }
+#panel-mas .fila-pr.destacada .juego-desc { color: #cfe5e3; }
+#panel-mas .fila-pr.destacada .flecha { color: var(--laton); }
+#panel-mas .fila-pr.destacada .fila-cuenta { background: var(--laton); color: #2a1c00; }
+.vacio-pr { margin: 0; padding: 14px 16px; border: 2px dashed var(--borde); border-radius: 18px; font-size: 16px; line-height: 1.45; color: var(--texto-suave); }
+
+/* ---------- Útil ---------- */
+.util-intro { font-size: 16px; margin: 0 0 12px; }
+.util-salto { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0 0 18px; }
+.util-salto-boton { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 10px 14px; border-radius: 16px; border: 2px solid var(--borde); background: var(--tarjeta); box-shadow: 0 3px 0 var(--borde); text-align: left; color: var(--texto); }
+.util-salto-boton strong { font-size: 17px; font-weight: 700; }
+.util-salto-boton span { font-size: 14px; color: var(--texto-suave); font-weight: 600; }
+@media (hover: hover) { .util-salto-boton:hover { border-color: var(--marca); } }
+.util-seccion { display: flex; flex-direction: column; gap: 12px; margin: 0 0 24px; scroll-margin-top: 72px; }
+.util-seccion > h2, .util-seccion > .util-nota { margin: 0; }
+h2.util-grupo { font-family: var(--serif); font-size: 28px; font-weight: 800; text-transform: none; letter-spacing: 0.01em; color: var(--texto); display: flex; align-items: center; gap: 10px; margin: 0; }
+h2.util-grupo::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--ficha); box-shadow: 0 0 0 2px var(--fondo), 0 0 0 3.5px var(--ficha); flex: none; }
+.util-bloque { position: relative; margin: 0; border-radius: 20px; }
+.util-bloque summary { min-height: 72px; padding: 12px 14px; gap: 14px; }
+.util-bloque summary strong { font-size: 18px; font-weight: 700; line-height: 1.2; }
+.util-bloque summary .util-desc, .util-bloque summary span:not(.util-icono):not(.flecha):not(.etiqueta-vip):not(.candado-vip) { font-size: 15px; line-height: 1.35; }
+.util-bloque .util-icono { width: 48px; height: 48px; border-radius: 14px; flex: none; }
+.util-bloque .etiqueta-vip { position: absolute; top: -11px; right: 14px; z-index: 1; font-size: 12.5px; padding: 3px 10px; border-radius: 999px; background: #fff3c4; color: #4d3200; border: 2px solid #c98a00; letter-spacing: 0.03em; }
+.util-bloque .candado-vip { font-size: 22px; flex: none; }
+.util-cuerpo { padding: 4px 14px 16px; }
+.util-cuerpo h3 { font-size: 17px; margin: 14px 0 6px; }
+.campos { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 8px 0; }
+
+/* ---------- Alto contraste (Ajustes) y preferencia del sistema ---------- */
+html[data-contraste="alto"] .decor { display: none; }
+html[data-contraste="alto"] body::before { display: none; }
+html[data-contraste="alto"] {
+  --fondo: #ffffff; --tarjeta: #ffffff; --tarjeta-hover: #eef4f4; --borde: #0a262d; --texto: #000000; --texto-suave: #1c3b42; --marca: #004a57; --foco: #0040ff;
+  --bien-fondo: #d6f5c8; --mal-fondo: #ffd9d3;
+}
+html[data-contraste="alto"] body { background: #fff; color: #000; }
+html[data-contraste="alto"] .juego, html[data-contraste="alto"] .repaso, html[data-contraste="alto"] .util-bloque, html[data-contraste="alto"] .meta, html[data-contraste="alto"] .rango, html[data-contraste="alto"] .reto, html[data-contraste="alto"] .opcion { border-width: 3px; border-color: #0a262d; }
+html[data-contraste="alto"] .juego-desc, html[data-contraste="alto"] .util-nota, html[data-contraste="alto"] .juego-niveles { color: #12313a; font-weight: 600; }
+html[data-contraste="alto"] .boton { border: 3px solid #000; }
+html[data-contraste="alto"] :focus-visible { outline-width: 4px; outline-color: #0040ff; }
+@media (prefers-contrast: more) {
+  :root { --borde: #5f8189; --texto-suave: #1f3f46; }
+  .juego-desc, .util-nota { font-weight: 600; }
+}
+.util-bloque, .util-bloque.exclusivo-vip { overflow: visible; }
+.util-bloque summary { border-radius: 18px; }
+.decor { --op: 0.2; }
+.campos { align-items: end; }

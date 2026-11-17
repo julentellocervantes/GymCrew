@@ -25,7 +25,7 @@ const progresoNuevo = () => ({
   srs: {},                        // repetición espaciada: id del ejercicio -> { caja, prox, fallos }
   conteo: { sesiones: 0, mejor: 0 }, // entrenador de conteo
   rapida: { partidas: 0, mejor: 0 }, // partida rápida de 60 segundos
-  ajustes: { letra: 'normal', calma: false, sonido: true, vibracion: true },
+  ajustes: { letra: 'normal', calma: false, contraste: false, sonido: true, vibracion: true },
   bienvenida: false,              // true cuando ya has visto la pantalla de bienvenida
   vip: { hasta: 0 },              // membresía VIP: instante (ms) hasta el que está activa
   fichas: 20,                     // moneda de la tienda
@@ -64,7 +64,7 @@ function normalizarProgreso(datos) {
   p.rapida = Object.assign({ partidas: 0, mejor: 0 }, obj(p.rapida, {}));
   p.rapida.partidas = num(p.rapida.partidas, 0);
   p.rapida.mejor = num(p.rapida.mejor, 0);
-  p.ajustes = Object.assign({ letra: 'normal', calma: false, sonido: true, vibracion: true }, obj(p.ajustes, {}));
+  p.ajustes = Object.assign({ letra: 'normal', calma: false, contraste: false, sonido: true, vibracion: true }, obj(p.ajustes, {}));
   p.vip = { hasta: p.vip && Number.isFinite(p.vip.hasta) && p.vip.hasta > 0 ? Math.floor(p.vip.hasta) : 0 };
   p.fichas = num(p.fichas, 20);
   const en = obj(p.energia, {});
@@ -675,19 +675,23 @@ function mostrarInicio(entrada = 'fundido') {
   // Repaso inteligente: lo que toca repasar hoy y tus fallos
   const nPend = pendientesHoy().length;
   const nErr = misErrores().length;
-  const filaRepaso = (clase, icono, titulo, desc, alPulsar) =>
+  // Fila de la pestaña Practicar: icono, título, una línea de explicación y, si hay, una etiqueta de texto (nunca solo color)
+  const filaRepaso = (clase, icono, titulo, desc, alPulsar, etiqueta) =>
     el(
       'button',
-      { class: 'repaso fijo ' + clase + (clase === 'conteo' ? '' : ' mini'), type: 'button', style: '--acento:#3a7be0', onclick: alPulsar },
+      { class: 'repaso fijo fila-pr ' + clase + (clase === 'conteo' ? '' : ' mini'), type: 'button', style: '--acento:#3a7be0', onclick: alPulsar },
       el('span', { class: 'repaso-icono' }, icono),
       el('span', { class: 'juego-texto' }, el('strong', {}, titulo), el('span', { class: 'juego-desc' }, desc)),
+      etiqueta ? el('span', { class: 'fila-cuenta' }, etiqueta) : null,
       el('span', { class: 'flecha', 'aria-hidden': 'true' }, '›')
     );
+  const listaPr = (...filas) => el('ul', { class: 'lista-pr' }, filas.filter(Boolean).map((f) => el('li', {}, f)));
+  const seccionPr = (id, titulo, ...contenido) => el('section', { class: 'seccion-pr', 'aria-labelledby': id }, el('h2', { id }, titulo), ...contenido);
   const plan = progreso.xp > 0 && typeof planSesionHoy === 'function' ? planSesionHoy() : null;
   const repasos = [
-    plan && plan.ids.length >= 5 ? filaRepaso('sesion-hoy', '🎯', 'Sesión de hoy · 5 min', plan.resumen, () => iniciarSesionHoy()) : null,
-    nPend ? filaRepaso('', '🧠', 'Repaso del día', `${nPend} ${nPend === 1 ? 'pregunta toca' : 'preguntas tocan'} repasarse hoy`, () => iniciarRepasoGlobal('pendientes')) : null,
-    nErr ? filaRepaso('', '🩹', 'Mis errores', `${nErr} ${nErr === 1 ? 'pregunta' : 'preguntas'} que fallaste y aún no dominas`, () => iniciarRepasoGlobal('errores')) : null,
+    plan && plan.ids.length >= 5 ? filaRepaso('sesion-hoy destacada', '🎯', 'Sesión de hoy · 5 min', plan.resumen, () => iniciarSesionHoy(), 'Empezar') : null,
+    nPend ? filaRepaso('', '🧠', 'Repaso del día', `${nPend} ${nPend === 1 ? 'pregunta toca' : 'preguntas tocan'} repasarse hoy`, () => iniciarRepasoGlobal('pendientes'), String(nPend)) : null,
+    nErr ? filaRepaso('', '🩹', 'Mis errores', `${nErr} ${nErr === 1 ? 'pregunta' : 'preguntas'} que fallaste y aún no dominas`, () => iniciarRepasoGlobal('errores'), String(nErr)) : null,
   ];
 
   // Racha en peligro: tienes racha y hoy aún no has practicado (una partida rápida de 1 minuto la salva)
@@ -725,20 +729,23 @@ function mostrarInicio(entrada = 'fundido') {
   const abrirMas = (f) => () => { seccionInicio = 'mas'; f(); };
   const panelJuegos = el('div', { class: 'panel-inicio', id: 'panel-juegos', role: 'tabpanel', 'aria-labelledby': 'pestana-juegos' }, el('h1', {}, 'Elige tu mesa'), tarjetas);
   const panelMas = el('div', { class: 'panel-inicio', id: 'panel-mas', role: 'tabpanel', 'aria-labelledby': 'pestana-mas' },
-    repasos.some(Boolean)
-      ? el('section', { class: 'para-hoy', 'aria-label': 'Para hoy' },
-          el('h2', {}, 'Para hoy'),
-          el('div', { class: 'repasos-mini' }, repasos))
-      : null,
-    el('h2', { class: 'herr-titulo' }, 'Herramientas'),
+    seccionPr('pr-hoy', 'Para hoy',
+      repasos.some(Boolean)
+        ? el('div', { class: 'para-hoy' }, repasos[0], listaPr(repasos[1], repasos[2]))
+        : el('p', { class: 'vacio-pr' }, 'Estás al día. Cuando falles una pregunta o te toque repasar, aparecerá aquí.')),
     el('div', { class: 'herramientas' },
-    filaRepaso('conteo', '⚡', 'Partida rápida', progreso.rapida.mejor ? `60 segundos, todas las que puedas · Récord: ${progreso.rapida.mejor}` : '60 segundos: contesta todas las que puedas', abrirMas(() => iniciarPartidaRapida())),
-    filaRepaso('conteo', '🃏', 'Simulador de blackjack', progreso.simulador && progreso.simulador.mejor ? `${SIM_MANOS} manos con corrección · Mejor sesión: ${progreso.simulador.mejor} %` : `${SIM_MANOS} manos de verdad, con la estrategia básica corrigiéndote`, abrirMas(() => mostrarSimulador())),
-    filaRepaso('conteo', '🧭', 'Test de nivel', 'Responde unas preguntas y empieza en el nivel que te toca', abrirMas(() => mostrarTestNivel())),
-    filaRepaso('conteo', '⏱️', 'Entrena el conteo', 'Cartas a toda velocidad con el sistema Hi-Lo', abrirMas(() => mostrarConteo())),
-    filaRepaso('conteo', '🤝', 'Ranking con amigos', progreso.social.alias ? `Tu XP de la semana: ${typeof xpDeLaSemana === 'function' ? xpDeLaSemana() : 0}` : 'Compite cada semana con tus amigos', abrirMas(() => mostrarAmigos())),
-    filaRepaso('conteo', '📊', 'Mis estadísticas', 'Tus aciertos por juego y tus puntos débiles', abrirMas(() => mostrarEstadisticas()))
-    )
+      seccionPr('pr-entrenar', 'Entrenar',
+        listaPr(
+          filaRepaso('conteo', '⚡', 'Partida rápida', progreso.rapida.mejor ? `60 segundos, todas las que puedas · Récord: ${progreso.rapida.mejor}` : '60 segundos: contesta todas las que puedas', abrirMas(() => iniciarPartidaRapida())),
+          filaRepaso('conteo', '🃏', 'Simulador de blackjack', progreso.simulador && progreso.simulador.mejor ? `${SIM_MANOS} manos con corrección · Mejor sesión: ${progreso.simulador.mejor} %` : `${SIM_MANOS} manos de verdad, con la estrategia básica corrigiéndote`, abrirMas(() => mostrarSimulador())),
+          filaRepaso('conteo', '🧭', 'Test de nivel', 'Responde unas preguntas y empieza en el nivel que te toca', abrirMas(() => mostrarTestNivel())),
+          filaRepaso('conteo', '⏱️', 'Entrena el conteo', 'Cartas a toda velocidad con el sistema Hi-Lo', abrirMas(() => mostrarConteo()))
+        )),
+      seccionPr('pr-tu', 'Tú y tus amigos',
+        listaPr(
+          filaRepaso('conteo', '🤝', 'Ranking con amigos', progreso.social.alias ? `Tu XP de la semana: ${typeof xpDeLaSemana === 'function' ? xpDeLaSemana() : 0}` : 'Compite cada semana con tus amigos', abrirMas(() => mostrarAmigos())),
+          filaRepaso('conteo', '📊', 'Mis estadísticas', 'Tus aciertos por juego y tus puntos débiles', abrirMas(() => mostrarEstadisticas()))
+        )))
   );
   const bloqueHoy = el('div', { class: 'bloque-hoy' }, heroInicio(), el('div', { class: 'resumen' }, tarjetaMeta, tarjetaRango), typeof tarjetaReto === 'function' ? tarjetaReto(() => mostrarInicio('sin')) : null);
   const elegir = (cual) => {
@@ -749,7 +756,13 @@ function mostrarInicio(entrada = 'fundido') {
   };
   const pestJuegos = el('button', { class: 'pestana-inicio', id: 'pestana-juegos', type: 'button', role: 'tab', 'aria-controls': 'panel-juegos', onclick: () => elegir('juegos') }, 'Juegos');
   const pestMas = el('button', { class: 'pestana-inicio', id: 'pestana-mas', type: 'button', role: 'tab', 'aria-controls': 'panel-mas', onclick: () => elegir('mas') }, 'Practicar', (nPend + nErr) > 0 || (plan && plan.ids.length >= 5) ? el('span', { class: 'punto-aviso', 'aria-label': 'Tienes cosas pendientes' }) : null);
-  const pestanasInicio = el('div', { class: 'pestanas-inicio', role: 'tablist', 'aria-label': 'Secciones del inicio' }, pestJuegos, pestMas);
+  const pestanasInicio = el('div', { class: 'pestanas-inicio', role: 'tablist', 'aria-label': 'Secciones del inicio', onkeydown: (e) => {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
+    e.preventDefault();
+    const a = e.key === 'ArrowLeft' || e.key === 'Home' ? 'juegos' : 'mas';
+    elegir(a);
+    (a === 'juegos' ? pestJuegos : pestMas).focus();
+  } }, pestJuegos, pestMas);
   elegir(seccionInicio);
   seccionInicio = 'juegos'; // solo se recuerda la vuelta desde una de las herramientas
 
