@@ -165,3 +165,6 @@ body .cabecera { border-bottom: 0; border-radius: 0 0 26px 26px; padding: 14px 1
 
 .bloque-hoy[hidden] { display: none; }
 .herramientas .repaso, .para-hoy .repaso, .para-hoy .reto { margin: 0; }
+.bloque-hoy .reto { margin: 10px 0 0; padding: 10px 14px; border-radius: 18px; }
+.bloque-hoy .reto p, .bloque-hoy .reto .juego-niveles { font-size: 12.5px; }
+.bloque-hoy { margin-bottom: 14px; }

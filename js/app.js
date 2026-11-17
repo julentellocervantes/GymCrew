@@ -725,11 +725,10 @@ function mostrarInicio(entrada = 'fundido') {
   const abrirMas = (f) => () => { seccionInicio = 'mas'; f(); };
   const panelJuegos = el('div', { class: 'panel-inicio', id: 'panel-juegos', role: 'tabpanel', 'aria-labelledby': 'pestana-juegos' }, el('h1', {}, 'Elige tu mesa'), tarjetas);
   const panelMas = el('div', { class: 'panel-inicio', id: 'panel-mas', role: 'tabpanel', 'aria-labelledby': 'pestana-mas' },
-    repasos.some(Boolean) || typeof tarjetaReto === 'function'
+    repasos.some(Boolean)
       ? el('section', { class: 'para-hoy', 'aria-label': 'Para hoy' },
           el('h2', {}, 'Para hoy'),
-          repasos.some(Boolean) ? el('div', { class: 'repasos-mini' }, repasos) : null,
-          typeof tarjetaReto === 'function' ? tarjetaReto(() => mostrarInicio('sin')) : null)
+          el('div', { class: 'repasos-mini' }, repasos))
       : null,
     el('h2', { class: 'herr-titulo' }, 'Herramientas'),
     el('div', { class: 'herramientas' },
@@ -741,7 +740,7 @@ function mostrarInicio(entrada = 'fundido') {
     filaRepaso('conteo', '📊', 'Mis estadísticas', 'Tus aciertos por juego y tus puntos débiles', abrirMas(() => mostrarEstadisticas()))
     )
   );
-  const bloqueHoy = el('div', { class: 'bloque-hoy' }, heroInicio(), el('div', { class: 'resumen' }, tarjetaMeta, tarjetaRango));
+  const bloqueHoy = el('div', { class: 'bloque-hoy' }, heroInicio(), el('div', { class: 'resumen' }, tarjetaMeta, tarjetaRango), typeof tarjetaReto === 'function' ? tarjetaReto(() => mostrarInicio('sin')) : null);
   const elegir = (cual) => {
     panelJuegos.hidden = cual !== 'juegos';
     panelMas.hidden = cual !== 'mas';
