@@ -172,29 +172,64 @@ function abrirCofre(id) {
   return premios;
 }
 
+// Cofre animado: se sacude, la tapa se abre con un haz de luz, saltan las monedas y aparecen los premios uno a uno
+const SVG_COFRE = `<svg viewBox="0 0 200 170" class="cofre-svg" focusable="false" aria-hidden="true">
+<defs>
+<linearGradient id="cfM" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e9ad6c"/><stop offset=".55" stop-color="#b4692c"/><stop offset="1" stop-color="#6e3b14"/></linearGradient>
+<linearGradient id="cfO" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff3a8"/><stop offset=".45" stop-color="#ffc928"/><stop offset="1" stop-color="#d98200"/></linearGradient>
+<radialGradient id="cfL" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff8c8"/><stop offset=".5" stop-color="#ffd54a"/><stop offset="1" stop-color="#ffd54a" stop-opacity="0"/></radialGradient>
+</defs>
+<ellipse cx="100" cy="158" rx="78" ry="9" fill="#0003"/>
+<ellipse class="cf-luz" cx="100" cy="92" rx="62" ry="22" fill="url(#cfL)"/>
+<g class="cf-monedas">
+<circle class="cf-m m1" cx="78" cy="96" r="11" fill="url(#cfO)" stroke="#a86a00" stroke-width="2.5"/>
+<circle class="cf-m m2" cx="102" cy="94" r="12" fill="url(#cfO)" stroke="#a86a00" stroke-width="2.5"/>
+<circle class="cf-m m3" cx="124" cy="97" r="10" fill="url(#cfO)" stroke="#a86a00" stroke-width="2.5"/>
+<circle class="cf-m m4" cx="90" cy="98" r="9" fill="url(#cfO)" stroke="#a86a00" stroke-width="2.5"/>
+<circle class="cf-m m5" cx="114" cy="99" r="9" fill="url(#cfO)" stroke="#a86a00" stroke-width="2.5"/>
+</g>
+<path d="M32 90 H168 V150 Q168 156 162 156 H38 Q32 156 32 150Z" fill="url(#cfM)" stroke="#4a2608" stroke-width="4" stroke-linejoin="round"/>
+<path d="M32 108 H168 M32 134 H168" stroke="#5a3010" stroke-opacity=".45" stroke-width="2"/>
+<rect x="30" y="112" width="140" height="12" fill="url(#cfO)" stroke="#8a5a00" stroke-width="2.5"/>
+<rect x="44" y="90" width="12" height="66" fill="url(#cfO)" stroke="#8a5a00" stroke-width="2.5"/>
+<rect x="144" y="90" width="12" height="66" fill="url(#cfO)" stroke="#8a5a00" stroke-width="2.5"/>
+<g class="cf-tapa">
+<path d="M32 90 V70 Q32 38 100 38 Q168 38 168 70 V90Z" fill="url(#cfM)" stroke="#4a2608" stroke-width="4" stroke-linejoin="round"/>
+<rect x="30" y="76" width="140" height="12" fill="url(#cfO)" stroke="#8a5a00" stroke-width="2.5"/>
+<rect x="44" y="45" width="12" height="45" fill="url(#cfO)" stroke="#8a5a00" stroke-width="2.5"/>
+<rect x="144" y="45" width="12" height="45" fill="url(#cfO)" stroke="#8a5a00" stroke-width="2.5"/>
+<path d="M62 62 Q80 48 104 46" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="5" stroke-linecap="round"/>
+</g>
+<g class="cf-cerradura"><rect x="86" y="92" width="28" height="30" rx="7" fill="url(#cfO)" stroke="#8a5a00" stroke-width="3"/><circle cx="100" cy="104" r="4.5" fill="#6b3d00"/><rect x="98" y="104" width="4" height="10" rx="2" fill="#6b3d00"/></g>
+</svg>`;
+
 function mostrarCofre(curso, id, volver) {
   alTeclear = null;
   let premios = null;
   const { fila, parrafo } = naiFila('feliz', '¡Un cofre! A ver qué hay dentro…', 'grande');
-  const cofre = el('div', { class: 'cofre-grande', 'aria-hidden': 'true' }, '🎁');
+  const cofre = el('div', { class: 'cofre-grande', 'aria-hidden': 'true' });
+  cofre.innerHTML = SVG_COFRE;
+  const escena = el('div', { class: 'cofre-escena' }, el('div', { class: 'cofre-rayos' }), cofre);
   const lista = el('ul', { class: 'cofre-premios', 'aria-live': 'polite' });
   const boton = el('button', { class: 'boton oro', type: 'button' }, 'Abrir cofre');
   boton.onclick = () => {
     if (premios) return volver();
     premios = abrirCofre(id);
-    cofre.textContent = '🎉';
+    escena.classList.add('abierto');
     cofre.classList.add('abierto');
     parrafo.textContent = '¡Aquí tienes tu premio!';
     lista.replaceChildren(...premios.map((p, i) => el('li', { class: 'cofre-premio aparece', style: `--i:${i}` }, el('span', { class: 'cofre-premio-icono', 'aria-hidden': 'true' }, p.icono), p.texto)));
     boton.textContent = 'Continuar';
-    document.querySelector('.contenido').append(confeti(60));
-    sonido('ficha');
-    sonido('logro', 260);
+    sonido('cofreSacude');
+    sonido('cofreAbre', 700);
+    sonido('monedas', 1150);
+    premios.forEach((_, i) => sonido('ficha', 1500 + i * 220));
+    setTimeout(() => { const c = document.querySelector('.contenido'); if (c && cofre.isConnected) c.append(confeti(70)); }, 800);
   };
   pintar(
     'adelante',
     el('header', { class: 'cabecera-leccion' }, el('button', { class: 'cerrar', type: 'button', 'aria-label': 'Volver al mapa', onclick: () => volver() }, '✕')),
-    el('main', { class: 'contenido centro', style: `--acento:${curso.color}` }, el('h1', {}, 'Cofre del camino'), cofre, fila, lista),
+    el('main', { class: 'contenido centro', style: `--acento:${curso.color}` }, el('h1', {}, 'Cofre del camino'), escena, fila, lista),
     el('div', { class: 'pie' }, boton)
   );
 }

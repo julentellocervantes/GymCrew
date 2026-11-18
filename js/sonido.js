@@ -73,6 +73,34 @@
       [1319, 1568, 1976].forEach((f, i) => nota(c, d, t, f, i * 0.07, 0.35, { tipo: 'sine', vol: 0.16 }));
       nota(c, d, t, 659, 0, 0.4, { tipo: 'triangle', vol: 0.1 });
     },
+    // una nota por estrella: cada una más aguda, con brillo
+    estrella1: (c, d, t) => { nota(c, d, t, 784, 0, 0.35, { tipo: 'triangle', vol: 0.2 }); nota(c, d, t, 1568, 0, 0.3, { tipo: 'sine', vol: 0.07 }); },
+    estrella2: (c, d, t) => { nota(c, d, t, 988, 0, 0.38, { tipo: 'triangle', vol: 0.2 }); nota(c, d, t, 1976, 0, 0.32, { tipo: 'sine', vol: 0.07 }); },
+    estrella3: (c, d, t) => { nota(c, d, t, 1319, 0, 0.5, { tipo: 'triangle', vol: 0.22 }); nota(c, d, t, 2637, 0.02, 0.45, { tipo: 'sine', vol: 0.09 }); nota(c, d, t, 1976, 0.06, 0.4, { tipo: 'sine', vol: 0.07 }); },
+    // redoble de caja que acelera y sube
+    redoble: (c, d, t) => { let x = 0, paso = 0.07; for (let i = 0; i < 9; i++) { ruido(c, d, t, x, 0.05, 3000 + i * 120, 0.28 + i * 0.03); x += paso; paso *= 0.87; } },
+    // fanfarria de nivel perfecto: acorde brillante con campanas
+    perfecto: (c, d, t) => {
+      [[523, 659, 784], [587, 740, 880], [659, 830, 988]].forEach((acorde, k) => acorde.forEach((f) => nota(c, d, t, f, k * 0.13, k === 2 ? 0.9 : 0.2, { tipo: 'sawtooth', vol: 0.045 })));
+      [1319, 1568, 1976, 2637].forEach((f, i) => nota(c, d, t, f, 0.4 + i * 0.07, 0.6, { tipo: 'sine', vol: 0.12 }));
+    },
+    // cofre: se sacude, crujen las bisagras, estalla el brillo y cae una lluvia de monedas
+    cofreSacude: (c, d, t) => [0, 0.14, 0.28, 0.42, 0.56].forEach((i, k) => { nota(c, d, t, 95 + k * 8, i, 0.12, { tipo: 'sine', vol: 0.25, hasta: 70 }); ruido(c, d, t, i, 0.08, 900, 0.25); }),
+    cofreAbre: (c, d, t) => {
+      nota(c, d, t, 160, 0, 0.45, { tipo: 'sawtooth', vol: 0.06, hasta: 420 });
+      nota(c, d, t, 170, 0, 0.45, { tipo: 'square', vol: 0.03, hasta: 440 });
+      ruido(c, d, t, 0.3, 0.5, 4200, 0.35);
+      [1047, 1319, 1568, 2093, 2637].forEach((f, i) => nota(c, d, t, f, 0.4 + i * 0.07, 0.5, { tipo: 'sine', vol: 0.14 }));
+    },
+    monedas: (c, d, t) => [0, 0.07, 0.13, 0.22, 0.28, 0.4, 0.47].forEach((i, k) => {
+      nota(c, d, t, 2400 + (k % 3) * 400, i, 0.1, { tipo: 'triangle', vol: 0.11, hasta: 2100 + (k % 3) * 350 });
+      nota(c, d, t, 3300 + (k % 2) * 500, i + 0.04, 0.1, { tipo: 'triangle', vol: 0.08 });
+    }),
+    // algo nuevo desbloqueado: clic de cerradura y subida
+    desbloqueo: (c, d, t) => {
+      ruido(c, d, t, 0, 0.04, 1800, 0.4);
+      [659, 880, 1175].forEach((f, i) => nota(c, d, t, f, 0.1 + i * 0.09, 0.3, { tipo: 'triangle', vol: 0.17 }));
+    },
     rango: (c, d, t) => {
       [392, 523, 659, 784].forEach((f, i) => nota(c, d, t, f, i * 0.12, 0.22, { tipo: 'square', vol: 0.07 }));
       [784, 1047].forEach((f, i) => nota(c, d, t, f, 0.5 + i * 0.12, 0.5, { tipo: 'triangle', vol: 0.2 }));
@@ -102,7 +130,7 @@
   // Vibración corta del móvil que acompaña a cada sonido (se apaga en Ajustes o con «Menos movimiento»)
   const HAPTICA = {
     toque: [4], unir: [8], carta: [6], acierto: [14], error: [40, 50, 40], ficha: [10, 40, 10], reparto: [6, 80, 6, 80, 6],
-    nivel: [20, 50, 20, 50, 70], meta: [30, 40, 30], logro: [20, 40, 60], rango: [40, 60, 40, 60, 120],
+    nivel: [20, 50, 20, 50, 70], estrella1: [12], estrella2: [14], estrella3: [20], redoble: [4, 40, 4, 40, 4, 40, 4], perfecto: [30, 40, 30, 40, 100], cofreSacude: [20, 60, 20, 60, 20, 60, 20], cofreAbre: [60, 80, 30], monedas: [8, 40, 8, 40, 8], desbloqueo: [10, 40, 24], meta: [30, 40, 30], logro: [20, 40, 60], rango: [40, 60, 40, 60, 120],
   };
   const hapticaActiva = () => !(typeof progreso === 'object' && progreso && progreso.ajustes && (progreso.ajustes.vibracion === false || progreso.ajustes.calma));
   function vibrar(nombre) {

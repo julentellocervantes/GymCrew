@@ -272,3 +272,8 @@ Ningún ejercicio usa algo que aún no se ha explicado en un nivel anterior. Par
 ## Más intuitiva (v46)
 - **Mano ganadora**: al terminar un nivel se reparten cinco cartas y se nombra tu jugada según la precisión (Carta alta … Escalera real).
 - **Primeros pasos**: tarjeta en el inicio con tres pasos (primer nivel, meta diaria, visitar la tienda); se oculta sola al completarla o con la cruz (`progreso.pasos`).
+
+## Victoria, cofres y sonido (v47)
+- **Pantalla de victoria**: título tipo letrero con letras que caen, tarjetas de XP y precisión que cuentan, avisos en píldoras.
+- **Cofre**: SVG propio; se sacude, la tapa se abre con rayos de luz, saltan monedas y los premios entran uno a uno.
+- **Sonidos nuevos** (Web Audio, sin archivos): `estrella1-3`, `redoble`, `perfecto`, `cofreSacude`, `cofreAbre`, `monedas`, `desbloqueo`; con vibración asociada.

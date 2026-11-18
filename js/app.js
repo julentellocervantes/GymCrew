@@ -1789,6 +1789,15 @@ function finalizarLeccion(curso, leccion, precision) {
   });
 }
 
+// Título del resultado: cada letra cae por separado (el lector de pantalla lee el texto entero)
+function tituloLetras(texto) {
+  let k = 0;
+  const palabras = texto.split(' ').map((w) => el('span', { class: 'res-pal', 'aria-hidden': 'true' }, Array.from(w).map((c) => el('span', { class: 'res-letra', style: `--k:${k++}` }, c))));
+  const h = el('h1', { class: 'resultado-titulo', 'aria-label': texto });
+  palabras.forEach((w, i) => { if (i) h.append(' '); h.append(w); });
+  return h;
+}
+
 // Mano de póker según la precisión: cinco cartas que se reparten y el nombre de la jugada
 function manoResultado(precision) {
   const manos = [[100, 'Escalera real'], [90, 'Póker'], [80, 'Full'], [70, 'Color'], [60, 'Escalera'], [50, 'Trío'], [40, 'Doble pareja'], [25, 'Pareja'], [0, 'Carta alta']];
@@ -1843,11 +1852,18 @@ function mostrarResultado(curso, leccion, precision, extra) {
       : 'Nivel completado. Los fallos también enseñan: repítelo cuando quieras para afianzar.';
   const nEstrellas = rap !== null ? (rap >= 12 ? 3 : rap >= 6 ? 2 : 1) : precision === 100 ? 3 : precision >= 67 ? 2 : 1;
   const { fila } = naiFila(precision >= 67 ? 'celebrando' : 'feliz', mensaje, 'grande');
+  const tituloRes = rap !== null ? '¡Tiempo!' : leccion.repaso ? '¡Repaso terminado!' : leccion.oro ? '👑 ¡Nivel Oro completado!' : '¡Nivel completado!';
 
   // Las líneas van apareciendo una tras otra (--i) y los números suben desde 0
   const linea = (i, clase, contenido) => el('p', { class: clase + ' aparece', style: `--i:${i}` }, contenido);
-  const xp = linea(2, 'resultado-dato', '');
-  const prec = linea(3, 'resultado-dato', '');
+  const tarjetaRes = (i, etiqueta) => {
+    const num = el('strong', { class: 'res-num' }, '');
+    return { num, caja: el('div', { class: 'resultado-dato res-tarjeta aparece', style: `--i:${i}` }, el('span', { class: 'res-etq' }, etiqueta), num) };
+  };
+  const tXp = tarjetaRes(2, 'XP ganado');
+  const tPrec = tarjetaRes(3, rap !== null ? 'Aciertos' : 'Precisión');
+  const xp = tXp.num;
+  const prec = tPrec.num;
   let orden = 4;
   const notas = [];
   if (rachaVigente() > 0) notas.push(linea(orden++, 'resultado-dato', `🔥 Racha: ${rachaVigente()} ${rachaVigente() === 1 ? 'día' : 'días'}`));
@@ -1868,7 +1884,7 @@ function mostrarResultado(curso, leccion, precision, extra) {
     el(
       'main',
       { class: 'contenido centro', style: `--acento:${curso.color}`, 'data-oro': leccion.oro ? '1' : null },
-      el('h1', { class: 'resultado-titulo' }, rap !== null ? '¡Tiempo!' : leccion.repaso ? '¡Repaso terminado!' : leccion.oro ? '👑 ¡Nivel Oro completado!' : '¡Nivel completado!'),
+      tituloLetras(tituloRes),
       el(
         'div',
         { class: 'estrellas', 'aria-hidden': 'true' },
@@ -1876,22 +1892,28 @@ function mostrarResultado(curso, leccion, precision, extra) {
       ),
       rap === null ? manoResultado(precision) : null,
       fila,
-      xp,
-      prec,
-      notas
+      el('div', { class: 'res-tarjetas' }, tXp.caja, tPrec.caja),
+      el('div', { class: 'res-notas' }, notas)
     ),
     el('div', { class: 'pie' }, el('button', { class: 'boton', type: 'button', onclick: volver }, 'Continuar')),
     precision >= 67 && rap !== 0 || extra.cursoCompleto || extra.rangoNuevo ? confeti(extra.cursoCompleto || extra.rangoNuevo ? 80 : 40) : null
   );
 
-  // Sonidos del resultado: fanfarria, y luego meta, logros y rango si los hay
-  sonido(precision >= 67 || extra.cursoCompleto ? 'nivel' : 'toque');
-  if (extra.fichas) sonido('ficha', 450);
-  if (act.metaCumplida) sonido('meta', 700);
-  if (extra.logros && extra.logros.length) sonido('logro', act.metaCumplida ? 1300 : 700);
-  if (extra.rangoNuevo) sonido('rango', 1500);
-  contar(xp, extra.xp, (v) => `+${v} XP`, 350);
-  if (rap !== null) contar(prec, rap, (v) => `Aciertos: ${v}`, 550);
-  else contar(prec, precision, (v) => `Precisión: ${v}%`, 550);
+  // Sonidos del resultado: redoble, una nota por estrella, fanfarria y luego meta, logros y rango si los hay
+  const buena = precision >= 67 || extra.cursoCompleto;
+  if (buena) sonido('redoble');
+  for (let n = 0; n < nEstrellas; n++) sonido('estrella' + (n + 1), 350 + n * 240);
+  const t0 = 350 + nEstrellas * 240 + 100;
+  sonido(buena ? 'nivel' : 'toque', t0);
+  if (precision === 100 && rap === null) sonido('perfecto', t0 + 150);
+  let t = t0 + 600;
+  if (extra.fichas) { sonido('monedas', t); t += 700; }
+  if (extra.desbloqueado) { sonido('desbloqueo', t); t += 600; }
+  if (act.metaCumplida) { sonido('meta', t); t += 700; }
+  if (extra.logros && extra.logros.length) { sonido('logro', t); t += 700; }
+  if (extra.rangoNuevo) sonido('rango', t);
+  contar(xp, extra.xp, (v) => `+${v}`, 350);
+  if (rap !== null) contar(prec, rap, (v) => `${v}`, 550);
+  else contar(prec, precision, (v) => `${v}%`, 550);
 }
 
