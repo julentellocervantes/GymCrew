@@ -212,10 +212,20 @@
   // Posición de cada nivel dentro de su juego (decide qué ejercicio de variedad le toca)
   const POS = new Map(), CURSO_DE = new Map();
   for (const curso of CURSOS) curso.unidades.flatMap((u) => u.lecciones).forEach((l, i) => { POS.set(l.id, i); CURSO_DE.set(l.id, curso.id); });
+  // Primer nivel de cada juego en el que ya se ha explicado lo que usa cada ejercicio (así no sale nada que aún no se haya enseñado)
+  const DESDE = {
+    bjRelampago: 3, bjHilo: 7, bjCuenta: 9,
+    pkManos: 2, pkOuts: 4, pkPotOdds: 6,
+    msValores: 1, msPuntos: 2, msJuego: 4,
+    baTotal: 1, baNatural: 2, baJugador: 4,
+    vpPaga: 3, vpRelampago: 3,
+  };
   GENERADORES.aplicar((l) => {
     const rot = ROTACION[CURSO_DE.get(l.id)];
     if (!rot || !POS.has(l.id)) return;
-    const nombre = rot[POS.get(l.id) % rot.length];
+    const disponibles = rot.filter((n) => POS.get(l.id) + 1 >= DESDE[n]);
+    if (!disponibles.length) return;
+    const nombre = disponibles[POS.get(l.id) % disponibles.length];
     let ej, intento = 0;
     do { ej = G[nombre](l.id + '-v1', GEN(semilla(l.id + nombre + (intento || '')))); intento++; }
     while (ej.tipo === 'relampago' && ej.opciones.some((_, k) => !ej.items.some((x) => x[1] === k)) && intento < 200);

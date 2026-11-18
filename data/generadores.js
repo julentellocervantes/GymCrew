@@ -285,6 +285,35 @@ const GEN = (function () {
         };
       }
     },
+    // Cómo se reparte el Texas Hold'em (lo único que se ha explicado en el primer nivel)
+    est(r, i = 0) {
+      if (i % 3 === 1) {
+        return i % 2
+          ? { tipo: 'ordenar', pregunta: 'Ordena las cartas comunes, de la primera que sale a la última.', elementos: ['Flop (3 cartas)', 'Turn (1 carta)', 'River (1 carta)'], explicacion: 'Primero el flop con 3 cartas, luego el turn y por último el river.' }
+          : { tipo: 'emparejar', pregunta: 'Une cada parte de la mano con sus cartas.', pares: [['Cartas privadas', '2 por jugador'], ['Flop', '3 comunes'], ['Cartas comunes en total', '5 en la mesa']], explicacion: 'Cada jugador tiene 2 privadas y en la mesa hay 5 comunes: 3 del flop, 1 del turn y 1 del river.' };
+      }
+      if (i % 3 === 2) {
+        const [pregunta, opciones, explicacion] = pick(r, [
+          ['¿Cómo se llaman las tres primeras cartas comunes?', ['El flop', 'El turn', 'El river', 'Las ciegas'], 'Las tres primeras cartas comunes son el flop.'],
+          ['¿Cómo se llama la cuarta carta común?', ['El turn', 'El flop', 'El river', 'El botón'], 'La cuarta carta común es el turn.'],
+          ['¿Cómo se llama la última carta común?', ['El river', 'El flop', 'El turn', 'El botón'], 'La quinta y última carta común es el river.'],
+        ]);
+        return { tipo: 'opcion_unica', pregunta, opciones, correcta: 0, explicacion };
+      }
+      const q = [
+        ['¿Cuántas cartas privadas recibe cada jugador?', 2, 'Cada jugador recibe 2 cartas privadas.'],
+        ['¿Cuántas cartas comunes se reparten en total hasta el river?', 5, 'Son 5 cartas comunes: 3 del flop, 1 del turn y 1 del river.'],
+        ['¿Cuántas cartas se reparten en el flop?', 3, 'El flop son 3 cartas comunes a la vez.'],
+        ['¿Cuántas cartas comunes hay sobre la mesa justo después del turn?', 4, 'Flop (3) + turn (1) = 4 cartas comunes.'],
+        ['¿Cuántas cartas tienes disponibles al final para formar tu mano (privadas y comunes)?', 7, '2 privadas + 5 comunes = 7 cartas.'],
+        ['¿Con cuántas cartas se forma la mano final?', 5, 'La mano final son las 5 mejores cartas de las 7 disponibles.'],
+        ['¿Cuántas cartas se reparten en el river?', 1, 'El river es la última carta común: solo 1.'],
+        ['¿Cuántas cartas comunes faltan por salir justo después del flop?', 2, 'Tras el flop (3 de 5) faltan el turn y el river: 2 cartas.'],
+        ['¿Cuántas cartas comunes faltan por salir justo después del turn?', 1, 'Tras el turn (4 de 5) solo falta el river: 1 carta.'],
+      ];
+      const [pregunta, respuesta, explicacion] = pick(r, q);
+      return { tipo: 'numero', pregunta, respuesta, explicacion };
+    },
     ordP(r) {
       const cats = barajar(r, [0, 1, 2, 3, 4, 5, 6, 7]).slice(0, 4).sort((a, b) => a - b);
       const manos = cats.map((cat) => { for (;;) { const c = repartir(r, 5); if (valor5(c.map(carta))[0] === cat) return c.join(' '); } });
@@ -412,6 +441,17 @@ const GEN = (function () {
       const manos = nombres.map((n) => f[n]());
       return { tipo: 'emparejar', pregunta: 'Une cada mano con lo que tiene en el lance de Pares.', pares: nombres.map((n, i) => [manos[i].join(' · '), n]), explicacion: 'Recuerda que el 3 cuenta como Rey y el 2 como As: dos cartas equivalentes ya forman pareja.', chequeo: { musCats: manos } };
     },
+    // Lo explicado en el primer nivel: la baraja y sus valores
+    bas(r, i = 0) {
+      if (i % 3 === 1 && i < 3) return { tipo: 'emparejar', pregunta: 'Une cada carta con lo que vale en el mus.', pares: [['Rey', 'Vale 10'], ['As', 'Vale 1'], ['Tres', 'Cuenta como un rey']], explicacion: 'Jugando a 8 reyes, el 3 cuenta como rey y el 2 como as.' };
+      if (i % 3 === 2 || i >= 6) { const [pregunta, respuesta, explicacion] = pick(r, [['¿Cuántas cartas tiene la baraja española?', 40, 'La baraja española del mus tiene 40 cartas.'], ['¿Cuántas cartas recibe cada jugador?', 4, 'Cada jugador empieza con 4 cartas.']]); return { tipo: 'numero', pregunta, respuesta, explicacion }; }
+      const [pregunta, opciones, explicacion] = pick(r, [
+        ['Jugando a 8 reyes, ¿cuántos puntos vale un 3?', ['10', '3', '1', '0'], 'El 3 cuenta como rey: 10 puntos.'],
+        ['Jugando a 8 reyes, ¿cuántos puntos vale un 2?', ['1', '2', '10', '0'], 'El 2 cuenta como as: 1 punto.'],
+        ['¿Cuántos puntos vale una Sota?', ['10', '11', '1', '8'], 'Sota, caballo y rey valen 10.'],
+      ]);
+      return { tipo: 'opcion_unica', pregunta, opciones, correcta: 0, explicacion };
+    },
     pie(r) { const n = 3 + Math.floor(r() * 37); if (n % 5 === 0) return M.pie(r); return { tipo: 'numero', pregunta: `Tu pareja lleva ${n} piedras. ¿Cuántos amarracos completos son?`, respuesta: Math.floor(n / 5), explicacion: `Un amarraco son 5 piedras: ${n} ÷ 5 = ${Math.floor(n / 5)} completos (sobran ${n % 5}).` }; },
     fal(r) { const n = 4 + Math.floor(r() * 34); return { tipo: 'numero', pregunta: `Si llevas ${n} piedras, ¿cuántas te faltan para llegar a 40?`, respuesta: 40 - n, explicacion: `40 − ${n} = ${40 - n} piedras.` }; },
   };
@@ -422,8 +462,8 @@ const GEN = (function () {
 
 
   const BJ = { tot: G.tot, dur: G.acc('duras'), bla: G.acc('blandas'), par: G.acc('parejas'), sel: null, emp: G.emp, con: G.con, conN: G.conN, ver: G.ver, verN: G.verN, ordC: G.ordC, ordT: G.ordT, selH: G.selH, dbl: G.dbl, seg: G.seg, ren: G.ren, nat: G.nat, bank: G.bank };
-  const PK = { mano: P.mano, gana: P.gana, pot: P.pot, outs: P.outs, dec: P.dec, ordP: P.ordP, emP: P.emP, selC: P.selC, emO: P.emO };
-  const MS = { sel10: M.sel10, pun: M.pun, jue: M.jue, winG: M.win('Grande'), winC: M.win('Chica'), winP: M.win('Pares'), winJ: M.win('Juego'), ordMG: M.ordM('Grande'), ordMC: M.ordM('Chica'), ordJ: M.ordJ, cat: M.cat, pie: M.pie, fal: M.fal };
+  const PK = { est: P.est, mano: P.mano, gana: P.gana, pot: P.pot, outs: P.outs, dec: P.dec, ordP: P.ordP, emP: P.emP, selC: P.selC, emO: P.emO };
+  const MS = { bas: M.bas, sel10: M.sel10, pun: M.pun, jue: M.jue, winG: M.win('Grande'), winC: M.win('Chica'), winP: M.win('Pares'), winJ: M.win('Juego'), ordMG: M.ordM('Grande'), ordMC: M.ordM('Chica'), ordJ: M.ordJ, cat: M.cat, pie: M.pie, fal: M.fal };
   const SEL_BJ = { selD: G.sel('duras'), selP: G.sel('parejas'), selB: G.sel('blandas') };
 
   // Construye los ejercicios de un nivel a partir de una receta («tot dur selD …»), sin repetir ninguno.
@@ -443,5 +483,26 @@ const GEN = (function () {
     });
   }
 
-  return { construir, G, P, M, BJ, PK, MS, SEL_BJ, hash, semilla, pick, barajar, signo, lista, RANGOS_BJ, PALOS, totalBJ, valBJ, NOMBRES_MUS, valMus, rangoMus, catPares, ganaLance, mazoPk, repartir, carta, valor5, mejorMano, comparar, combos };
+  // Primer nivel de cada juego en el que ya se ha explicado lo que pide cada tipo de ejercicio.
+  // Si una receta Oro usa uno que aún no toca, se cambia por otro de los ya explicados (así no sale nada que no se haya enseñado).
+  const MINIMO = {
+    blackjack: { tot: 1, ordT: 1, dur: 3, selD: 4, dbl: 4, emp: 5, par: 5, bla: 6, con: 7, conN: 7, selH: 7, ordC: 9, ver: 9, verN: 9, seg: 12, nat: 13, ren: 13, bank: 14 },
+    poker: { est: 1, mano: 2, ordP: 2, emP: 2, gana: 12, selC: 3, emO: 3, outs: 4, dec: 6, pot: 6 },
+    mus: { bas: 1, sel10: 1, pun: 1, winG: 2, winC: 2, ordMG: 2, ordMC: 2, winP: 3, cat: 3, jue: 4, ordJ: 4, winJ: 4, pie: 7, fal: 7 },
+    baccarat: { val: 1, tot: 1, ordT: 1, emV: 1, nat: 2, pag: 3, emP: 3, pj: 4, bP: 5, bR: 6, selB: 6, gana: 7, mej: 8, edO: 8, perd: 8, bank: 9 },
+    videopoker: { vpBas: 1, vpMano: 3, vpPago: 2, vpOrd: 2, vpEm: 2, vpHecha: 4, gT: 4, dT: 4, gP: 5, dP: 5, gC: 6, dC: 6, vpQuedan: 6, gR: 7, dR: 7, gA: 8, dA: 8, vpCoste: 9, vpRet: 9 },
+    ruleta: { rlColor: 1, rlRojos: 1, rlDocena: 1, rlColumna: 1, rlPagoGana: 2, rlPagoTotal: 2, rlOrd: 2, rlEm: 2, rlCubre: 3, rlCuantas: 3, rlGana: 3, rlProb: 4, rlMasProb: 4, rlOrdProb: 4, rlNeto: 5, rlPerdida: 6, rlEsperada: 6, rlMito: 7, rlBanca: 8 },
+  };
+  function adaptar(receta, nivel, juego) {
+    const min = MINIMO[juego];
+    if (!min) return receta;
+    const claves = receta.split(' ');
+    const libres = Object.keys(min).filter((k) => min[k] <= nivel);
+    if (!libres.length) return receta;
+    let j = 0;
+    return claves.map((k) => (min[k] === undefined || min[k] <= nivel ? k : libres[j++ % libres.length])).join(' ');
+  }
+
+
+  return { adaptar, construir, G, P, M, BJ, PK, MS, SEL_BJ, hash, semilla, pick, barajar, signo, lista, RANGOS_BJ, PALOS, totalBJ, valBJ, NOMBRES_MUS, valMus, rangoMus, catPares, ganaLance, mazoPk, repartir, carta, valor5, mejorMano, comparar, combos };
 })();

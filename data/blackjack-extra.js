@@ -133,14 +133,6 @@
           correcta: 1,
           explicacion: 'El índice del 12 contra 3 es +2: con esa cuenta te plantas, aunque la estrategia básica diga pedir.',
         },
-        {
-          id: 'bj-3-5-e6',
-          tipo: 'opcion_unica',
-          pregunta: 'El crupier enseña un As y la cuenta verdadera es +3. ¿Tomas el seguro?',
-          opciones: ['Sí', 'No'],
-          correcta: 0,
-          explicacion: 'Con +3 o más hay suficientes cartas de valor 10 para que el seguro sea rentable a largo plazo.',
-        },
       ],
     }
   );

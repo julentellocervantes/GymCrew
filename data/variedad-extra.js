@@ -85,10 +85,10 @@
     ],
     'pk-4-1': [
       ord('pk-4-1-x1', 'Ordena las posiciones empezando por el botón, en el sentido del reparto.', ['Botón', 'Ciega pequeña', 'Ciega grande'], 'Después del botón vienen la ciega pequeña y la grande, y luego el resto de jugadores.'),
+      emp('pk-4-1-x9', 'Une cada posición con cuándo habla después del flop.', [['Botón', 'Habla el último'], ['Ciega pequeña', 'Habla el primero'], ['Ciega grande', 'Habla el segundo']], 'Después del flop se habla empezando por la ciega pequeña y acabando en el botón.'),
     ],
     'pk-3-1': [
       ord('pk-3-1-x1', 'Ordena estas manos iniciales, de la más fuerte a la más débil.', ['Pareja de ases', 'Pareja de reyes', 'A-K del mismo palo', '7-2 de distinto palo'], 'Las parejas altas encabezan la lista, después va A-K y lo peor de todo es 7-2 sin color.'),
-      emp('pk-3-1-x2', 'Une cada posición con cuándo habla después del flop.', [['Botón', 'Habla el último'], ['Ciega pequeña', 'Habla el primero'], ['Ciega grande', 'Habla el segundo']], 'Después del flop se habla empezando por la ciega pequeña y acabando en el botón.'),
     ],
     'pk-4-2': [
       ord('pk-4-2-x1', 'Ordena estas posiciones, de la mejor a la peor después del flop.', ['Botón', 'Cutoff (a su derecha)', 'Ciega grande', 'Ciega pequeña'], 'Cuanto más tarde hablas, mejor. La ciega pequeña es la peor porque habla la primera.'),
@@ -122,7 +122,6 @@
     ],
     'ms-2-2': [
       ord('ms-2-2-x1', 'Ordena estos juegos, del mejor al peor.', ['31', '32', '40', '37'], 'El orden de los juegos en el mus es especial: 31 es el mejor, después 32, 40, 37, 36, 35, 34 y 33.', { ordenJuego: true }),
-      emp('ms-2-2-x2', 'Une cada resultado con las piedras que vale (sin envites).', [['Juego de 31', '3 piedras'], ['Otro juego (32 a 40)', '2 piedras'], ['Punto', '1 piedra']], 'Tener 31 vale 3 piedras; los demás juegos valen 2, y ganar el punto vale 1.'),
     ],
     'ms-2-1': [
       sel('ms-2-1-x1', 'Toca las cartas que forman las medias.', ['Caballo', '5', 'Caballo', 'Caballo'], [0, 2, 3], 'Las medias son tres cartas iguales: aquí, los tres caballos.'),

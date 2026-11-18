@@ -286,6 +286,15 @@ function verificarInteractivo(e) {
   else if ((m = q.match(/Apuestas (\d+) fichas y te rindes/))) esperado = Number(m[1]) / 2;
   else if ((m = q.match(/blackjack natural con una apuesta de (\d+) fichas.*paga (\d+) a (\d+)/))) esperado = (Number(m[1]) * Number(m[2])) / Number(m[3]);
   else if ((m = q.match(/bankroll es de (\d+) € .* el (\d+) %/))) esperado = (Number(m[1]) * Number(m[2])) / 100;
+  else if (/privadas recibe cada jugador/.test(q)) esperado = 2;
+  else if (/comunes se reparten en total hasta el river/.test(q)) esperado = 3 + 1 + 1;
+  else if (/cartas se reparten en el flop/.test(q)) esperado = 3;
+  else if (/cartas se reparten en el river/.test(q)) esperado = 1;
+  else if (/comunes hay sobre la mesa justo después del turn/.test(q)) esperado = 3 + 1;
+  else if (/disponibles al final para formar tu mano/.test(q)) esperado = 2 + 5;
+  else if (/Con cuántas cartas se forma la mano final/.test(q)) esperado = 5;
+  else if (/comunes faltan por salir justo después del flop/.test(q)) esperado = 5 - 3;
+  else if (/comunes faltan por salir justo después del turn/.test(q)) esperado = 5 - 4;
   else if (/cartas tienes en total/.test(q)) esperado = 2 + 5;
   else if (/cuántas cuentan para tu mano final/i.test(q)) esperado = 5;
   else if ((m = q.match(/Tienes (\d+) cartas de un mismo palo.*cuántas quedan en el mazo/i))) esperado = 13 - Number(m[1]);

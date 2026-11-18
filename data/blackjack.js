@@ -62,7 +62,7 @@
                 opciones: ['Blackjack', 'Un 21 normal', 'Una pareja', 'Un 11 duro'],
                 correcta: 0,
                 explicacion:
-                  'As + figura o 10 en las dos primeras cartas es un blackjack natural. Suele pagar 3:2, así que conviene evitar las mesas que pagan 6:5.',
+                  'As + figura o 10 en las dos primeras cartas es un blackjack natural.',
               },
               {
                 id: 'bj-1-1-e4',

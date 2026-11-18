@@ -156,15 +156,16 @@ const RULETA = (function () {
   ];
 
   function curso() {
+    let n = 0;
     return {
       id: 'ruleta', nombre: 'Ruleta', icono: '🎡', color: '#0f8a5f',
       descripcion: 'La ruleta europea: apuestas, pagos y por qué la casa siempre gana',
       reglas: 'Ruleta europea de 37 casillas (0–36). Cada apuesta cubre unos números y paga según cuántos cubra; el cero verde da a la casa un 2,7 % de ventaja.',
       unidades: UNIDADES.map((u) => ({
         id: u.id, titulo: u.titulo, descripcion: u.descripcion,
-        lecciones: u.lecciones.map(([id, icono, titulo, xp, intro, fijos, receta]) => GEN.perezoso({
+        lecciones: u.lecciones.map(([id, icono, titulo, xp, intro, fijos, receta]) => { const posicion = ++n; return GEN.perezoso({
           id, titulo, icono, xp, intro,
-        }, () => fijos.map(([p, o, c, ex], i) => op(`${id}-e${i + 1}`, p, o, c, ex)).concat(construir(id, receta, T)))),
+        }, () => fijos.map(([p, o, c, ex], i) => op(`${id}-e${i + 1}`, p, o, c, ex)).concat(construir(id, GEN.adaptar(receta, posicion, 'ruleta'), T))); }),
       })),
     };
   }

@@ -265,3 +265,6 @@ Se aplican con `GEN.transformar` (`data/perezoso.js`), que corre sobre cada nive
 - Ajustes: **Tamaño de letra**, **Menos movimiento** y **Alto contraste** (textos y bordes más marcados, sin fondo animado). También se respeta `prefers-contrast` y `prefers-reduced-motion` del sistema.
 
 - **Tienda rediseñada**: una cartera (fichas + energía) sobre fieltro, el pase VIP dorado, cuatro categorías en cuadrícula con objetivos de 48 px y artículos grandes con sello «Puesto». **Practicar** ya no oculta el resumen de arriba y **Útil** se divide en pestañas (Calculadoras / Chuletas) con cuadrícula de fichas.
+
+## Orden de lo que se enseña
+Ningún ejercicio usa algo que aún no se ha explicado en un nivel anterior. Para mantenerlo: los ejercicios de variedad automáticos (`data/variedad-generada.js`, tabla `DESDE`) y las recetas generadas, incluida la ruta dorada (`GEN.adaptar` en `data/generadores.js`, tabla `MINIMO`), indican desde qué nivel puede salir cada tipo de ejercicio y, si una receta pide uno que aún no toca, lo cambian por otro ya explicado. Si añades un tipo de ejercicio nuevo, apunta en esas tablas el nivel donde se explica su tema.

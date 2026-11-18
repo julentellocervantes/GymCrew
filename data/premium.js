@@ -85,7 +85,7 @@ const CURSOS_ORO = [];
     ],
     baccarat: [
       ['ba-1-1', 'Valores al vuelo', 'val tot ordT emV tot val'],
-      ['ba-1-2', 'Naturales sin dudar', 'nat tot gana nat ordT gana'],
+      ['ba-1-2', 'Naturales sin dudar', 'nat tot emV nat ordT tot'],
       ['ba-1-3', 'Pagos de oro', 'pag emP mej pag perd bank'],
       ['ba-2-1', 'Jugador sin errores', 'pj pj tot ordT pj selB'],
       ['ba-2-2', 'La Banca decide', 'bP bP bR pj tot ordT'],
@@ -123,8 +123,8 @@ const CURSOS_ORO = [];
     const extra = (typeof AMPLIACION !== 'undefined' ? AMPLIACION[curso.id] || [] : []).map(([id, , titulo, , receta]) => [id, 'Oro · ' + titulo, receta]);
     const recetas = (RECETAS[curso.id] || []).concat(extra);
     if (!recetas.length) continue;
-    const base = {};
-    curso.unidades.forEach((u) => u.lecciones.forEach((l) => (base[l.id] = l)));
+    const base = {}, posicion = {};
+    curso.unidades.flatMap((u) => u.lecciones).forEach((l, i) => { base[l.id] = l; posicion[l.id] = i + 1; });
     const lecciones = [];
     for (const [idBase, titulo, receta] of recetas) {
       const normal = base[idBase];
@@ -133,7 +133,7 @@ const CURSOS_ORO = [];
       const nivel = GEN.perezoso({
         id, oro: true, base: idBase, titulo, icono: '👑', xp: normal.xp * 2,
         intro: `Nivel Oro de «${normal.titulo}»: las mismas ideas, pero con situaciones más difíciles y sin pistas fáciles. Si fallas no pasa nada: la explicación te dice por qué.`,
-      }, () => GEN.construir(id, receta, TABLAS[curso.id] || GEN.BJ), false);
+      }, () => GEN.construir(id, GEN.adaptar(receta, posicion[idBase], curso.id), TABLAS[curso.id] || GEN.BJ), false);
       ORO[idBase] = nivel;
       lecciones.push(nivel);
     }

@@ -118,11 +118,9 @@
       RE('ms-1-2-r1', 'Completa el orden de los lances.', 'Los lances del mus, en orden: Grande, Chica, {} y {}.', ['Pares', 'Juego'], ['Pares', 'Juego', 'Piedras', 'Amarraco'],
         'Primero se juegan Grande y Chica, después Pares y por último Juego (o Punto si nadie tiene juego).'),
     ],
-    'ms-2-1': [
-      RE('ms-2-1-r1', 'Completa las piedras de cada pares.', 'Una pareja vale {} piedra, las medias {} y los duples {}.', ['1', '2', '3'], ['1', '2', '3', '4', '5'],
-        'Pareja, 1 piedra; medias, 2 piedras; duples, 3 piedras.'),
-    ],
     'ms-3-3': [
+      RE('ms-3-3-r2', 'Completa las piedras de cada pares.', 'Una pareja vale {} piedra, las medias {} y los duples {}.', ['1', '2', '3'], ['1', '2', '3', '4', '5'],
+        'Pareja, 1 piedra; medias, 2 piedras; duples, 3 piedras.'),
       RE('ms-3-3-r1', 'Completa la frase sobre las piedras.', 'El amarraco vale {} piedras y la partida llega a {}.', ['5', '40'], ['5', '3', '30', '40'],
         'Cada amarraco son cinco piedras y la partida se juega a 40.'),
     ],

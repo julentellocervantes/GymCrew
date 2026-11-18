@@ -312,6 +312,29 @@ const CASINO = (function () {
       const m = pick(r, [1, 2, 3, 5]), v = pick(r, [1, 2]), manos = pick(r, [20, 50, 100]);
       return { tipo: 'numero', pregunta: `Juegas ${manos} manos apostando ${monedas(m)} de ${v} € cada vez. ¿Cuántos euros apuestas en total?`, unidad: '€', respuesta: m * v * manos, explicacion: `${m} × ${v} € × ${manos} manos = ${m * v * manos} €. Los euros se van rápido aunque cada mano parezca barata.`, chequeo: { k: 'vpCoste', m, v, manos } };
     },
+    // Cómo se juega una mano (lo único que se ha explicado en el primer nivel)
+    vpBas(r, i = 0) {
+      if (i % 3 === 1) {
+        const [pregunta, opciones, explicacion] = pick(r, [
+          ['¿Cuántas veces puedes cambiar cartas en una mano?', ['Una sola vez', 'Dos veces', 'Las que quieras', 'Ninguna'], 'Solo hay un cambio por mano.'],
+          ['Después de cambiar las cartas, ¿qué ocurre?', ['Cobras según tu mano final', 'Puedes cambiar otra vez', 'Pierdes la apuesta', 'Empieza otra mano sin cobrar'], 'Tras el cambio se mira tu mano final y se cobra si paga.'],
+          ['¿Qué haces con las cartas que quieres conservar?', ['Las guardas', 'Las cambias', 'Las enseñas al crupier', 'Las descartas'], 'Eliges cuáles guardar y la máquina cambia las demás.'],
+        ]);
+        return { tipo: 'opcion_unica', pregunta, opciones, correcta: 0, explicacion, chequeo: { k: 'def' } };
+      }
+      if (i % 3 === 2 && i < 5) return { tipo: 'ordenar', pregunta: 'Ordena los pasos de una mano de vídeo póker.', elementos: ['Recibes cinco cartas', 'Eliges cuáles guardar', 'La máquina cambia el resto', 'Cobras según tu mano final'], explicacion: 'Primero recibes las cartas, después eliges, la máquina cambia el resto y al final cobras.', chequeo: { k: 'def' } };
+      const q = [
+        ['¿Cuántas cartas recibes al empezar cada mano?', 5, 'La máquina reparte 5 cartas.'],
+        ['Guardas 2 cartas. ¿Cuántas cartas nuevas te da la máquina?', 3, 'Cambia las que no guardas: 5 − 2 = 3.'],
+        ['Guardas 4 cartas. ¿Cuántas cartas nuevas te da la máquina?', 1, 'Cambia las que no guardas: 5 − 4 = 1.'],
+        ['Guardas las 5 cartas. ¿Cuántas cartas nuevas recibes?', 0, 'Si lo guardas todo, no cambia ninguna.'],
+        ['No guardas ninguna carta. ¿Cuántas cartas nuevas recibes?', 5, 'Se cambian las 5 cartas.'],
+        ['Guardas 3 cartas. ¿Cuántas cartas nuevas te da la máquina?', 2, 'Cambia las que no guardas: 5 − 3 = 2.'],
+        ['Guardas 1 carta. ¿Cuántas cartas nuevas te da la máquina?', 4, 'Cambia las que no guardas: 5 − 1 = 4.'],
+      ];
+      const [pregunta, respuesta, explicacion] = pick(r, q);
+      return { tipo: 'numero', pregunta, respuesta, explicacion, chequeo: { k: 'def' } };
+    },
     vpRet(r) {
       const apostado = pick(r, [1000, 2000]), ret = pick(r, [99.5, 95, 90]);
       const perdida = Math.round((apostado * (100 - ret)) / 100);
@@ -331,7 +354,7 @@ const CASINO = (function () {
       ['ba-1-1', '🔢', 'Valores y total', 10, 'En el bacarrá cada carta tiene un valor: el As vale 1, del 2 al 9 su número, y el 10, la J, la Q y la K valen 0. Sumas las cartas y solo cuenta la cifra de las unidades: 7 + 8 = 15 vale 5. El máximo es 9.',
         [['¿Cuánto vale una K en el bacarrá?', ['0', '10', '13', '1'], 0, 'Las figuras y el 10 valen 0.']], 'val tot tot emV ordT'],
       ['ba-1-2', '⭐', 'Naturales', 10, 'Si con las dos primeras cartas el Jugador o la Banca suma 8 o 9, es un natural: la mano termina y nadie roba carta. Gana el total más alto; si empatan, es empate. Gana la mano que más se acerque a 9.',
-        [['¿Qué totales son naturales?', ['8 y 9', 'Solo el 9', '7, 8 y 9', 'Cualquier total de 21']  , 0, 'Un natural es un 8 o un 9 con las dos primeras cartas.']], 'nat tot ordT nat gana'],
+        [['¿Qué totales son naturales?', ['8 y 9', 'Solo el 9', '7, 8 y 9', 'Cualquier total de 21']  , 0, 'Un natural es un 8 o un 9 con las dos primeras cartas.']], 'nat tot ordT nat emV'],
       ['ba-1-3', '💶', 'Apuestas y pagos', 10, 'Puedes apostar al Jugador (paga 1 a 1), a la Banca (1 a 1 menos un 5 % de comisión) o al Empate (8 a 1). «Jugador» y «Banca» son solo nombres de las dos manos: no importa quién eres tú, apuestas a la que creas que gana.',
         [['Apuestas a la Banca y gana. ¿Qué descuenta el casino?', ['Una comisión del 5 % sobre lo ganado', 'Nada', 'La mitad de la apuesta', 'Un 20 % de lo ganado'], 0, 'La Banca paga 1 a 1 pero el casino se queda el 5 % de lo que ganas.']], 'pag pag emP pag'],
     ] },
@@ -386,11 +409,12 @@ const CASINO = (function () {
 
   function curso(base, unidades, tabla) {
     const c = Object.assign({}, base);
+    let posicion = 0;
     c.unidades = unidades.map((u) => ({
       id: u.id, titulo: u.titulo, descripcion: u.descripcion,
       lecciones: u.lecciones.map(([id, icono, titulo, xp, intro, fijos, receta]) => ({
         id, titulo, icono, xp, intro,
-        ejercicios: fijos.map(([p, o, c2, ex], i) => op(`${id}-e${i + 1}`, p, o, c2, ex)).concat(construir(id, receta, tabla)),
+        ejercicios: fijos.map(([p, o, c2, ex], i) => op(`${id}-e${i + 1}`, p, o, c2, ex)).concat(construir(id, GEN.adaptar(receta, ++posicion, c.id), tabla)),
       })),
     }));
     return c;
