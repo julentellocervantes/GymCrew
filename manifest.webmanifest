@@ -1,7 +1,7 @@
 {
   "name": "Tapete · Entrenador de cartas",
   "short_name": "Tapete",
-  "description": "Aprende blackjack, póker y mus con ejercicios cortos, como en Duolingo.",
+  "description": "Aprende blackjack, póker, mus, baccarat, ruleta y vídeo póker con 600 niveles cortos, como en Duolingo.",
   "lang": "es",
   "start_url": "./index.html",
   "scope": "./",
@@ -9,10 +9,90 @@
   "orientation": "portrait",
   "background_color": "#082a32",
   "theme_color": "#0c3a44",
-  "categories": ["education", "games"],
+  "categories": [
+    "education",
+    "games"
+  ],
   "icons": [
-    { "src": "icons/icono-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "icons/icono-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "icons/icono-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {
+      "src": "icons/icono-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icono-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icono-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "id": "./index.html",
+  "shortcuts": [
+    {
+      "name": "Seguir jugando",
+      "short_name": "Jugar",
+      "url": "./index.html",
+      "icons": [
+        {
+          "src": "icons/icono-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Acerca de Tapete",
+      "short_name": "Acerca de",
+      "url": "./acerca.html",
+      "icons": [
+        {
+          "src": "icons/icono-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "capturas/inicio.webp",
+      "sizes": "780x1688",
+      "type": "image/webp",
+      "form_factor": "narrow",
+      "label": "Tu siguiente nivel y la meta diaria"
+    },
+    {
+      "src": "capturas/mapa.webp",
+      "sizes": "780x1688",
+      "type": "image/webp",
+      "form_factor": "narrow",
+      "label": "Mapa de 100 niveles por juego"
+    },
+    {
+      "src": "capturas/ejercicio.webp",
+      "sizes": "780x1688",
+      "type": "image/webp",
+      "form_factor": "narrow",
+      "label": "Preguntas cortas de todo tipo"
+    },
+    {
+      "src": "capturas/tienda.webp",
+      "sizes": "780x1688",
+      "type": "image/webp",
+      "form_factor": "narrow",
+      "label": "Tienda de fondos y barajas"
+    },
+    {
+      "src": "capturas/escritorio.webp",
+      "sizes": "2560x1440",
+      "type": "image/webp",
+      "form_factor": "wide",
+      "label": "Tapete en el ordenador"
+    }
   ]
 }

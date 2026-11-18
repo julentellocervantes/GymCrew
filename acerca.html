@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0c3a44" />
+  <title>Tapete · Aprende juegos de cartas y casino</title>
+  <meta name="description" content="Tapete enseña blackjack, póker, mus, baccarat, ruleta y vídeo póker con 600 niveles cortos. Se instala en el móvil y funciona sin conexión." />
+  <link rel="canonical" href="https://entrenador-cartas.onrender.com/acerca.html" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Tapete · Aprende juegos de cartas y casino" />
+  <meta property="og:description" content="Blackjack, póker, mus, baccarat, ruleta y vídeo póker en niveles cortos, sin dinero real." />
+  <meta property="og:image" content="https://entrenador-cartas.onrender.com/icons/compartir.jpg" />
+  <meta property="og:locale" content="es_ES" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icons/icono.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Instrument+Sans:wght@500;600;700&display=swap" />
+  <style>
+    :root {
+      --pano: #0c3a44; --pano-osc: #082a32; --pano-claro: #14505d; --tiza: #eef1e6; --tiza-suave: #cfe0d8;
+      --ficha: #e0402a; --ficha-osc: #8f2514; --laton: #f3b63f; --tinta: #0b2229;
+      --serif: 'Big Shoulders Display', 'Arial Narrow', Impact, sans-serif;
+      --cuerpo: 'Instrument Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; background: var(--pano-osc); color: var(--tiza); font: 500 17px/1.55 var(--cuerpo); }
+    a { color: inherit; }
+    .envoltura { width: min(1080px, 100% - 32px); margin-inline: auto; }
+    :focus-visible { outline: 3px solid var(--laton); outline-offset: 3px; border-radius: 6px; }
+
+    .boton { display: inline-flex; align-items: center; justify-content: center; min-height: 52px; padding: 0 30px; border-radius: 16px; background: linear-gradient(180deg, #ea4a31, #c93219); border-bottom: 5px solid var(--ficha-osc); color: #fff; font: 700 18px var(--cuerpo); text-decoration: none; }
+    .boton:hover { background: linear-gradient(180deg, #f2583f, #d63a20); }
+    .boton.claro { background: transparent; border: 2px solid var(--laton); border-bottom-width: 2px; color: var(--laton); }
+    .boton.claro:hover { background: rgba(243, 182, 63, .12); }
+
+    header.cabecera { padding: 18px 0; }
+    header.cabecera .envoltura { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .marca { display: flex; align-items: center; gap: 10px; font: 900 30px var(--serif); letter-spacing: .03em; text-decoration: none; }
+    .marca img { width: 36px; height: 36px; border-radius: 10px; }
+    nav.enlaces { display: flex; gap: 22px; }
+    nav.enlaces a { text-decoration: none; color: var(--tiza-suave); font-weight: 600; }
+    nav.enlaces a:hover { color: var(--laton); }
+    @media (max-width: 640px) { nav.enlaces { display: none; } }
+
+    .hero { background: radial-gradient(ellipse at 25% 0%, var(--pano-claro), var(--pano-osc) 70%); padding: 40px 0 72px; overflow: hidden; }
+    .hero .envoltura { display: grid; grid-template-columns: 1.1fr .9fr; gap: 40px; align-items: center; }
+    .hero h1 { font: 900 clamp(64px, 11vw, 128px)/.92 var(--serif); margin: 0 0 18px; letter-spacing: .01em; }
+    .hero p.lema { font-size: clamp(19px, 2.4vw, 24px); color: var(--tiza-suave); max-width: 30ch; margin: 0 0 28px; }
+    .acciones { display: flex; flex-wrap: wrap; gap: 14px; }
+    .nota { margin: 18px 0 0; color: var(--tiza-suave); font-size: 15px; }
+    .movil { position: relative; width: min(300px, 78vw); justify-self: center; border-radius: 40px; padding: 10px; background: #101d22; border: 3px solid var(--laton); box-shadow: 0 30px 60px #0008; transform: rotate(3deg); }
+    .movil img { display: block; width: 100%; height: auto; border-radius: 30px; }
+    @media (max-width: 800px) { .hero .envoltura { grid-template-columns: 1fr; } .movil { transform: none; } }
+
+    section { padding: 72px 0; }
+    h2 { font: 900 clamp(38px, 6vw, 60px)/1 var(--serif); margin: 0 0 14px; letter-spacing: .01em; }
+    .intro { color: var(--tiza-suave); max-width: 52ch; margin: 0 0 36px; }
+
+    .juegos { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .juegos li { background: var(--pano); border: 2px solid rgba(243, 182, 63, .35); border-radius: 22px; padding: 22px 22px 20px; }
+    .juegos strong { display: block; font: 800 30px var(--serif); letter-spacing: .02em; margin-bottom: 4px; }
+    .juegos span { color: var(--tiza-suave); font-size: 16px; }
+    @media (max-width: 800px) { .juegos { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 480px) { .juegos { grid-template-columns: 1fr; } }
+
+    .claro-fondo { background: var(--pano); }
+    .pasos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; margin: 0; padding: 0; list-style: none; counter-reset: paso; }
+    .pasos li { counter-increment: paso; }
+    .pasos li::before { content: counter(paso); display: grid; place-items: center; width: 52px; height: 52px; margin-bottom: 14px; border-radius: 50%; background: var(--laton); color: var(--tinta); font: 900 28px var(--serif); }
+    .pasos strong { display: block; font: 800 28px var(--serif); margin-bottom: 4px; }
+    .pasos span { color: var(--tiza-suave); }
+    @media (max-width: 800px) { .pasos { grid-template-columns: 1fr; } }
+
+    .galeria { display: flex; gap: 18px; overflow-x: auto; padding: 6px 4px 22px; scroll-snap-type: x mandatory; }
+    .galeria figure { flex: 0 0 auto; margin: 0; width: 220px; scroll-snap-align: start; }
+    .galeria img { width: 100%; height: auto; display: block; border-radius: 24px; border: 2px solid rgba(243, 182, 63, .4); }
+    .galeria figcaption { margin-top: 10px; color: var(--tiza-suave); font-size: 15px; }
+
+    .vip { background: linear-gradient(135deg, #3a2a05, #7a5410 45%, #3a2a05); border: 3px solid var(--laton); border-radius: 28px; padding: clamp(24px, 5vw, 48px); display: grid; grid-template-columns: 1.2fr 1fr; gap: 28px; align-items: center; }
+    .vip h2 { margin-bottom: 8px; }
+    .vip ul { margin: 0; padding-left: 20px; color: #fbe9bb; }
+    .vip li { margin: 6px 0; }
+    @media (max-width: 800px) { .vip { grid-template-columns: 1fr; } }
+
+    .instalar { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .instalar div { background: var(--pano); border-radius: 20px; padding: 22px; }
+    .instalar h3 { margin: 0 0 8px; font: 800 26px var(--serif); }
+    .instalar ol { margin: 0; padding-left: 20px; color: var(--tiza-suave); }
+    @media (max-width: 700px) { .instalar { grid-template-columns: 1fr; } }
+
+    footer { padding: 36px 0 56px; color: var(--tiza-suave); font-size: 15px; border-top: 1px solid rgba(238, 241, 230, .15); }
+    footer p { margin: 6px 0; max-width: 70ch; }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  </style>
+</head>
+<body>
+  <header class="cabecera">
+    <div class="envoltura">
+      <a class="marca" href="acerca.html"><img src="icons/icono-48.png" alt="" width="36" height="36" />Tapete</a>
+      <nav class="enlaces" aria-label="Secciones">
+        <a href="#juegos">Juegos</a>
+        <a href="#como">Cómo funciona</a>
+        <a href="#instalar">Instalar</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="hero">
+      <div class="envoltura">
+        <div>
+          <h1>Tapete</h1>
+          <p class="lema">Aprende juegos de cartas y casino jugando, nivel a nivel.</p>
+          <div class="acciones">
+            <a class="boton" href="index.html">Abrir Tapete</a>
+            <a class="boton claro" href="#instalar">Instalar en el móvil</a>
+          </div>
+          <p class="nota">Gratis, sin dinero real y sin registrarte.</p>
+        </div>
+        <div class="movil"><img src="capturas/web-inicio.webp" width="390" height="844" alt="Pantalla de inicio de Tapete con tu siguiente nivel, la meta diaria y los juegos" /></div>
+      </div>
+    </div>
+
+    <section id="juegos">
+      <div class="envoltura">
+        <h2>Seis juegos, 100 niveles cada uno</h2>
+        <p class="intro">Cada nivel dura un par de minutos y solo pregunta lo que ya se ha explicado antes.</p>
+        <ul class="juegos">
+          <li><strong>Blackjack</strong><span>Estrategia básica, conteo Hi-Lo y gestión del dinero.</span></li>
+          <li><strong>Póker</strong><span>Manos, outs, pot odds, posición y decisiones.</span></li>
+          <li><strong>Mus</strong><span>Lances, juego, pares y cuándo hablar, con baraja española.</span></li>
+          <li><strong>Baccarat</strong><span>Totales, tercera carta y las apuestas más rentables.</span></li>
+          <li><strong>Vídeo póker</strong><span>Qué cartas guardar en Jacks or Better.</span></li>
+          <li><strong>Ruleta</strong><span>Apuestas, pagos y por qué gana la casa.</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="como" class="claro-fondo">
+      <div class="envoltura">
+        <h2>Cómo funciona</h2>
+        <p class="intro">Pensada como un juego, para que practicar dé ganas de repetir.</p>
+        <ol class="pasos">
+          <li><strong>Sube de nivel</strong><span>Preguntas de todo tipo: elegir, ordenar, unir cartas, contrarreloj.</span></li>
+          <li><strong>Repasa lo que fallas</strong><span>La app recuerda tus errores y te los vuelve a poner cuando toca.</span></li>
+          <li><strong>Usa las herramientas</strong><span>Calculadoras y chuletas para tener a mano en la mesa.</span></li>
+        </ol>
+      </div>
+    </section>
+
+    <section>
+      <div class="envoltura">
+        <h2>Así se ve</h2>
+        <div class="galeria" tabindex="0" aria-label="Capturas de la app">
+          <figure><img src="capturas/web-mapa.webp" width="390" height="844" loading="lazy" alt="Mapa de niveles de blackjack" /><figcaption>El mapa de niveles</figcaption></figure>
+          <figure><img src="capturas/web-ejercicio.webp" width="390" height="844" loading="lazy" alt="Pregunta de blackjack con cuatro opciones" /><figcaption>Una pregunta</figcaption></figure>
+          <figure><img src="capturas/web-tienda.webp" width="390" height="844" loading="lazy" alt="Tienda con fondos y barajas" /><figcaption>Tienda de aspectos</figcaption></figure>
+          <figure><img src="capturas/web-inicio.webp" width="390" height="844" loading="lazy" alt="Pantalla de inicio" /><figcaption>Tu progreso</figcaption></figure>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="envoltura">
+        <div class="vip">
+          <div>
+            <h2>Pase VIP</h2>
+            <p class="intro" style="color:#fbe9bb;margin:0">Para quien quiere ir más lejos.</p>
+          </div>
+          <ul>
+            <li>Niveles Oro, más difíciles, junto a cada nivel</li>
+            <li>Calculadoras avanzadas</li>
+            <li>Todo lo demás sigue siendo gratis</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="instalar" class="claro-fondo">
+      <div class="envoltura">
+        <h2>Instálala como una app</h2>
+        <p class="intro">Una vez abierta funciona sin conexión y ocupa muy poco.</p>
+        <div class="instalar">
+          <div>
+            <h3>iPhone</h3>
+            <ol><li>Abre Tapete en Safari.</li><li>Pulsa Compartir.</li><li>Elige «Añadir a pantalla de inicio».</li></ol>
+          </div>
+          <div>
+            <h3>Android</h3>
+            <ol><li>Abre Tapete en Chrome.</li><li>Pulsa el menú (⋮).</li><li>Elige «Instalar aplicación».</li></ol>
+          </div>
+        </div>
+        <p style="margin-top:32px"><a class="boton" href="index.html">Empezar ahora</a></p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="envoltura">
+      <p>Tapete es una herramienta para aprender. No maneja dinero real ni ofrece juegos de azar.</p>
+      <p>Si juegas con dinero, hazlo con un presupuesto fijo. Mayores de 18 años. Ayuda gratuita en España: jugadoresanonimos.org.</p>
+    </div>
+  </footer>
+</body>
+</html>

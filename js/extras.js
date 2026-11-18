@@ -367,6 +367,28 @@ function mostrarAjustes(aviso = '', animacion = 'fundido') {
       el(
         'section',
         { class: 'ajuste' },
+        el('h2', {}, '📲 Compartir Tapete'),
+        el('p', {}, 'Pásasela a quien quiera aprender contigo.'),
+        (() => {
+          const datos = { title: 'Tapete · Entrenador de cartas', text: 'Aprende blackjack, póker, mus, baccarat, ruleta y vídeo póker con niveles cortos:', url: 'https://entrenador-cartas.onrender.com/acerca.html' };
+          const b = el('button', { class: 'boton secundario', type: 'button' }, 'Compartir enlace');
+          b.onclick = async () => {
+            try {
+              if (navigator.share) { await navigator.share(datos); return; }
+              await navigator.clipboard.writeText(datos.url);
+              b.textContent = 'Enlace copiado';
+            } catch (e) {
+              if (e && e.name === 'AbortError') return; // cerraste el menú de compartir
+              b.textContent = datos.url; // sin portapapeles: se muestra para copiarlo a mano
+            }
+            setTimeout(() => (b.textContent = 'Compartir enlace'), 2500);
+          };
+          return b;
+        })()
+      ),
+      el(
+        'section',
+        { class: 'ajuste' },
         el('h2', {}, '👋 Bienvenida'),
         el('p', {}, 'Vuelve a ver la pantalla de presentación.'),
         el('button', { class: 'boton secundario', type: 'button', onclick: () => mostrarBienvenida(true) }, 'Ver la bienvenida')
