@@ -262,7 +262,7 @@ function preparar(e) {
     return Object.assign({}, e, { opciones: [], correcta: 0, mezcla });
   }
   if (e.tipo === 'rellenar') return Object.assign({}, e, { opciones: [], correcta: 0, mezcla: barajar(e.banco.map((_, i) => i)) });
-  if (e.tipo === 'relampago') return Object.assign({}, e, { respuestas: e.opciones, opciones: [], correcta: 0, mezcla: barajar(e.items.map((_, i) => i)) });
+  if (e.tipo === 'relampago') return Object.assign({}, e, { respuestas: e.respuestas || e.opciones, opciones: [], correcta: 0, mezcla: barajar(e.items.map((_, i) => i)) });
   // Formas nuevas (data/formas-interactivas.js): el ejercicio original va en `base`
   if (e.tipo === 'vf') return Object.assign({}, e, { opciones: [], correcta: 0 });
   if (e.tipo === 'duelo') return Object.assign({}, e, { par: barajar([e.acierto, e.falsa]), opciones: [], correcta: 0 });
