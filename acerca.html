@@ -95,14 +95,109 @@
 
     footer { padding: 36px 0 56px; color: var(--tiza-suave); font-size: 15px; border-top: 1px solid rgba(238, 241, 230, .15); }
     footer p { margin: 6px 0; max-width: 70ch; }
-    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+    /* ===== Movimiento ===== */
+    .progreso-scroll { position: fixed; inset: 0 0 auto 0; height: 4px; z-index: 50; transform-origin: 0 50%; transform: scaleX(var(--p, 0)); background: linear-gradient(90deg, #8a5a00, var(--laton), #fff3b0); }
+    header.cabecera { position: sticky; top: 0; z-index: 40; transition: background .25s, box-shadow .25s; }
+    header.cabecera.fija { background: rgba(8, 42, 50, .92); backdrop-filter: blur(8px); box-shadow: 0 6px 20px #0005; }
+    nav.enlaces a.activo { color: var(--laton); }
+
+    /* Título: las letras se reparten como cartas */
+    .hero h1 span { display: inline-block; opacity: 0; transform: translateY(-60px) rotate(-12deg); animation: reparte .6s cubic-bezier(.2, .9, .3, 1.2) forwards; animation-delay: calc(var(--i) * 70ms + 150ms); }
+    @keyframes reparte { to { opacity: 1; transform: none; } }
+
+    /* Abanico de cartas detrás del móvil */
+    .escena { position: relative; justify-self: center; width: min(340px, 86vw); aspect-ratio: 340 / 560; }
+    .escena .movil { position: absolute; inset: 0; margin: auto; width: 82%; height: fit-content; z-index: 2; transition: transform .15s ease-out; animation: flota 6s ease-in-out infinite 1.4s; }
+    .escena .carta { position: absolute; width: 34%; aspect-ratio: 5 / 7; border-radius: 12px; background: #fdfbf0; color: #14212b; display: grid; place-items: center; font: 900 clamp(26px, 6vw, 40px) Georgia, serif; box-shadow: 0 12px 24px #0007; z-index: 1; opacity: 0; animation: vuela 1s cubic-bezier(.2, .9, .3, 1.1) forwards; animation-delay: calc(var(--i) * 140ms + 700ms); }
+    .escena .carta.r { color: #d0342a; }
+    .escena .c1 { left: -4%; top: 8%; --rot: -18deg; }
+    .escena .c2 { right: -6%; top: 2%; --rot: 14deg; }
+    .escena .c3 { left: -8%; bottom: 12%; --rot: -9deg; }
+    .escena .c4 { right: -4%; bottom: 6%; --rot: 20deg; }
+    @keyframes vuela { from { opacity: 0; transform: translate(60%, -120%) rotate(180deg) scale(.4); } to { opacity: 1; transform: rotate(var(--rot)); } }
+    @keyframes flota { 0%, 100% { translate: 0 0; } 50% { translate: 0 -10px; } }
+    .movil { transform: none; }
+
+    /* Palos que suben despacio */
+    .palos { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+    .palos i { position: absolute; bottom: -60px; left: var(--x); font: normal 900 var(--t) Georgia, serif; color: rgba(238, 241, 230, .07); animation: sube var(--d) linear infinite; animation-delay: var(--r); }
+    @keyframes sube { to { transform: translateY(-120vh) rotate(40deg); } }
+    .hero { position: relative; }
+    .hero .envoltura { position: relative; z-index: 1; }
+
+    /* Cinta de juegos */
+    .cinta { overflow: hidden; border-block: 1px solid rgba(243, 182, 63, .3); background: var(--pano-osc); padding: 14px 0; }
+    .cinta div { display: flex; width: max-content; gap: 44px; animation: cinta 32s linear infinite; font: 800 30px var(--serif); letter-spacing: .04em; color: var(--tiza-suave); }
+    .cinta span b { color: var(--laton); font-weight: 900; margin-left: 44px; }
+    @keyframes cinta { to { transform: translateX(-50%); } }
+    .cinta:hover div { animation-play-state: paused; }
+
+    /* Cifras */
+    .cifras { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; text-align: center; padding: 56px 0 8px; }
+    .cifras strong { display: block; font: 900 clamp(48px, 8vw, 84px)/1 var(--serif); color: var(--laton); }
+    .cifras span { color: var(--tiza-suave); }
+    @media (max-width: 640px) { .cifras { grid-template-columns: 1fr 1fr; row-gap: 28px; } }
+
+    /* Pruébalo */
+    .prueba { background: var(--pano); border: 2px solid rgba(243, 182, 63, .35); border-radius: 28px; padding: clamp(18px, 4vw, 36px); }
+    .pestanas { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+    .pestanas button { min-height: 44px; padding: 0 18px; border-radius: 999px; border: 2px solid rgba(238, 241, 230, .25); background: transparent; color: var(--tiza); font: 700 16px var(--cuerpo); cursor: pointer; transition: background .2s, color .2s, border-color .2s, transform .2s; }
+    .pestanas button:hover { border-color: var(--laton); }
+    .pestanas button[aria-selected="true"] { background: var(--laton); color: var(--tinta); border-color: var(--laton); }
+    .reto { max-width: 640px; }
+    .reto .pregunta { font: 800 clamp(28px, 4.6vw, 40px)/1.1 var(--serif); margin: 0 0 18px; min-height: 2.2em; }
+    .reto .opciones { display: grid; gap: 10px; }
+    .reto .op { text-align: left; min-height: 54px; padding: 10px 16px; border-radius: 16px; border: 2px solid rgba(238, 241, 230, .25); border-bottom-width: 4px; background: var(--pano-osc); color: var(--tiza); font: 600 18px var(--cuerpo); cursor: pointer; transition: transform .15s, border-color .15s, background .2s; }
+    .reto .op:hover:not([disabled]) { border-color: var(--laton); transform: translateX(4px); }
+    .reto .op.bien { background: #1f6b3a; border-color: #58cc02; animation: salta .4s; }
+    .reto .op.mal { background: #6e2430; border-color: #ff5a5a; animation: sacude .4s; }
+    .reto .op[disabled] { cursor: default; }
+    .reto .explica { min-height: 3.2em; margin: 16px 0 6px; color: var(--tiza-suave); }
+    .reto .siguiente { margin-top: 6px; }
+    @keyframes salta { 50% { transform: scale(1.03); } }
+    @keyframes sacude { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+
+    /* Tarjetas de juego: se dan la vuelta al aparecer */
+    .juegos li { transition: transform .25s, border-color .25s, box-shadow .25s; }
+    .juegos li:hover { transform: translateY(-6px) rotate(-1deg); border-color: var(--laton); box-shadow: 0 16px 30px #0006; }
+    .juegos li .palo { float: right; font: 900 34px Georgia, serif; color: var(--laton); }
+    .juegos li .palo.r { color: #ff6b57; }
+    .aparece { opacity: 0; transform: perspective(700px) rotateX(-40deg) translateY(24px); transition: opacity .6s, transform .7s cubic-bezier(.2, .9, .3, 1); transition-delay: calc(var(--i, 0) * 90ms); }
+    .aparece.visto { opacity: 1; transform: none; }
+
+    /* Pasos: la línea se dibuja al hacer scroll */
+    .pasos { position: relative; }
+    .pasos::before { content: ''; position: absolute; left: 26px; right: 26px; top: 26px; height: 3px; background: linear-gradient(90deg, var(--laton) calc(var(--l, 0) * 100%), rgba(238, 241, 230, .15) 0); z-index: 0; }
+    .pasos li { position: relative; z-index: 1; }
+    .pasos li::before { transition: transform .4s; }
+    .pasos li:hover::before { transform: scale(1.12) rotate(-8deg); }
+    @media (max-width: 800px) { .pasos::before { display: none; } }
+
+    /* VIP: borde dorado con brillo, como dentro de la app */
+    .vip { border: 3px solid transparent; background: linear-gradient(135deg, #3a2a05, #7a5410 45%, #3a2a05) padding-box, linear-gradient(110deg, #8a5a00, #f3b63f, #fff3b0, #f3b63f, #8a5a00, #f3b63f, #fff3b0) border-box; background-size: 100% 100%, 300% 100%; animation: brillo 5s linear infinite; }
+    @keyframes brillo { to { background-position: 0 0, -300% 0; } }
+
+    .galeria figure { transition: transform .3s; }
+    .galeria figure:hover { transform: translateY(-8px) rotate(-1.5deg); }
+    .boton { transition: transform .15s, background .2s; }
+    .boton:hover { transform: translateY(-2px); }
+    .boton:active { transform: translateY(2px); }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+      .hero h1 span, .escena .carta, .aparece { opacity: 1 !important; transform: none !important; }
+      .escena .c1 { transform: rotate(-18deg) !important; } .escena .c2 { transform: rotate(14deg) !important; } .escena .c3 { transform: rotate(-9deg) !important; } .escena .c4 { transform: rotate(20deg) !important; }
+    }
   </style>
 </head>
 <body>
+  <div class="progreso-scroll" aria-hidden="true"></div>
   <header class="cabecera">
     <div class="envoltura">
       <a class="marca" href="acerca.html"><img src="icons/icono-48.png" alt="" width="36" height="36" />Tapete</a>
       <nav class="enlaces" aria-label="Secciones">
+        <a href="#prueba">Pruébalo</a>
         <a href="#juegos">Juegos</a>
         <a href="#como">Cómo funciona</a>
         <a href="#instalar">Instalar</a>
@@ -112,31 +207,65 @@
 
   <main>
     <div class="hero">
+      <div class="palos" aria-hidden="true"></div>
       <div class="envoltura">
         <div>
-          <h1>Tapete</h1>
+          <h1 aria-label="Tapete"><span style="--i:0" aria-hidden="true">T</span><span style="--i:1" aria-hidden="true">a</span><span style="--i:2" aria-hidden="true">p</span><span style="--i:3" aria-hidden="true">e</span><span style="--i:4" aria-hidden="true">t</span><span style="--i:5" aria-hidden="true">e</span></h1>
           <p class="lema">Aprende juegos de cartas y casino jugando, nivel a nivel.</p>
           <div class="acciones">
             <a class="boton" href="index.html">Abrir Tapete</a>
-            <a class="boton claro" href="#instalar">Instalar en el móvil</a>
+            <a class="boton claro" href="#prueba">Pruébalo aquí</a>
           </div>
           <p class="nota">Gratis, sin dinero real y sin registrarte.</p>
         </div>
-        <div class="movil"><img src="capturas/web-inicio.webp" width="390" height="844" alt="Pantalla de inicio de Tapete con tu siguiente nivel, la meta diaria y los juegos" /></div>
+        <div class="escena" aria-hidden="false">
+          <div class="carta c1" style="--i:0" aria-hidden="true">A♠</div>
+          <div class="carta c2 r" style="--i:1" aria-hidden="true">K♥</div>
+          <div class="carta c3" style="--i:2" aria-hidden="true">Q♣</div>
+          <div class="carta c4 r" style="--i:3" aria-hidden="true">10♦</div>
+          <div class="movil"><img src="capturas/web-inicio.webp" width="390" height="844" alt="Pantalla de inicio de Tapete con tu siguiente nivel, la meta diaria y los juegos" /></div>
+        </div>
       </div>
     </div>
+
+    <div class="cinta" aria-hidden="true"><div id="cinta"></div></div>
+
+    <div class="envoltura">
+      <div class="cifras">
+        <div><strong data-n="6">0</strong><span>juegos</span></div>
+        <div><strong data-n="600">0</strong><span>niveles</span></div>
+        <div><strong data-n="16">0</strong><span>tipos de pregunta</span></div>
+        <div><strong data-n="0">0</strong><span>euros: es gratis</span></div>
+      </div>
+    </div>
+
+    <section id="prueba">
+      <div class="envoltura">
+        <h2>Pruébalo ahora</h2>
+        <p class="intro">Elige un juego y contesta una pregunta de verdad, como las de la app.</p>
+        <div class="prueba">
+          <div class="pestanas" role="tablist" aria-label="Juegos" id="pestanas"></div>
+          <div class="reto" id="reto" aria-live="polite">
+            <p class="pregunta" id="pregunta"></p>
+            <div class="opciones" id="opciones"></div>
+            <p class="explica" id="explica"></p>
+            <button class="boton siguiente" id="siguiente" type="button" hidden>Otra pregunta</button>
+          </div>
+        </div>
+      </div>
+    </section>
 
     <section id="juegos">
       <div class="envoltura">
         <h2>Seis juegos, 100 niveles cada uno</h2>
         <p class="intro">Cada nivel dura un par de minutos y solo pregunta lo que ya se ha explicado antes.</p>
         <ul class="juegos">
-          <li><strong>Blackjack</strong><span>Estrategia básica, conteo Hi-Lo y gestión del dinero.</span></li>
-          <li><strong>Póker</strong><span>Manos, outs, pot odds, posición y decisiones.</span></li>
-          <li><strong>Mus</strong><span>Lances, juego, pares y cuándo hablar, con baraja española.</span></li>
-          <li><strong>Baccarat</strong><span>Totales, tercera carta y las apuestas más rentables.</span></li>
-          <li><strong>Vídeo póker</strong><span>Qué cartas guardar en Jacks or Better.</span></li>
-          <li><strong>Ruleta</strong><span>Apuestas, pagos y por qué gana la casa.</span></li>
+          <li class="aparece" style="--i:0"><span class="palo " aria-hidden="true">♠</span><strong>Blackjack</strong><span>Estrategia básica, conteo Hi-Lo y gestión del dinero.</span></li>
+          <li class="aparece" style="--i:1"><span class="palo r" aria-hidden="true">♥</span><strong>Póker</strong><span>Manos, outs, pot odds, posición y decisiones.</span></li>
+          <li class="aparece" style="--i:2"><span class="palo r" aria-hidden="true">♦</span><strong>Mus</strong><span>Lances, juego, pares y cuándo hablar, con baraja española.</span></li>
+          <li class="aparece" style="--i:3"><span class="palo " aria-hidden="true">♣</span><strong>Baccarat</strong><span>Totales, tercera carta y las apuestas más rentables.</span></li>
+          <li class="aparece" style="--i:4"><span class="palo " aria-hidden="true">♠</span><strong>Vídeo póker</strong><span>Qué cartas guardar en Jacks or Better.</span></li>
+          <li class="aparece" style="--i:5"><span class="palo r" aria-hidden="true">♥</span><strong>Ruleta</strong><span>Apuestas, pagos y por qué gana la casa.</span></li>
         </ul>
       </div>
     </section>
@@ -206,5 +335,113 @@
       <p>Si juegas con dinero, hazlo con un presupuesto fijo. Mayores de 18 años. Ayuda gratuita en España: jugadoresanonimos.org.</p>
     </div>
   </footer>
+
+  <script>
+  (function () {
+    var reducir = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var $ = function (s) { return document.querySelector(s); };
+
+    // Palos que suben en el fondo del hero
+    var p = $('.palos'), simb = ['♠', '♥', '♦', '♣'];
+    for (var i = 0; i < 14; i++) {
+      var e = document.createElement('i');
+      e.textContent = simb[i % 4];
+      e.style.cssText = '--x:' + (4 + i * 7) % 96 + '%;--t:' + (28 + (i * 13) % 40) + 'px;--d:' + (16 + (i * 5) % 14) + 's;--r:-' + (i * 2.3).toFixed(1) + 's';
+      p.appendChild(e);
+    }
+
+    // Cinta de juegos (se duplica para que el bucle no se note)
+    var nombres = ['Blackjack', 'Póker', 'Mus', 'Baccarat', 'Vídeo póker', 'Ruleta'], c = $('#cinta'), html = '';
+    for (var k = 0; k < 2; k++) nombres.forEach(function (n, j) { html += '<span>' + n + '<b>' + simb[j % 4] + '</b></span>'; });
+    c.innerHTML = html + html;
+
+    // Barra de progreso, cabecera fija y sección activa
+    var cab = $('header.cabecera'), barra = $('.progreso-scroll'), enlaces = [].slice.call(document.querySelectorAll('nav.enlaces a')), pasos = $('.pasos');
+    function alScroll() {
+      var max = document.documentElement.scrollHeight - innerHeight;
+      barra.style.setProperty('--p', max > 0 ? Math.min(1, scrollY / max) : 0);
+      cab.classList.toggle('fija', scrollY > 24);
+      if (pasos) {
+        var r = pasos.getBoundingClientRect(), v = (innerHeight * 0.8 - r.top) / (r.height + innerHeight * 0.3);
+        pasos.style.setProperty('--l', Math.max(0, Math.min(1, v * 1.6)));
+      }
+      var actual = null;
+      enlaces.forEach(function (a) { var s = document.querySelector(a.getAttribute('href')); if (s && s.getBoundingClientRect().top < innerHeight * 0.4) actual = a; });
+      enlaces.forEach(function (a) { a.classList.toggle('activo', a === actual); });
+    }
+    addEventListener('scroll', alScroll, { passive: true }); alScroll();
+
+    // Aparición y contadores
+    function contar(el) {
+      var meta = Number(el.dataset.n), t0 = null;
+      if (reducir || !meta) { el.textContent = meta; return; }
+      (function paso(t) { if (!t0) t0 = t; var f = Math.min(1, (t - t0) / 1200); el.textContent = Math.round(meta * (1 - Math.pow(1 - f, 3))); if (f < 1) requestAnimationFrame(paso); })(performance.now());
+    }
+    var io = 'IntersectionObserver' in window ? new IntersectionObserver(function (es) {
+      es.forEach(function (x) { if (!x.isIntersecting) return; x.target.classList.add('visto'); if (x.target.dataset.n !== undefined) contar(x.target); io.unobserve(x.target); });
+    }, { threshold: 0.3 }) : null;
+    [].slice.call(document.querySelectorAll('.aparece, .cifras strong')).forEach(function (el) { if (io) io.observe(el); else { el.classList.add('visto'); if (el.dataset.n !== undefined) el.textContent = el.dataset.n; } });
+
+    // El móvil sigue un poco al puntero
+    var esc = $('.escena'), mov = $('.escena .movil');
+    if (esc && !reducir && matchMedia('(hover: hover)').matches) {
+      esc.addEventListener('pointermove', function (e) { var r = esc.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5; mov.style.transform = 'perspective(800px) rotateY(' + x * 14 + 'deg) rotateX(' + -y * 10 + 'deg)'; });
+      esc.addEventListener('pointerleave', function () { mov.style.transform = ''; });
+    }
+
+    // Preguntas de prueba (las respuestas son las mismas que enseña la app)
+    var Q = {
+      'Blackjack': [
+        ['¿Cuánto vale una J en el blackjack?', ['10', '11', '1', '12'], 0, 'Las figuras (J, Q, K) valen 10.'],
+        ['Tienes As y 6. ¿Qué total cuentas?', ['17', '7', '16', '21'], 0, 'El As vale 11 mientras no te pases: es un 17 «blando».'],
+        ['En el conteo Hi-Lo, ¿cuánto suma un 5?', ['+1', '0', '−1', '+2'], 0, 'Las cartas bajas (2 a 6) suman +1; las altas, −1.']],
+      'Póker': [
+        ['¿Qué mano gana: color o escalera?', ['Escalera', 'Color', 'Empatan', 'Depende del palo'], 0, 'La escalera vale más que el color.'],
+        ['Tienes cuatro cartas del mismo palo tras el flop. ¿Cuántas cartas te dan el color?', ['9', '13', '4', '8'], 0, 'Quedan 13 − 4 = 9 cartas de ese palo: tienes 9 outs.']],
+      'Mus': [
+        ['Jugando a 8 reyes, ¿cuántos puntos vale un 3?', ['10', '3', '1', '0'], 0, 'En 8 reyes, el 3 cuenta como rey: 10 puntos.'],
+        ['¿Cuántas cartas recibe cada jugador en el mus?', ['4', '2', '5', '3'], 0, 'Cada jugador empieza con 4 cartas.']],
+      'Baccarat': [
+        ['¿Cuánto vale una figura en el baccarat?', ['0', '10', '1', '11'], 0, '10, J, Q y K valen 0; el As vale 1.'],
+        ['Apuestas a la Banca y gana. ¿Qué comisión suele cobrar el casino?', ['5 %', 'Ninguna', '50 %', '20 %'], 0, 'La Banca paga 1 a 1 con un 5 % de comisión.']],
+      'Vídeo póker': [
+        ['¿Cuántas veces puedes cambiar cartas en una mano?', ['Una', 'Dos', 'Las que quieras', 'Ninguna'], 0, 'Solo hay un cambio por mano.'],
+        ['En Jacks or Better, ¿qué mano mínima paga?', ['Pareja de J o mejor', 'Cualquier pareja', 'Doble pareja', 'Trío'], 0, 'Paga desde pareja de jotas o mejor.']],
+      'Ruleta': [
+        ['¿Cuántas casillas tiene la ruleta europea?', ['37', '36', '38', '40'], 0, 'Del 0 al 36: 37 casillas.'],
+        ['¿Cuánto paga una apuesta a un solo número (pleno)?', ['35 a 1', '36 a 1', '17 a 1', '2 a 1'], 0, 'El pleno paga 35 a 1 (más tu apuesta).']]
+    };
+    var juego = 'Blackjack', n = 0, pest = $('#pestanas'), preg = $('#pregunta'), ops = $('#opciones'), exp = $('#explica'), sig = $('#siguiente');
+    function mezclar(a) { var b = a.slice(); for (var i = b.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = b[i]; b[i] = b[j]; b[j] = t; } return b; }
+    function pintar() {
+      var q = Q[juego][n % Q[juego].length], lista = mezclar(q[1].map(function (t, i) { return { t: t, ok: i === q[2] }; }));
+      preg.textContent = q[0]; exp.textContent = ''; sig.hidden = true; ops.innerHTML = '';
+      lista.forEach(function (o, i) {
+        var b = document.createElement('button');
+        b.type = 'button'; b.className = 'op'; b.textContent = (i + 1) + '  ' + o.t;
+        b.onclick = function () {
+          [].forEach.call(ops.children, function (x, k) { x.disabled = true; if (lista[k].ok) x.classList.add('bien'); });
+          if (!o.ok) b.classList.add('mal');
+          exp.textContent = (o.ok ? '¡Correcto! ' : 'Casi. ') + q[3];
+          sig.hidden = false; sig.focus({ preventScroll: true });
+        };
+        ops.appendChild(b);
+      });
+    }
+    Object.keys(Q).forEach(function (j) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.role = 'tab'; b.textContent = j; b.setAttribute('aria-selected', j === juego);
+      b.onclick = function () { juego = j; n = 0; [].forEach.call(pest.children, function (x) { x.setAttribute('aria-selected', x === b); }); pintar(); };
+      pest.appendChild(b);
+    });
+    sig.onclick = function () { n += 1; pintar(); };
+    addEventListener('keydown', function (e) {
+      var r = $('#prueba').getBoundingClientRect();
+      if (!/^[1-9]$/.test(e.key) || r.top > innerHeight * 0.6 || r.bottom < innerHeight * 0.3) return;
+      var b = ops.children[Number(e.key) - 1]; if (b && !b.disabled && document.activeElement.tagName !== 'INPUT') b.click();
+    });
+    pintar();
+  })();
+  </script>
 </body>
 </html>
