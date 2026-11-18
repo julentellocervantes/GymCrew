@@ -241,6 +241,7 @@ function mostrarSinEnergia(reintentar, atras) {
 // ---------- la tienda ----------
 function mostrarTienda(entrada = 'fundido') {
   alTeclear = null;
+  if (progreso.pasos && !progreso.pasos.tienda) { progreso.pasos.tienda = true; guardarProgreso(); }
   const vip = esVip();
   const { fila } = naiFila('feliz', 'Bienvenido a la tienda. Gana fichas con los niveles y los cofres, y gástalas en energía o en estilo.');
   const mensaje = el('p', { class: 'ajuste-mensaje', role: 'status', 'aria-live': 'polite' });

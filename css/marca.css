@@ -421,3 +421,26 @@ html[data-calma="si"] #app[data-oro="si"] * { animation: none !important; }
 #app[data-oro="si"] .mesa { border: 3px solid transparent; background: linear-gradient(160deg, #1b7a55, #0f4d37) padding-box, var(--borde-oro) border-box; background-size: 100% 100%, 300% 100%; animation: oro-brillo 4.5s linear infinite; box-shadow: 0 0 18px rgba(243,182,63,.35); }
 #app[data-oro="si"] .numero-entrada:not(.bien):not(.mal) { box-shadow: 0 4px 0 var(--oro-1); }
 #app[data-oro="si"] .globo { border: 2px solid transparent; background: linear-gradient(var(--tarjeta), var(--tarjeta)) padding-box, var(--borde-oro) border-box; background-size: 100% 100%, 300% 100%; animation: oro-brillo 4.5s linear infinite; box-shadow: 0 0 14px rgba(243,182,63,.35); }
+
+/* Mano ganadora en el resultado */
+.mano-resultado { display: grid; justify-items: center; gap: 8px; margin: 4px 0 10px; }
+.mano-cartas { display: flex; }
+.mano-carta { width: 44px; height: 62px; margin-left: -10px; border-radius: 7px; background: #fffdf5; border: 1.5px solid #17241d; color: #17241d; display: grid; place-items: center; align-content: center; font-family: var(--serif); box-shadow: 0 3px 8px rgba(0,0,0,.28); rotate: calc((var(--i) - 2) * 6deg); animation: mano-reparte .55s var(--rebote) backwards; animation-delay: calc(var(--i) * 110ms + 250ms); }
+.mano-carta:first-child { margin-left: 0; }
+.mano-carta b { font-size: 1.15rem; line-height: 1; }
+.mano-carta i { font-style: normal; font-size: 1.1rem; line-height: 1.1; }
+.mano-carta.roja { color: #c93a3a; }
+.mano-nombre { margin: 0; font-family: var(--serif); font-size: 1.25rem; letter-spacing: .02em; color: #7a4d00; font-weight: 700; }
+@keyframes mano-reparte { from { opacity: 0; translate: 0 -40px; rotate: -20deg; scale: .7; } }
+/* Primeros pasos */
+.primeros-pasos { margin: 12px 0; padding: 12px 14px; border-radius: 14px; background: var(--pano-claro); color: var(--tiza); border: 1px solid rgba(238,241,230,.18); }
+.pp-cab { display: flex; justify-content: space-between; align-items: center; }
+.pp-cerrar { background: none; border: 0; color: inherit; font-size: 1.4rem; min-width: 44px; min-height: 44px; cursor: pointer; }
+.primeros-pasos ul { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 8px; }
+.primeros-pasos li { display: flex; align-items: center; gap: 10px; }
+.primeros-pasos li.hecho { opacity: .65; text-decoration: line-through; }
+.pp-marca { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--laton); display: grid; place-items: center; font-size: .8rem; flex: none; }
+.primeros-pasos li.hecho .pp-marca { background: var(--laton); color: var(--pano-osc); }
+.sr-solo { position: absolute; left: -9999px; }
+@media (prefers-reduced-motion: reduce) { .mano-carta { animation: none; } }
+#app[data-calma="si"] .mano-carta { animation: none; }

@@ -26,6 +26,7 @@ const progresoNuevo = () => ({
   conteo: { sesiones: 0, mejor: 0 }, // entrenador de conteo
   rapida: { partidas: 0, mejor: 0 }, // partida rápida de 60 segundos
   ajustes: { letra: 'normal', calma: false, contraste: false, sonido: true, vibracion: true },
+  pasos: { tienda: false, meta: false, ocultar: false }, // «Primeros pasos» del inicio
   bienvenida: false,              // true cuando ya has visto la pantalla de bienvenida
   vip: { hasta: 0 },              // membresía VIP: instante (ms) hasta el que está activa
   fichas: 20,                     // moneda de la tienda
@@ -82,6 +83,8 @@ function normalizarProgreso(datos) {
   const eq = obj(tn.equipado, {});
   const sl = (s) => (typeof s === 'string' && /^[a-z]{3,12}$/.test(s) ? s : null);
   p.tienda = { comprados: Array.isArray(tn.comprados) ? tn.comprados.filter(idOk).slice(0, 60) : [], equipado: { fondo: sl(eq.fondo) || 'clasico', baraja: sl(eq.baraja) || 'clasica', espanola: sl(eq.espanola) || 'clasica', nai: sl(eq.nai) || 'clasico' } };
+  const ps = obj(p.pasos, {});
+  p.pasos = { tienda: ps.tienda === true, meta: ps.meta === true, ocultar: ps.ocultar === true };
   // quien ya tenía progreso no necesita la bienvenida
   p.bienvenida = p.bienvenida === true || p.xp > 0 || Object.keys(p.completadas).length > 0;
   return p;
@@ -147,6 +150,7 @@ function registrarActividad(xp) {
   progreso.xp += xp;
   if (typeof sumarXpSemana === 'function') { sumarXpSemana(xp); retoSuma('dias'); }
   res.metaCumplida = antes < progreso.meta && antes + xp >= progreso.meta;
+  if (antes + xp >= progreso.meta && progreso.pasos) progreso.pasos.meta = true;
   return res;
 }
 
@@ -747,6 +751,7 @@ function mostrarInicio(entrada = 'fundido') {
         )))
   );
   const bloqueHoy = el('div', { class: 'bloque-hoy' }, heroInicio(), el('div', { class: 'resumen' }, tarjetaMeta, tarjetaRango), typeof tarjetaReto === 'function' ? tarjetaReto(() => mostrarInicio('sin')) : null);
+  const primeros = tarjetaPrimerosPasos();
   const elegir = (cual) => {
     panelJuegos.hidden = cual !== 'juegos';
     panelMas.hidden = cual !== 'mas';
@@ -775,6 +780,7 @@ function mostrarInicio(entrada = 'fundido') {
         : null,
       avisoRacha,
       bloqueHoy,
+      primeros,
       pestanasInicio,
       panelJuegos,
       panelMas,
@@ -1783,6 +1789,36 @@ function finalizarLeccion(curso, leccion, precision) {
   });
 }
 
+// Mano de póker según la precisión: cinco cartas que se reparten y el nombre de la jugada
+function manoResultado(precision) {
+  const manos = [[100, 'Escalera real'], [90, 'Póker'], [80, 'Full'], [70, 'Color'], [60, 'Escalera'], [50, 'Trío'], [40, 'Doble pareja'], [25, 'Pareja'], [0, 'Carta alta']];
+  const nombre = manos.find((m) => precision >= m[0])[1];
+  const rangos = { 'Escalera real': ['10', 'J', 'Q', 'K', 'A'], 'Póker': ['9', '9', '9', '9', 'K'], 'Full': ['Q', 'Q', 'Q', '7', '7'], 'Color': ['2', '5', '8', 'J', 'K'], 'Escalera': ['5', '6', '7', '8', '9'], 'Trío': ['8', '8', '8', '3', 'K'], 'Doble pareja': ['J', 'J', '4', '4', '9'], 'Pareja': ['10', '10', '2', '6', 'K'], 'Carta alta': ['2', '5', '7', '9', 'Q'] }[nombre];
+  const palos = nombre === 'Color' || nombre === 'Escalera real' ? ['♠', '♠', '♠', '♠', '♠'] : ['♠', '♥', '♣', '♦', '♥'];
+  return el(
+    'div',
+    { class: 'mano-resultado', role: 'img', 'aria-label': `Tu mano: ${nombre}` },
+    el('div', { class: 'mano-cartas', 'aria-hidden': 'true' }, rangos.map((r, i) => el('span', { class: 'mano-carta' + (palos[i] === '♥' || palos[i] === '♦' ? ' roja' : ''), style: `--i:${i}` }, el('b', {}, r), el('i', {}, palos[i])))),
+    el('p', { class: 'mano-nombre' }, `Tu mano: ${nombre}`)
+  );
+}
+
+// Lista de «Primeros pasos» para quien acaba de empezar; se oculta sola al completarla o con la cruz
+function tarjetaPrimerosPasos() {
+  const pa = progreso.pasos;
+  const nivel = Object.keys(progreso.completadas).length > 0;
+  if (!pa || pa.ocultar) return null;
+  const pasos = [['Completa tu primer nivel', nivel], ['Cumple tu meta diaria', pa.meta], ['Echa un vistazo a la tienda', pa.tienda]];
+  if (pasos.every((p) => p[1])) { pa.ocultar = true; guardarProgreso(); return null; }
+  const hechos = pasos.filter((p) => p[1]).length;
+  return el(
+    'section',
+    { class: 'primeros-pasos', 'aria-label': 'Primeros pasos' },
+    el('div', { class: 'pp-cab' }, el('strong', {}, `Primeros pasos · ${hechos}/3`), el('button', { type: 'button', class: 'pp-cerrar', 'aria-label': 'Ocultar primeros pasos', onclick: (e) => { pa.ocultar = true; guardarProgreso(); e.currentTarget.closest('section').remove(); } }, '×')),
+    el('ul', {}, pasos.map((p) => el('li', { class: p[1] ? 'hecho' : '' }, el('span', { class: 'pp-marca', 'aria-hidden': 'true' }, p[1] ? '✓' : ''), p[0], p[1] ? el('span', { class: 'sr-solo' }, ' (hecho)') : null)))
+  );
+}
+
 function mostrarResultado(curso, leccion, precision, extra) {
   // Al volver al mapa se animan el nivel que acabas de completar y el que se desbloquea
   const volver = () =>
@@ -1838,6 +1874,7 @@ function mostrarResultado(curso, leccion, precision, extra) {
         { class: 'estrellas', 'aria-hidden': 'true' },
         [0, 1, 2].map((n) => el('span', { class: 'estrella' + (n < nEstrellas ? ' on' : ''), style: `--i:${n}` }, '★'))
       ),
+      rap === null ? manoResultado(precision) : null,
       fila,
       xp,
       prec,

@@ -268,3 +268,7 @@ Se aplican con `GEN.transformar` (`data/perezoso.js`), que corre sobre cada nive
 
 ## Orden de lo que se enseña
 Ningún ejercicio usa algo que aún no se ha explicado en un nivel anterior. Para mantenerlo: los ejercicios de variedad automáticos (`data/variedad-generada.js`, tabla `DESDE`) y las recetas generadas, incluida la ruta dorada (`GEN.adaptar` en `data/generadores.js`, tabla `MINIMO`), indican desde qué nivel puede salir cada tipo de ejercicio y, si una receta pide uno que aún no toca, lo cambian por otro ya explicado. Si añades un tipo de ejercicio nuevo, apunta en esas tablas el nivel donde se explica su tema.
+
+## Más intuitiva (v46)
+- **Mano ganadora**: al terminar un nivel se reparten cinco cartas y se nombra tu jugada según la precisión (Carta alta … Escalera real).
+- **Primeros pasos**: tarjeta en el inicio con tres pasos (primer nivel, meta diaria, visitar la tienda); se oculta sola al completarla o con la cruz (`progreso.pasos`).
