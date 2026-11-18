@@ -487,6 +487,7 @@ function pintar(entrada, ...nodos) {
   if (typeof barra === 'function') barra(null); // la barra inferior solo se muestra en las pantallas principales
   const y = window.scrollY || 0;
   raiz.dataset.entrada = entrada;
+  raiz.dataset.oro = nodos.some((n) => n && n.querySelector && (n.matches('[data-oro="1"]') || n.querySelector('[data-oro="1"]'))) ? 'si' : 'no';
   // Se descartan los null: replaceChildren los escribiría como el texto "null"
   raiz.replaceChildren(...nodos.filter(Boolean));
   if (typeof window.scrollTo === 'function') window.scrollTo(0, entrada === 'sin' ? y : 0);
@@ -1057,12 +1058,12 @@ function mostrarIntro(curso, leccion) {
     'adelante',
     el(
       'header',
-      { class: 'cabecera-leccion' },
+      { class: 'cabecera-leccion', 'data-oro': leccion.oro ? '1' : null },
       el('button', { class: 'cerrar', type: 'button', 'aria-label': 'Volver al mapa', onclick: () => mostrarMapa(curso, 'atras') }, '✕')
     ),
     el(
       'main',
-      { class: 'contenido centro', style: `--acento:${leccion.oro ? '#e8a400' : curso.color}` },
+      { class: 'contenido centro', style: `--acento:${leccion.oro ? '#e8a400' : curso.color}`, 'data-oro': leccion.oro ? '1' : null },
       el('p', { class: 'etiqueta' }, leccion.oro ? `${curso.nombre} · Nivel Oro` : curso.nombre),
       el('h1', {}, `${leccion.icono} ${leccion.titulo}`),
       fila,
@@ -1695,7 +1696,7 @@ function mostrarLeccion(curso, leccion) {
       entrada,
       el(
         'header',
-        { class: 'cabecera-leccion' + (leccion.rapida ? ' rapida' : ''), 'data-rapida': leccion.rapida ? '1' : null },
+        { class: 'cabecera-leccion' + (leccion.rapida ? ' rapida' : ''), 'data-rapida': leccion.rapida ? '1' : null, 'data-oro': leccion.oro ? '1' : null },
         el('button', { class: 'cerrar', type: 'button', 'aria-label': 'Salir de la lección', onclick: salir }, '✕'),
         leccion.rapida
           ? el('div', { class: 'barra barra-tiempo', role: 'timer', 'aria-label': 'Tiempo restante de la partida rápida', style: `--acento:${curso.color}` },
@@ -1830,7 +1831,7 @@ function mostrarResultado(curso, leccion, precision, extra) {
     'adelante',
     el(
       'main',
-      { class: 'contenido centro', style: `--acento:${curso.color}` },
+      { class: 'contenido centro', style: `--acento:${curso.color}`, 'data-oro': leccion.oro ? '1' : null },
       el('h1', { class: 'resultado-titulo' }, rap !== null ? '¡Tiempo!' : leccion.repaso ? '¡Repaso terminado!' : leccion.oro ? '👑 ¡Nivel Oro completado!' : '¡Nivel completado!'),
       el(
         'div',
