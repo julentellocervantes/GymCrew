@@ -410,7 +410,8 @@ function mostrarCampana(entrada = 'fundido', recientes = [], enfocar = null) {
           abrirHoja(cap, curso, n);
         },
       }, hecha ? '✓' : bloqueado ? '🔒' : n.tipo === 'jefe' ? '⚔️' : l.icono);
-      return el('div', { class: 'nodo-envoltorio' + (recientes.includes(l.id) ? ' recien' : ''), style: estilo }, esActual && !bloqueado ? el('span', { class: 'empezar' }, n.tipo === 'jefe' ? 'JEFE' : 'EMPEZAR') : null, el('div', { class: 'nodo-fila' }, b), el('span', { class: 'nodo-titulo' }, n.tipo === 'jefe' ? 'Jefe del piso' : l.titulo));
+      const aqui = esActual && !bloqueado;
+      return el('div', { class: 'nodo-envoltorio' + (recientes.includes(l.id) ? ' recien' : '') + (aqui ? ' con-nai' : ''), style: estilo }, aqui ? el('div', { class: 'nai-compana ' + (desp > 0 ? 'izq' : 'der') }, mascota('feliz')) : null, esActual && !bloqueado ? el('span', { class: 'empezar' }, n.tipo === 'jefe' ? 'JEFE' : 'EMPEZAR') : null, el('div', { class: 'nodo-fila' }, b), el('span', { class: 'nodo-titulo' }, n.tipo === 'jefe' ? 'Jefe del piso' : l.titulo));
     };
 
     const h = capHechos(cap);

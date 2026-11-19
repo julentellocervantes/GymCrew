@@ -797,3 +797,13 @@ html[data-calma="si"] .pestana-central .pestana-icono, html[data-calma="si"] .pe
 @keyframes zona-cambia { from { opacity: 0; translate: 0 8px; } }
 @media (prefers-reduced-motion: reduce) { .adorno, .zona-salon::before, .zona-rueda::before, .umbral-flechas, .adorno-neonEstrella, .adorno-neonRayo, .adorno-neon777 { animation: none; } }
 html[data-calma="si"] .adorno, html[data-calma="si"] .zona-rueda::before, html[data-calma="si"] .zona-salon::before { animation: none; }
+
+/* Nai acompaña al nivel que te toca */
+.nai-compana { position: absolute; top: 2px; width: 62px; z-index: 4; pointer-events: none; animation: nai-bota 1.6s ease-in-out infinite; filter: drop-shadow(0 4px 4px rgba(0,0,0,.35)); }
+.nai-compana .nai { width: 62px; }
+.nai-compana.izq { right: calc(50% + 46px); }
+.nai-compana.der { left: calc(50% + 46px); }
+.nai-compana.der .nai { transform: scaleX(-1); }
+@keyframes nai-bota { 50% { translate: 0 -6px; } }
+@media (prefers-reduced-motion: reduce) { .nai-compana { animation: none; } }
+html[data-calma="si"] .nai-compana { animation: none; }
