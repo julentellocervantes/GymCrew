@@ -280,3 +280,12 @@ Ningún ejercicio usa algo que aún no se ha explicado en un nivel anterior. Par
 
 ## Portada (v48)
 Al abrir la app aparece una portada (cartas que se reparten, título "Tapete" y «Toca para entrar»). Al tocarla (o con Enter/Espacio) se abre el menú con una transición suave: las cartas salen volando y la portada se disuelve. Se salta al volver de un enlace de acceso o de un pago, con `?sinportada` y en navegadores automatizados; `?portada` la fuerza.
+
+## Movimiento al navegar (v49)
+- **Ondas** doradas donde tocas (botones, tarjetas, pestañas).
+- **Apertura circular**: al abrir un juego o una pantalla nueva, se despliega desde el punto que tocaste (máscara, no bloquea toques).
+- **Aparecer al hacer scroll**: lo que queda fuera de pantalla entra con un rebote al llegar a ello (`js/movimiento.js`); no se usa dentro de los ejercicios ni en los nodos del mapa.
+- **Pestañas Juegos/Practicar**: la píldora se desliza y el panel entra por el lado.
+- Tarjetas que se hunden al pulsar y se elevan con el ratón; el icono de la barra inferior rebota al activarse.
+- Con scroll (navegadores compatibles): sombra en la cabecera, el héroe se aleja y el fondo se mueve en paralaje.
+- Todo se apaga con «Menos movimiento» o `prefers-reduced-motion`.

@@ -493,7 +493,10 @@ function pintar(entrada, ...nodos) {
   raiz.dataset.entrada = entrada;
   raiz.dataset.oro = nodos.some((n) => n && n.querySelector && (n.matches('[data-oro="1"]') || n.querySelector('[data-oro="1"]'))) ? 'si' : 'no';
   // Se descartan los null: replaceChildren los escribiría como el texto "null"
+  if (entrada === 'adelante' && typeof origenZoom === 'function') origenZoom(raiz);
   raiz.replaceChildren(...nodos.filter(Boolean));
+  // aparición con scroll solo en pantallas de menú, nunca dentro de un ejercicio
+  if (typeof revelarScroll === 'function' && entrada !== 'ejercicio' && entrada !== 'sin' && !raiz.querySelector('.cabecera-leccion')) requestAnimationFrame(() => revelarScroll(raiz));
   if (typeof window.scrollTo === 'function') window.scrollTo(0, entrada === 'sin' ? y : 0);
   // Foco para teclado y lectores de pantalla: al responder pasa a "Continuar"; en una pantalla nueva, a su contenido
   const destino = entrada === 'sin' ? raiz.querySelector('.feedback .boton') : raiz.querySelector('main');
@@ -752,10 +755,22 @@ function mostrarInicio(entrada = 'fundido') {
   );
   const bloqueHoy = el('div', { class: 'bloque-hoy' }, heroInicio(), el('div', { class: 'resumen' }, tarjetaMeta, tarjetaRango), typeof tarjetaReto === 'function' ? tarjetaReto(() => mostrarInicio('sin')) : null);
   const primeros = tarjetaPrimerosPasos();
+  let panelActual = null;
   const elegir = (cual) => {
+    const cambia = panelActual !== null && panelActual !== cual;
+    const hacia = cual === 'mas' ? 'der' : 'izq';
     panelJuegos.hidden = cual !== 'juegos';
     panelMas.hidden = cual !== 'mas';
     [['juegos', pestJuegos], ['mas', pestMas]].forEach(([k, b]) => { b.classList.toggle('activa', k === cual); b.setAttribute('aria-selected', String(k === cual)); b.tabIndex = k === cual ? 0 : -1; });
+    pestanasInicio.style.setProperty('--pos', cual === 'mas' ? '1' : '0');
+    if (cambia && !(typeof sinMovimiento === 'function' && sinMovimiento())) {
+      const p = cual === 'mas' ? panelMas : panelJuegos;
+      p.classList.remove('panel-der', 'panel-izq');
+      void p.offsetWidth;
+      p.classList.add('panel-' + hacia);
+      if (typeof revelarScroll === 'function') requestAnimationFrame(() => revelarScroll(raiz));
+    }
+    panelActual = cual;
   };
   const pestJuegos = el('button', { class: 'pestana-inicio', id: 'pestana-juegos', type: 'button', role: 'tab', 'aria-controls': 'panel-juegos', onclick: () => elegir('juegos') }, 'Juegos');
   const pestMas = el('button', { class: 'pestana-inicio', id: 'pestana-mas', type: 'button', role: 'tab', 'aria-controls': 'panel-mas', onclick: () => elegir('mas') }, 'Practicar', (nPend + nErr) > 0 || (plan && plan.ids.length >= 5) ? el('span', { class: 'punto-aviso', 'aria-label': 'Tienes cosas pendientes' }) : null);

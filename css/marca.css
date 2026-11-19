@@ -524,3 +524,57 @@ html[data-calma="si"] #app[data-oro="si"] * { animation: none !important; }
 .portada:focus-visible .por-toca { outline: 2px solid var(--laton); outline-offset: 6px; border-radius: 8px; }
 @media (prefers-reduced-motion: reduce) { .portada, .portada.saliendo { transition: opacity .3s; scale: 1; filter: none; } .por-carta, .por-letra, .por-sub, .por-toca, .por-nota, .por-luz, .por-palos span, .por-anillo { animation: none; } .portada.saliendo .por-carta { translate: 0 0; } }
 html[data-calma="si"] .portada, html[data-calma="si"] .portada.saliendo { transition: opacity .3s; scale: 1; filter: none; }
+
+/* ===== Movimiento al navegar ===== */
+/* Onda dorada al tocar */
+.onda { position: fixed; z-index: 900; width: 20px; height: 20px; margin: -10px 0 0 -10px; border-radius: 50%; pointer-events: none; border: 2px solid rgba(243, 182, 63, .9); background: rgba(243, 182, 63, .28); animation: onda .6s ease-out forwards; }
+@keyframes onda { from { scale: .3; opacity: 1; } to { scale: 4.2; opacity: 0; } }
+
+/* Abrir una pantalla: se despliega en círculo desde donde tocaste */
+@property --r { syntax: '<percentage>'; inherits: false; initial-value: 170%; }
+#app[data-entrada="adelante"] { animation: circulo .6s cubic-bezier(.2, .75, .2, 1) backwards; -webkit-mask-image: radial-gradient(circle at var(--ox, 50%) var(--oy, 38%), #000 var(--r), transparent calc(var(--r) + 3%)); mask-image: radial-gradient(circle at var(--ox, 50%) var(--oy, 38%), #000 var(--r), transparent calc(var(--r) + 3%)); }
+#app[data-entrada="adelante"] > :not(.confeti) { animation: entra-zoom .55s var(--suave) backwards; }
+@keyframes circulo { from { --r: 0%; } to { --r: 170%; } }
+@keyframes entra-zoom { from { opacity: 0; } }
+
+/* Aparecer al hacer scroll */
+.rv { opacity: 0; translate: var(--rx, 0px) 30px; scale: .96; }
+.rv.rv-ok { opacity: 1; translate: 0 0; scale: 1; transition: opacity .5s ease var(--rd, 0ms), translate .6s var(--rebote) var(--rd, 0ms), scale .6s var(--rebote) var(--rd, 0ms); }
+
+/* Pestañas del inicio: la píldora se desliza y el panel entra por el lado */
+.pestanas-inicio { position: relative; isolation: isolate; }
+.pestanas-inicio::before { content: ""; position: absolute; z-index: -1; top: 5px; bottom: 5px; left: 5px; width: calc((100% - 16px) / 2); border-radius: 12px; background: var(--pano); box-shadow: 0 2px 0 var(--pano-osc), inset 0 0 0 1.5px var(--laton); translate: calc(var(--pos, 0) * (100% + 6px)) 0; transition: translate .4s var(--rebote); }
+.pestanas-inicio .pestana-inicio.activa { background: transparent; box-shadow: none; }
+.pestana-inicio:not(.activa):active { scale: .96; }
+.panel-der { animation: panel-der .45s var(--suave) backwards; }
+.panel-izq { animation: panel-izq .45s var(--suave) backwards; }
+@keyframes panel-der { from { opacity: 0; translate: 40px 0; } }
+@keyframes panel-izq { from { opacity: 0; translate: -40px 0; } }
+
+/* Respuesta al pulsar y al pasar el ratón */
+.juego, .repaso, .nodo, .articulo, .opcion { transition: scale .18s var(--rebote), translate .25s var(--suave), box-shadow .25s; }
+.juego:active, .repaso:active, .articulo:active { scale: .97; }
+@media (hover: hover) { .juego:hover, .repaso:hover, .articulo:hover { translate: 0 -3px; } }
+
+/* La barra inferior: el icono rebota al activarse */
+.pestana.activa .pestana-icono { animation: pestana-salto .55s var(--rebote); }
+@keyframes pestana-salto { 0% { translate: 0 6px; scale: .8; } 50% { translate: 0 -8px; scale: 1.3; } 100% { translate: 0 -2px; scale: 1.18; } }
+
+/* Con scroll: cabecera con sombra, héroe que se aleja y fondo en paralaje (solo navegadores que lo soportan) */
+@supports (animation-timeline: scroll()) {
+  .cabecera { animation: cab-sombra linear both; animation-timeline: scroll(root); animation-range: 0 90px; }
+  @keyframes cab-sombra { to { box-shadow: 0 10px 22px rgba(5, 30, 36, .35); } }
+  .hero-tapete { animation: hero-sale linear both; animation-timeline: view(); animation-range: exit 0% exit 90%; }
+  @keyframes hero-sale { to { translate: 0 22px; scale: .94; opacity: .35; } }
+  .decor { animation: decor-sube linear both; animation-timeline: scroll(root); }
+  @keyframes decor-sube { to { translate: 0 -120px; } }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rv { opacity: 1; translate: 0 0; scale: 1; }
+  #app[data-entrada="adelante"], #app[data-entrada="adelante"] > :not(.confeti) { animation: fundido .2s ease-out; }
+  .onda { display: none; }
+}
+html[data-calma="si"] .onda { display: none; }
+/* Dentro de un nivel (con cabecera de lección) se mantiene la entrada simple: nada cambia de tamaño mientras respondes */
+#app[data-entrada="adelante"]:has(.cabecera-leccion) { animation: none; -webkit-mask-image: none; mask-image: none; }
+#app[data-entrada="adelante"]:has(.cabecera-leccion) > :not(.confeti) { animation: entra-der 0.42s var(--suave) backwards; }
