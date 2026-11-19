@@ -235,12 +235,93 @@ function mostrarMedalla(cap) {
   if (ultima) sonido('perfecto', 700);
 }
 
+// ---------- zonas: cada piso es un ambiente distinto del casino ----------
+const SV = (v, cuerpo) => `<svg viewBox="${v || '0 0 60 60'}" aria-hidden="true" focusable="false">${cuerpo}</svg>`;
+const DECOR = {
+  pila: (a, b, c) => SV('', [c, b, a].map((col, i) => `<ellipse cx="30" cy="${46 - i * 10}" rx="20" ry="7.5" fill="${col}" stroke="#0004" stroke-width="1.5"/><path d="M12 ${46 - i * 10} v-4 a20 7.5 0 0 1 36 0 v4" fill="${col}"/><ellipse cx="30" cy="${42 - i * 10}" rx="20" ry="7.5" fill="${col}" stroke="#0004" stroke-width="1.5"/><ellipse cx="30" cy="${42 - i * 10}" rx="13" ry="4.5" fill="none" stroke="#fff" stroke-width="2" stroke-dasharray="4 3" opacity=".85"/>`).join('')),
+  dado: () => SV('', `<g transform="rotate(14 30 30)"><rect x="9" y="9" width="42" height="42" rx="9" fill="#fffdf5" stroke="#8a8a80" stroke-width="2.5"/><g fill="#1b1b1b"><circle cx="21" cy="21" r="4"/><circle cx="39" cy="21" r="4"/><circle cx="30" cy="30" r="4"/><circle cx="21" cy="39" r="4"/><circle cx="39" cy="39" r="4"/></g></g>`),
+  abanico: () => SV('', `<g transform="rotate(-24 30 54)"><rect x="14" y="8" width="30" height="44" rx="4" fill="#fffdf5" stroke="#555" stroke-width="2"/><text x="19" y="22" font-size="13" font-weight="700" fill="#c0392b">K</text><text x="19" y="35" font-size="11" fill="#c0392b">♥</text></g><g transform="rotate(0 30 54)"><rect x="15" y="6" width="30" height="44" rx="4" fill="#fffdf5" stroke="#555" stroke-width="2"/><text x="20" y="20" font-size="13" font-weight="700" fill="#1b1b1b">A</text><text x="20" y="33" font-size="11" fill="#1b1b1b">♠</text></g><g transform="rotate(24 30 54)"><rect x="16" y="8" width="30" height="44" rx="4" fill="#fffdf5" stroke="#555" stroke-width="2"/><text x="21" y="22" font-size="13" font-weight="700" fill="#c0392b">Q</text><text x="21" y="35" font-size="11" fill="#c0392b">♦</text></g>`),
+  foco: () => SV('0 0 60 90', `<path d="M24 0 h12 l-3 10 h-6z" fill="#333"/><path d="M26 10 h8 l22 80 h-52z" fill="#fff3c4" fill-opacity=".18"/><ellipse cx="30" cy="12" rx="8" ry="4" fill="#fff3c4"/>`),
+  barril: () => SV('', `<path d="M14 8 Q4 30 14 52 H46 Q56 30 46 8Z" fill="#8a5a2b" stroke="#3b2210" stroke-width="2.5"/><path d="M11 18 H49 M8 30 H52 M11 42 H49" stroke="#3b2210" stroke-width="3.5" opacity=".75"/><path d="M22 8 Q16 30 22 52 M38 8 Q44 30 38 52" fill="none" stroke="#3b2210" stroke-width="1.4" opacity=".6"/>`),
+  oros: () => SV('', `<circle cx="30" cy="30" r="24" fill="#f3b63f" stroke="#a86a00" stroke-width="3"/><circle cx="30" cy="30" r="16" fill="none" stroke="#a86a00" stroke-width="2"/><text x="30" y="37" text-anchor="middle" font-size="20" font-weight="700" font-family="Georgia,serif" fill="#a86a00">1</text>`),
+  copas: () => SV('', `<path d="M14 8 H46 Q48 30 34 36 V46 H42 V52 H18 V46 H26 V36 Q12 30 14 8Z" fill="#c0392b" stroke="#6d140a" stroke-width="2.5" stroke-linejoin="round"/><path d="M18 14 H42" stroke="#fff" stroke-opacity=".5" stroke-width="3" stroke-linecap="round"/>`),
+  lampara: () => SV('0 0 60 70', `<path d="M30 0 V20" stroke="#222" stroke-width="2"/><path d="M12 42 Q14 22 30 20 Q46 22 48 42Z" fill="#2c3e2c" stroke="#111" stroke-width="2"/><ellipse cx="30" cy="42" rx="18" ry="4" fill="#ffd57a"/><path d="M14 46 L2 70 H58 L46 46Z" fill="#ffd57a" fill-opacity=".22"/>`),
+  arana: () => SV('0 0 80 80', `<path d="M40 0 V14" stroke="#c9a14a" stroke-width="2.5"/><path d="M8 44 Q14 24 40 18 Q66 24 72 44" fill="none" stroke="#f3b63f" stroke-width="3.5" stroke-linecap="round"/><path d="M40 18 V54" stroke="#f3b63f" stroke-width="3"/><g fill="#fff8d6"><path d="M8 44 v6 l-3 6 6 0z"/><path d="M26 34 v8 l-3 8 6 0z"/><path d="M40 54 v6 l-4 8 8 0z"/><path d="M54 34 v8 l-3 8 6 0z"/><path d="M72 44 v6 l-3 6 6 0z"/></g><g fill="#ffe08a"><circle cx="8" cy="40" r="3"/><circle cx="26" cy="29" r="3"/><circle cx="40" cy="14" r="3"/><circle cx="54" cy="29" r="3"/><circle cx="72" cy="40" r="3"/></g>`),
+  flauta: () => SV('0 0 40 70', `<path d="M10 2 H30 Q31 24 24 32 Q20 36 20 40 V58 H28 V64 H12 V58 H20 V40 Q20 36 16 32 Q9 24 10 2Z" fill="#ffe08a" fill-opacity=".9" stroke="#e6ecf8" stroke-width="2.2" stroke-linejoin="round"/><g fill="#fff"><circle cx="17" cy="20" r="1.6"/><circle cx="23" cy="13" r="1.3"/><circle cx="21" cy="26" r="1.1"/></g>`),
+  neonEstrella: () => SV('', `<path d="M30 6 L36 23 L54 24 L40 35 L45 53 L30 43 L15 53 L20 35 L6 24 L24 23Z" fill="none" stroke="#ff4fd8" stroke-width="3.5" stroke-linejoin="round"/>`),
+  neonRayo: () => SV('', `<path d="M34 4 L14 34 H28 L22 56 L46 24 H31Z" fill="none" stroke="#3df5ff" stroke-width="3.5" stroke-linejoin="round"/>`),
+  neon777: () => SV('0 0 80 44', `<rect x="3" y="3" width="74" height="38" rx="9" fill="none" stroke="#ff4fd8" stroke-width="3"/><text x="40" y="33" text-anchor="middle" font-size="27" font-weight="900" font-family="Georgia,serif" fill="none" stroke="#ffe14d" stroke-width="2.4">777</text>`),
+  moneda: () => SV('', `<circle cx="30" cy="30" r="22" fill="#ffd54a" stroke="#a86a00" stroke-width="3"/><circle cx="30" cy="30" r="15" fill="none" stroke="#a86a00" stroke-width="2" stroke-dasharray="3 3"/><path d="M30 20 V40 M25 24 Q30 19 35 24 Q35 29 30 30 Q25 31 25 36 Q30 41 35 36" fill="none" stroke="#a86a00" stroke-width="2.4" stroke-linecap="round"/>`),
+  bola: () => SV('', `<circle cx="30" cy="30" r="9" fill="#fff" stroke="#bbb" stroke-width="2"/><circle cx="27" cy="27" r="3" fill="#fff" opacity=".9"/>`),
+};
+
+// Cada zona: ambiente (clase de CSS), adornos a los lados (x en %, y en % de la altura del piso, lado) y la escalera que lleva a ella
+const ZONAS = {
+  c1: { clase: 'zona-tapete', puerta: 'Entrada del casino', adornos: [['pila', ['#d93a2a', '#2c5fa8', '#1f7a4d'], 'izq', 12, 18], ['dado', [], 'der', 6, 38], ['pila', ['#f3b63f', '#d93a2a', '#222'], 'der', 10, 62], ['dado', [], 'izq', 4, 84]] },
+  c2: { clase: 'zona-terciopelo', puerta: 'Cortinas de la sala roja', adornos: [['foco', [], 'izq', 14, 6], ['abanico', [], 'der', 8, 30], ['foco', [], 'der', 18, 52], ['abanico', [], 'izq', 6, 74]] },
+  c3: { clase: 'zona-sociedad', puerta: 'Puerta de la sociedad', adornos: [['lampara', [], 'izq', 14, 4], ['barril', [], 'der', 8, 34], ['oros', [], 'izq', 6, 58], ['copas', [], 'der', 10, 80], ['lampara', [], 'der', 20, 8]] },
+  c4: { clase: 'zona-salon', puerta: 'Salón privado', adornos: [['arana', [], 'izq', 22, 2], ['flauta', [], 'der', 10, 34], ['arana', [], 'der', 26, 50], ['flauta', [], 'izq', 8, 78]] },
+  c5: { clase: 'zona-neon', puerta: 'Pasillo de neones', adornos: [['neonEstrella', [], 'izq', 10, 10], ['neon777', [], 'der', 6, 34], ['neonRayo', [], 'izq', 8, 60], ['neonEstrella', [], 'der', 8, 82]] },
+  c6: { clase: 'zona-rueda', puerta: 'Gran salón', adornos: [['moneda', [], 'izq', 10, 14], ['bola', [], 'der', 20, 34], ['moneda', [], 'der', 8, 58], ['moneda', [], 'izq', 6, 84]] },
+};
+
+function adornosDe(cap) {
+  const z = ZONAS[cap.id];
+  const caja = el('div', { class: 'adornos', 'aria-hidden': 'true' });
+  z.adornos.forEach(([tipo, args, lado, x, y], k) => {
+    const a = document.createElement('span');
+    a.className = 'adorno adorno-' + tipo;
+    a.style.cssText = `${lado === 'izq' ? 'left' : 'right'}:${x}px;top:${y}%;--k:${k}`;
+    a.innerHTML = DECOR[tipo](...args);
+    caja.append(a);
+  });
+  return caja;
+}
+
+// La escalera que une dos zonas: se nota que cambias de ambiente
+function umbralDe(cap, i, libre) {
+  const z = ZONAS[cap.id];
+  return el(
+    'div',
+    { class: 'umbral' + (libre ? '' : ' cerrado'), 'aria-hidden': 'true' },
+    el('span', { class: 'umbral-escalera' }),
+    el('span', { class: 'umbral-texto' }, libre ? (i === 0 ? z.puerta : `Subes al piso ${i + 1}`) : `Puerta cerrada · piso ${i + 1}`),
+    el('span', { class: 'umbral-flechas' }, '▲ ▲ ▲')
+  );
+}
+
 // ---------- un aviso corto arriba (reemplaza al globo del personaje) ----------
 function avisarCampana(texto) {
   document.querySelectorAll('.camp-aviso').forEach((n) => n.remove());
   const a = el('div', { class: 'camp-aviso', role: 'status' }, texto);
   document.body.append(a);
   setTimeout(() => a.remove(), 2800);
+}
+
+// El rótulo de arriba cambia al nombre de la zona que tienes en pantalla mientras subes o bajas
+let quitarSeguirZona = null;
+function seguirZona(info) {
+  if (quitarSeguirZona) quitarSeguirZona();
+  const rotulo = info.querySelector('.torre-zona');
+  let esperando = false, ultima = null;
+  const mirar = () => {
+    esperando = false;
+    if (!rotulo.isConnected) return quitarSeguirZona && quitarSeguirZona();
+    const mitad = window.innerHeight * 0.45;
+    let zona = null;
+    for (const pz of document.querySelectorAll('.torre .piso')) { const r = pz.getBoundingClientRect(); if (r.top <= mitad && r.bottom >= mitad) { zona = pz; break; } }
+    const cima = document.querySelector('.torre .cima');
+    const nombre = zona ? zona.dataset.nombre : cima && cima.getBoundingClientRect().top <= mitad ? 'La cima' : null;
+    if (!nombre || nombre === ultima) return;
+    ultima = nombre;
+    rotulo.textContent = nombre;
+    info.style.setProperty('--zona', zona ? getComputedStyle(zona).getPropertyValue('--acento') : '#f3b63f');
+    rotulo.classList.remove('cambia'); void rotulo.offsetWidth; rotulo.classList.add('cambia');
+  };
+  const alScroll = () => { if (!esperando) { esperando = true; requestAnimationFrame(mirar); } };
+  window.addEventListener('scroll', alScroll, { passive: true });
+  quitarSeguirZona = () => { window.removeEventListener('scroll', alScroll); quitarSeguirZona = null; };
+  mirar();
 }
 
 // ---------- la torre: un único mapa que se sube de abajo (piso 1) a la cima ----------
@@ -337,6 +418,7 @@ function mostrarCampana(entrada = 'fundido', recientes = [], enfocar = null) {
     const banner = el(
       'div',
       { class: 'piso-entrada' },
+      el('span', { class: 'piso-numero', 'aria-hidden': 'true' }, String(i + 1)),
       el('button', { class: 'camp-presenta', type: 'button', 'aria-label': `Ver la presentación de ${p.nombre}`, disabled: !libre || null, onclick: () => mostrarEscena(cap, cap.presentacion, () => mostrarCampana('atras', [], cap.id), { boton: 'Volver a la torre' }) }, avatarPersonaje(p, 'mediano' + (libre ? '' : ' oculto'))),
       el('div', { class: 'piso-texto' },
         el('span', { class: 'piso-cinta' }, cap.lugar),
@@ -347,9 +429,11 @@ function mostrarCampana(entrada = 'fundido', recientes = [], enfocar = null) {
     );
     return el(
       'section',
-      { class: 'piso' + (libre ? '' : ' bloqueado') + (hecho ? ' completo' : '') + (i === idxActual ? ' actual' : ''), 'data-piso': cap.id, style: `--acento:${p.color}`, 'aria-label': `${cap.lugar}: ${cap.titulo}` },
+      { class: 'piso ' + ZONAS[cap.id].clase + (libre ? '' : ' bloqueado') + (hecho ? ' completo' : '') + (i === idxActual ? ' actual' : ''), 'data-piso': cap.id, 'data-nombre': `Piso ${i + 1} · ${cap.titulo}`, style: `--acento:${p.color}`, 'aria-label': `${cap.lugar}: ${cap.titulo}` },
+      umbralDe(cap, i, libre),
       banner,
-      el('div', { class: 'camino' }, nodos.map(crearNodo))
+      el('div', { class: 'camino' }, nodos.map(crearNodo)),
+      adornosDe(cap)
     );
   };
 
@@ -371,7 +455,7 @@ function mostrarCampana(entrada = 'fundido', recientes = [], enfocar = null) {
   const info = el(
     'div',
     { class: 'torre-info' },
-    el('div', { class: 'torre-datos' }, el('strong', {}, completa ? 'En la cima' : `Piso ${idxActual + 1} de ${CAMPANA.length}`), el('span', {}, `${hechos}/${total} pasos · ${medallas()} medallas`)),
+    el('div', { class: 'torre-datos' }, el('strong', { class: 'torre-zona' }, completa ? 'En la cima' : `Piso ${idxActual + 1} · ${CAMPANA[idxActual].titulo}`), el('span', {}, `${hechos}/${total} pasos · ${medallas()} medallas`)),
     el('button', { class: 'torre-pos', type: 'button', onclick: irAMiPosicion }, 'Mi posición')
   );
 
@@ -381,6 +465,7 @@ function mostrarCampana(entrada = 'fundido', recientes = [], enfocar = null) {
     el('main', { class: 'contenido torre-pantalla' }, info, el('div', { class: 'torre' }, el('div', { class: 'torre-cielo', 'aria-hidden': 'true' }), pisos, cima))
   );
   alTeclear = (e) => { if (e.key === 'Escape') cerrarHoja(); };
+  seguirZona(info);
   // empiezas abajo y subes: la pantalla se coloca en tu posición actual
   setTimeout(() => {
     const dest = (enfocar && document.querySelector(`.piso[data-piso="${enfocar}"] .nodo.actual`)) || document.querySelector('.nodo.actual') || (completa ? document.querySelector('.cima') : null);

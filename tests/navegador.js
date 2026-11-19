@@ -1099,7 +1099,8 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
     await page.getByRole('button', { name: 'Siguiente' }).click();
     await page.getByRole('button', { name: '¡A subir!' }).click();
     await page.waitForSelector('.torre');
-    ok(await page.locator('.torre .piso.bloqueado').count() === 4 && (await page.locator('.torre-info').innerText()).includes('Piso 2 de 6'), 'la torre muestra que estás en el piso 2');
+    await page.waitForFunction(() => (document.querySelector('.torre-info')||{}).innerText?.includes('Piso 2'), null, { timeout: 4000 }).catch(() => {});
+    ok(await page.locator('.torre .piso.bloqueado').count() === 4 && (await page.locator('.torre-info').innerText()).includes('Piso 2'), 'la torre muestra que estás en el piso 2');
   }
 
   ok(fallos.length === 0, 'sin errores de consola: ' + fallos.join(' | '));

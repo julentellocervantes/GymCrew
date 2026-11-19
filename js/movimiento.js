@@ -32,7 +32,7 @@
     if (quieto() || typeof IntersectionObserver !== 'function') return;
     const alto = window.innerHeight || 800;
     const lista = Array.from(raiz.querySelectorAll('main > *, .lista-pr > li, .articulos > *, #panel-juegos .juego, .ajuste-grupo, details, section'))
-      .filter((n) => !n.hidden && !n.closest('[hidden]') && !n.querySelector('.rv') && n.getBoundingClientRect().top > alto - 30 && n.getBoundingClientRect().height > 20);
+      .filter((n) => !n.closest('.torre') && !n.hidden && !n.closest('[hidden]') && !n.querySelector('.rv') && n.getBoundingClientRect().top > alto - 30 && n.getBoundingClientRect().height > 20);
     if (!lista.length) return;
     let lote = 0, aviso = 0;
     obs = new IntersectionObserver((entradas) => {

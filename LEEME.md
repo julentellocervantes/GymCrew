@@ -293,9 +293,10 @@ Al abrir la app aparece una portada (cartas que se reparten, título "Tapete" y 
 ## Chuletas y calculadoras animadas (v50)
 Al abrir o cerrar un bloque de la pestaña Útil, su altura se anima (`alternarBloque` en js/util.js); el contenido entra escalonado, el icono da un saltito y la tarjeta se resalta en dorado mientras está abierta. Con «Menos movimiento» cambia al instante.
 
-## Campaña «La torre del casino» (v51–52)
+## Campaña «La torre del casino» (v51–53)
 - **Botón central** de la barra (montaña con bandera, dorado y con brillo) que abre la campaña.
 - **Un único mapa continuo, en forma de torre**: empiezas abajo (piso 1) y subes hasta la cima; el cielo se va haciendo noche y hay estrellas arriba. Una barra pegajosa muestra el piso y los pasos, con «Mi posición» para volver a donde vas.
 - **6 pisos, uno por juego, y cada personaje es un objeto del casino con cara**: Fichón (una ficha, blackjack), Valeria (la dama de corazones, póker), Iñaki (el rey de oros con txapela, mus), Lady Sofía (una copa de champán, baccarat), Turbo (una tragaperras, vídeo póker) y Don Ramiro (la ruleta, con monóculo).
 - Cada piso: banner con su personaje (pulsa su cara para repetir la presentación), 7 niveles (los primeros del curso; el progreso se comparte con el mapa normal), cofres tras el 3 y el 6, un **jefe** que mezcla preguntas del piso (+10 fichas), un gran cofre y una **medalla** (+15 fichas; +40 en la cima). El jefe abre el piso siguiente. Los pisos cerrados se ven pero apagados.
+- **Cada piso es una zona distinta** (v53): tapete verde con fichas y dados, sala roja de terciopelo con focos, sociedad de madera con barril y lámparas, salón dorado con cortinas y copas, pasillo de neones parpadeantes y gran salón con una ruleta gigante girando. Cada una tiene su camino propio, adornos flotantes y una **escalera con flechas** ("Subes al piso N") al cambiar; el rótulo de arriba cambia de zona mientras haces scroll.
 - Datos en `data/campana.js` (textos, personajes, cofres); lógica y pantallas en `js/campana.js`; los personajes son SVG dibujados por código (`PERSONAJES_SVG`). Para añadir un piso: copia un capítulo, cambia `curso` y elige un `tipo` de personaje; `validar.js` comprueba que existan los niveles.
