@@ -1042,6 +1042,24 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
   ok(ancho <= 320, 'sin scroll horizontal en 320 px: ' + ancho);
   await foto('8-inicio-320');
 
+  // 9) Portada: al abrir la app hay que tocar la pantalla para entrar al menú
+  {
+    const base = page.url().split('?')[0].split('#')[0];
+    const pp = await ctx.newPage();
+    await pp.goto(base + '?portada');
+    await pp.waitForSelector('#portada');
+    ok(await pp.locator('#app').evaluate((n) => n.children.length === 0), 'con la portada aún no se ve el menú');
+    ok(await pp.locator('#portada').getAttribute('role') === 'button', 'la portada es un botón accesible');
+    await pp.keyboard.press('Enter');
+    await pp.waitForSelector('.bloque-hoy, .bienvenida');
+    await pp.waitForSelector('#portada', { state: 'detached', timeout: 4000 });
+    ok(true, 'tocar la portada abre el menú y la portada desaparece');
+    const pq = await ctx.newPage();
+    await pq.goto(base + '?sinportada');
+    ok((await pq.locator('#portada').count()) === 0, 'con ?sinportada no hay portada');
+    await pp.close(); await pq.close();
+  }
+
   ok(fallos.length === 0, 'sin errores de consola: ' + fallos.join(' | '));
   await b.close();
   console.log(`NAVEGADOR OK: ${hechos} comprobaciones`);

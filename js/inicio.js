@@ -21,8 +21,9 @@ const volvioDelEnlace = capturarEnlace();
 const vuelta = new URLSearchParams(location.search).get('vip');
 if (vuelta) history.replaceState(null, '', location.pathname);
 
-if (progreso.bienvenida || volvioDelEnlace || vuelta) mostrarInicio('fundido');
-else mostrarBienvenida();
+const abrirApp = () => { if (progreso.bienvenida || volvioDelEnlace || vuelta) mostrarInicio('fundido'); else mostrarBienvenida(); };
+if (volvioDelEnlace || vuelta) abrirApp();
+else mostrarPortada(abrirApp); // la portada espera un toque y después abre el menú con una transición suave
 
 if (nubeActiva() && (volvioDelEnlace || vuelta)) {
   const aviso = vuelta === 'cancelado' ? 'Has cancelado el pago. No se ha cobrado nada.' : vuelta === 'ok' ? '¡Pago recibido! En unos segundos se activa tu VIP.' : 'Sesión iniciada.';

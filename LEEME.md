@@ -277,3 +277,6 @@ Ningún ejercicio usa algo que aún no se ha explicado en un nivel anterior. Par
 - **Pantalla de victoria**: título tipo letrero con letras que caen, tarjetas de XP y precisión que cuentan, avisos en píldoras.
 - **Cofre**: SVG propio; se sacude, la tapa se abre con rayos de luz, saltan monedas y los premios entran uno a uno.
 - **Sonidos nuevos** (Web Audio, sin archivos): `estrella1-3`, `redoble`, `perfecto`, `cofreSacude`, `cofreAbre`, `monedas`, `desbloqueo`; con vibración asociada.
+
+## Portada (v48)
+Al abrir la app aparece una portada (cartas que se reparten, título "Tapete" y «Toca para entrar»). Al tocarla (o con Enter/Espacio) se abre el menú con una transición suave: las cartas salen volando y la portada se disuelve. Se salta al volver de un enlace de acceso o de un pago, con `?sinportada` y en navegadores automatizados; `?portada` la fuerza.
