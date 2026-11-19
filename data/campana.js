@@ -1,4 +1,4 @@
-// CAMPAÑA «La ruta del casino»: seis capítulos, uno por juego. Cada capítulo reutiliza los primeros niveles del curso
+// CAMPAÑA «La torre del casino»: seis pisos (capítulos), uno por juego, en un único mapa que se sube. Cada capítulo reutiliza los primeros niveles del curso
 // (así no hay contenido nuevo que verificar), con un personaje que te lo presenta, cofres de recompensa y un jefe final
 // que mezcla preguntas de todo el capítulo.
 //   niveles: cuántos niveles del curso entran (desde el primero)
@@ -6,12 +6,12 @@
 //   frases:  una por nivel, lo que dice el personaje al elegirlo
 const CAMPANA = [
   {
-    id: 'c1', curso: 'blackjack', titulo: 'El tapete verde', lugar: 'Casino Aurora · Mesa 1',
-    personaje: { id: 'rufino', nombre: 'Rufino', rol: 'Crupier veterano', color: '#1f7a4d', piel: '#f0c59a', pelo: '#9aa3a8', rasgo: 'bigote', ropa: 'chaleco' },
+    id: 'c1', curso: 'blackjack', titulo: 'El tapete verde', lugar: 'Piso 1 · Planta baja',
+    personaje: { id: 'rufino', tipo: 'ficha', nombre: 'Fichón', rol: 'Ficha veterana', color: '#1f7a4d' },
     presentacion: [
-      '¡Bienvenido a la mesa uno! Soy Rufino. Llevo treinta años repartiendo cartas y no he visto a nadie perder la calma si sabe las cuentas.',
-      'Aquí empieza todo: el blackjack es el mejor sitio para aprender a pensar con números. Nada de suerte, solo decisiones.',
-      'Yo te enseño, tú juegas. Y al final del capítulo te espera una prueba. ¿Empezamos?',
+      '¡Bienvenido a la planta baja! Soy Fichón, la ficha más veterana del casino. Llevo treinta años rodando por esta mesa y no he visto a nadie perder la calma si sabe las cuentas.',
+      'Aquí empieza la subida: el blackjack es el mejor sitio para aprender a pensar con números. Nada de suerte, solo decisiones.',
+      'Yo te enseño, tú juegas. Al final del piso te espera una prueba para poder subir. ¿Empezamos?',
     ],
     niveles: 7, cofres: [3, 6],
     frases: [
@@ -23,15 +23,15 @@ const CAMPANA = [
       'Las manos blandas tienen un as que cambia de valor. Cuidado.',
       'Último escalón. Aquí empieza la cuenta de cartas.',
     ],
-    jefe: 'Mi prueba final: todo lo que hemos visto, mezclado. Sin red.',
-    final: ['¡Muy bien! Has dejado la mesa uno como una moneda nueva.', 'Te regalo esta medalla. Y un consejo: la próxima mesa tiene humo y faroles.'],
+    jefe: 'La prueba para subir de piso: todo lo que hemos visto, mezclado. Sin red.',
+    final: ['¡Muy bien! Has dejado la planta baja como una moneda nueva.', 'Te regalo esta medalla. Y un consejo: en el piso de arriba hay humo y faroles.'],
     medalla: 'Medalla del Tapete',
   },
   {
-    id: 'c2', curso: 'poker', titulo: 'La sala roja', lugar: 'Casino Aurora · Sala de póker',
-    personaje: { id: 'valeria', nombre: 'Valeria', rol: 'Jugadora profesional', color: '#c0392b', piel: '#e2a77c', pelo: '#2b1d17', rasgo: 'gafas', ropa: 'americana' },
+    id: 'c2', curso: 'poker', titulo: 'La sala roja', lugar: 'Piso 2 · Sala de póker',
+    personaje: { id: 'valeria', tipo: 'dama', nombre: 'Valeria', rol: 'Dama de corazones', color: '#c0392b' },
     presentacion: [
-      'Ah, otro recién llegado. Soy Valeria Ibáñez, y sí, dicen que mis gafas no se las quito ni para dormir.',
+      'Ah, otro recién llegado. Soy Valeria, la dama de corazones. Dicen que nadie ha conseguido leerme la mano.',
       'En el póker no juegas contra la casa: juegas contra personas. Por eso importa más lo que haces que lo que te toca.',
       'Te enseñaré a leer una mano, a contar tus opciones y a saber cuándo retirarte. Empieza.',
     ],
@@ -45,17 +45,17 @@ const CAMPANA = [
       'Las pot odds: cuándo pagar y cuándo no.',
       'Ciegas y botón. Con esto ya hablas el idioma de la mesa.',
     ],
-    jefe: 'Una mano final contra mí. Piensa antes de apostar.',
-    final: ['No está nada mal. Has jugado como quien se lo ha currado.', 'Te dejo mi medalla. La próxima mesa no tiene fichas: tiene piedras y mucha picardía.'],
+    jefe: 'Una mano final contra mí. Piensa antes de apostar, y sube.',
+    final: ['No está nada mal. Has jugado como quien se lo ha currado.', 'Te dejo mi medalla. El siguiente piso no tiene fichas: tiene piedras y mucha picardía.'],
     medalla: 'Medalla de la Sala Roja',
   },
   {
-    id: 'c3', curso: 'mus', titulo: 'La sociedad', lugar: 'Sociedad gastronómica · Mesa del fondo',
-    personaje: { id: 'inaki', nombre: 'Tío Iñaki', rol: 'Maestro del mus', color: '#2c5fa8', piel: '#e6b48a', pelo: '#d8d8d8', rasgo: 'txapela', ropa: 'jersey' },
+    id: 'c3', curso: 'mus', titulo: 'La sociedad', lugar: 'Piso 3 · La sociedad',
+    personaje: { id: 'inaki', tipo: 'rey', nombre: 'Iñaki', rol: 'Rey de oros', color: '#2c5fa8' },
     presentacion: [
-      '¡Aupa! Soy Iñaki. Aquí no hay ruleta ni luces: hay cuatro amigos, una baraja y muchas señas.',
+      '¡Aupa! Soy Iñaki, el rey de oros de la baraja española. Aquí no hay ruleta ni luces: hay cuatro amigos, una baraja y muchas señas.',
       'El mus se juega en pareja, se habla poco y se miente bastante. Pero con orden, que esto es serio.',
-      'Siéntate y escucha. Te toca aprender los lances antes de que te toque el café.',
+      'Siéntate y escucha. Te toca aprender los lances antes de que llegue el café.',
     ],
     niveles: 7, cofres: [3, 6],
     frases: [
@@ -67,15 +67,15 @@ const CAMPANA = [
       'Mus y descartes: qué te quedas y qué tiras.',
       'Las piedras. Así se lleva la cuenta de verdad.',
     ],
-    jefe: 'La partida de la tarde. Pareja, tú contigo mismo.',
-    final: ['¡Eso es! Ya puedes sentarte en cualquier sociedad sin que te digan nada.', 'Anda, toma la medalla. Y ahora a la ciudad: te esperan los salones elegantes.'],
+    jefe: 'La partida de la tarde. Con tu pareja imaginaria, a por todas.',
+    final: ['¡Eso es! Ya puedes sentarte en cualquier sociedad sin que te digan nada.', 'Anda, toma la medalla. Y sigue subiendo: arriba esperan los salones elegantes.'],
     medalla: 'Medalla de la Txapela',
   },
   {
-    id: 'c4', curso: 'baccarat', titulo: 'El salón dorado', lugar: 'Gran hotel · Salón privado',
-    personaje: { id: 'sofia', nombre: 'Lady Sofía', rol: 'Anfitriona del salón', color: '#8e44ad', piel: '#f1d0b5', pelo: '#5a2a1a', rasgo: 'pendientes', ropa: 'vestido' },
+    id: 'c4', curso: 'baccarat', titulo: 'El salón dorado', lugar: 'Piso 4 · Salón privado',
+    personaje: { id: 'sofia', tipo: 'copa', nombre: 'Lady Sofía', rol: 'Copa de champán', color: '#8e44ad' },
     presentacion: [
-      'Bienvenido al salón dorado, querido. Soy Sofía. Aquí todo es elegancia, silencio y reglas que no se discuten.',
+      'Bienvenido al salón dorado, querido. Soy Sofía, la copa de champán de la casa. Aquí todo es elegancia, burbujas y reglas que no se discuten.',
       'El baccarat parece fácil porque lo es: no decides casi nada. Lo que importa es entender por qué la carta se reparte como se reparte.',
       'Aprende las reglas de la tercera carta y serás el invitado más tranquilo de la sala.',
     ],
@@ -90,14 +90,14 @@ const CAMPANA = [
       'Una mano completa, de principio a fin.',
     ],
     jefe: 'Una última mano. Sin apuntes, querido.',
-    final: ['Exquisito. Has entendido el salón mejor que muchos socios.', 'Acepta mi medalla. Abajo, en el sótano, brillan unas luces que te van a encantar.'],
+    final: ['Exquisito. Has entendido el salón mejor que muchos socios.', 'Acepta mi medalla. Arriba brillan unas luces que te van a encantar.'],
     medalla: 'Medalla del Salón Dorado',
   },
   {
-    id: 'c5', curso: 'videopoker', titulo: 'Los neones', lugar: 'Sala de máquinas · Planta baja',
-    personaje: { id: 'turbo', nombre: 'Turbo', rol: 'Técnico de las máquinas', color: '#00a8a8', piel: '#d9a074', pelo: '#1a1a1a', rasgo: 'gorra', ropa: 'mono' },
+    id: 'c5', curso: 'videopoker', titulo: 'Los neones', lugar: 'Piso 5 · Sala de máquinas',
+    personaje: { id: 'turbo', tipo: 'maquina', nombre: 'Turbo', rol: 'Tragaperras', color: '#00a8a8' },
     presentacion: [
-      '¡Eh! Soy Turbo, el que arregla estas máquinas desde que eran de palanca. Las conozco por dentro.',
+      '¡Eh! Soy Turbo, la tragaperras más veterana del casino. Desde que tenía palanca me conozco por dentro.',
       'El vídeo póker tiene truco: no es azar puro, hay una forma correcta de guardar cartas y cuesta aprenderla.',
       'Mira la tabla de pagos, juega con cabeza y la máquina te devolverá más de lo que parece.',
     ],
@@ -112,14 +112,14 @@ const CAMPANA = [
       'La escalera real. Muy difícil, muy bonita.',
     ],
     jefe: 'Una sesión completa. A ver si la máquina te saca de quicio.',
-    final: ['¡Máquina domada! Hasta se ha quedado callada.', 'Toma mi medalla. Y vete a la rueda, que Don Ramiro lleva años esperando a alguien que sepa de números.'],
+    final: ['¡Máquina domada! Hasta se ha quedado callada.', 'Toma mi medalla. Y sube a la rueda, que Don Ramiro lleva años esperando a alguien que sepa de números.'],
     medalla: 'Medalla de los Neones',
   },
   {
-    id: 'c6', curso: 'ruleta', titulo: 'La gran rueda', lugar: 'Salón principal · Mesa central',
-    personaje: { id: 'ramiro', nombre: 'Don Ramiro', rol: 'Maestro de la rueda', color: '#b8860b', piel: '#ecc7a1', pelo: '#f2f2f2', rasgo: 'monoculo', ropa: 'traje' },
+    id: 'c6', curso: 'ruleta', titulo: 'La gran rueda', lugar: 'Piso 6 · Salón principal',
+    personaje: { id: 'ramiro', tipo: 'ruleta', nombre: 'Don Ramiro', rol: 'La gran rueda', color: '#b8860b' },
     presentacion: [
-      'Pase, pase. Soy Don Ramiro. Cuarenta años girando esta rueda y le puedo asegurar una cosa: la bola no tiene memoria.',
+      'Pase, pase. Soy Don Ramiro, la ruleta. Cuarenta años girando y le puedo asegurar una cosa: la bola no tiene memoria.',
       'La ruleta es el juego más bonito y el que más mitos genera. Aquí le enseñaré lo que de verdad hay detrás: las probabilidades.',
       'Cuando termine, sabrá mirar la rueda con calma. Que es lo que hacemos los que hemos visto de todo.',
     ],
@@ -134,7 +134,7 @@ const CAMPANA = [
       'Mitos de la ruleta: aquí se acaban los cuentos.',
     ],
     jefe: 'La última mano de la noche. Con calma, joven.',
-    final: ['Magnífico. Lo ha entendido todo: la rueda, las cuentas y la calma.', 'Acaba de completar la ruta. Es usted oficialmente Campeón del Tapete.'],
+    final: ['Magnífico. Lo ha entendido todo: la rueda, las cuentas y la calma.', 'Acaba de llegar a la cima. Es usted oficialmente Campeón del Tapete.'],
     medalla: 'Campeón del Tapete',
   },
 ];

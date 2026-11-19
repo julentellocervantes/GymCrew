@@ -1060,24 +1060,24 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
     await pp.close(); await pq.close();
   }
 
-  // 10) Campaña: botón central, presentación del personaje, mapa del capítulo, jefe, medalla y siguiente capítulo
+  // 10) Campaña: botón central, la torre (un solo mapa), presentación del personaje, jefe, medalla y siguiente piso
   {
     const idsC1 = await page.evaluate(() => nivelesDe(CAMPANA[0]).map((l) => l.id));
     await inicio({ xp: 50, fichas: 20, energia: { n: 6, t: 0, dia: null }, completadas: Object.fromEntries(idsC1.map((i) => [i, true])) });
     ok((await page.locator('.pestana').nth(2).getAttribute('data-pestana')) === 'campana' && await page.locator('.pestana-central').count() === 1, 'el botón de campaña está en el centro de la barra');
     await page.locator('[data-pestana=campana]').click();
-    await page.waitForSelector('.camp-cap');
-    ok(await page.locator('.camp-cap').count() === 6 && await page.locator('.camp-cap.bloqueado').count() === 5, 'seis capítulos y solo el primero abierto');
-    await page.locator('.camp-cap').first().click();
     await page.waitForSelector('.esc-texto');
-    ok((await page.locator('.esc-placa').innerText()).includes('Rufino'), 'el personaje se presenta la primera vez');
+    ok((await page.locator('.esc-placa').innerText()).includes('Fichón'), 'el personaje del primer piso (una ficha) se presenta la primera vez');
     await page.getByRole('button', { name: 'Siguiente' }).click();
     await page.getByRole('button', { name: 'Siguiente' }).click();
-    await page.getByRole('button', { name: '¡A la mesa!' }).click();
-    await page.waitForSelector('.camp-mapa .nodo.jefe');
-    ok(await page.locator('.camp-mapa .nodo.hecho').count() === 7 && await page.locator('.nodo.jefe.actual').count() === 1, 'los siete niveles hechos y el jefe listo');
-    ok(await page.locator('.nodo.cofre.grande.bloqueado').count() === 1, 'el gran cofre espera al jefe');
-    await page.locator('.nodo.jefe').click({ force: true });
+    await page.getByRole('button', { name: '¡A subir!' }).click();
+    await page.waitForSelector('.torre .nodo.jefe');
+    ok(await page.locator('.torre .piso').count() === 6 && await page.locator('.torre .piso.bloqueado').count() === 5, 'un único mapa con seis pisos y solo el primero abierto');
+    ok(await page.locator('.piso[data-piso=c1] .nodo.hecho').count() === 7 && await page.locator('.nodo.jefe.actual').count() === 1, 'los siete niveles hechos y el jefe listo');
+    ok(await page.locator('.nodo.cofre.grande.bloqueado').count() >= 1 && await page.locator('.cima[data-cima=no]').count() === 1, 'el gran cofre y la cima esperan');
+    await page.locator('.piso[data-piso=c2] .nodo').first().click({ force: true });
+    ok(await page.locator('.camp-aviso').count() === 1, 'un piso cerrado avisa de que hay que vencer al jefe');
+    await page.locator('.nodo.jefe.actual').click({ force: true });
     await page.waitForSelector('.camp-hoja');
     await page.locator('[data-accion=jugar]').click();
     await page.getByRole('button', { name: '¡Vamos!' }).click();
@@ -1090,13 +1090,16 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
     await page.getByRole('button', { name: 'Recoger medalla' }).click();
     await page.waitForSelector('.medalla-grande');
     await page.getByRole('button', { name: 'Continuar' }).click();
-    await page.waitForSelector('.camp-cap');
-    ok((await page.locator('.camp-medallas').innerText()).startsWith('1 de 6') && await page.locator('.camp-cap.bloqueado').count() === 4, 'la medalla desbloquea el siguiente capítulo');
-    const e10 = await estado();
-    ok(e10.campana.fin.c1 === true && e10.campana.vistos.c1 === true, 'la campaña guarda medalla y escena vista');
-    await page.locator('.camp-cap').nth(1).click();
+    // el piso 2 se abre y su personaje (la dama de corazones) se presenta
     await page.waitForSelector('.esc-placa');
-    ok((await page.locator('.esc-placa').innerText()).includes('Valeria'), 'el siguiente capítulo presenta a Valeria');
+    ok((await page.locator('.esc-placa').innerText()).includes('Valeria'), 'al subir al piso 2 se presenta Valeria');
+    const e10 = await estado();
+    ok(e10.campana.fin.c1 === true && e10.campana.vistos.c1 === true && e10.campana.vistos.c2 === true, 'la campaña guarda medalla y escenas vistas');
+    await page.getByRole('button', { name: 'Siguiente' }).click();
+    await page.getByRole('button', { name: 'Siguiente' }).click();
+    await page.getByRole('button', { name: '¡A subir!' }).click();
+    await page.waitForSelector('.torre');
+    ok(await page.locator('.torre .piso.bloqueado').count() === 4 && (await page.locator('.torre-info').innerText()).includes('Piso 2 de 6'), 'la torre muestra que estás en el piso 2');
   }
 
   ok(fallos.length === 0, 'sin errores de consola: ' + fallos.join(' | '));

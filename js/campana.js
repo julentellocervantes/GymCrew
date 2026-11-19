@@ -1,6 +1,6 @@
 // CAMPAÑA «La ruta del casino» (datos en data/campana.js).
-// Pantallas: mostrarCampana (lista de capítulos) -> mostrarCapitulo (mapa de niveles) -> escenas con el personaje,
-// niveles (los mismos del curso), cofres, un jefe final y una medalla al terminar el capítulo.
+// Pantallas: mostrarCampana (la torre: un solo mapa continuo que se sube piso a piso) y escenas con el personaje de cada piso.
+// Cada piso son niveles (los mismos del curso), cofres, un jefe final y una medalla.
 // El progreso de los niveles es el de siempre (progreso.completadas); la campaña solo guarda qué escenas has visto
 // (progreso.campana.vistos) y qué medallas has recogido (progreso.campana.fin).
 
@@ -65,52 +65,89 @@ function nodosDe(cap) {
   return nodos;
 }
 
-// ---------- personajes (SVG) ----------
+// ---------- personajes: objetos del casino con cara (SVG) ----------
+const CARA = (x, y, sep = 9, r = 2.6) => `<circle cx="${x - sep}" cy="${y}" r="${r}" fill="#1b1b1b"/><circle cx="${x + sep}" cy="${y}" r="${r}" fill="#1b1b1b"/><circle cx="${x - sep + .9}" cy="${y - .9}" r=".9" fill="#fff"/><circle cx="${x + sep + .9}" cy="${y - .9}" r=".9" fill="#fff"/>`;
+const PERSONAJES_SVG = {
+  // Fichón: una ficha roja con bigote
+  ficha: () => `<ellipse cx="50" cy="88" rx="30" ry="5" fill="#0003"/>
+<circle cx="50" cy="50" r="38" fill="#d93a2a" stroke="#8f1c0c" stroke-width="3"/>
+<circle cx="50" cy="50" r="33" fill="none" stroke="#fff" stroke-width="7" stroke-dasharray="9.2 9.2" opacity=".95"/>
+<circle cx="50" cy="50" r="25" fill="#f8ead0" stroke="#8f1c0c" stroke-width="2.5"/>
+${CARA(50, 45)}
+<path d="M33 55 Q41 49 50 54 Q59 49 67 55 Q59 62 50 58 Q41 62 33 55Z" fill="#8c8f94"/>
+<path d="M43 63 Q50 68 57 63" fill="none" stroke="#7a2e2e" stroke-width="2" stroke-linecap="round"/>
+<ellipse cx="36" cy="52" rx="3" ry="2" fill="#ff8a8a" fill-opacity=".4"/><ellipse cx="64" cy="52" rx="3" ry="2" fill="#ff8a8a" fill-opacity=".4"/>
+<path d="M30 30 A28 28 0 0 1 46 22" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="3" stroke-linecap="round"/>`,
+  // Valeria: la dama de corazones
+  dama: () => `<g transform="rotate(-5 50 52)"><rect x="26" y="14" width="48" height="72" rx="6" fill="#fffdf5" stroke="#8c1d1d" stroke-width="3"/>
+<text x="31" y="29" font-family="Georgia,serif" font-weight="700" font-size="14" fill="#c0392b">Q</text><text x="31" y="41" font-size="11" fill="#c0392b">♥</text>
+<text x="69" y="80" text-anchor="end" font-family="Georgia,serif" font-weight="700" font-size="14" fill="#c0392b" transform="rotate(180 63 74)">Q</text>
+<path d="M33 52 Q30 78 42 82 L58 82 Q70 78 67 52 Q50 22 33 52Z" fill="#3a2418"/>
+<path d="M36 80 Q50 92 64 80 L64 86 L36 86Z" fill="#c0392b"/>
+<ellipse cx="50" cy="55" rx="13" ry="15" fill="#f0c4a0"/>
+<path d="M37 49 Q50 30 63 49 Q54 41 43 44Z" fill="#3a2418"/>
+${CARA(50, 54, 5.6, 2)}
+<path d="M44 61 Q50 66 56 61" fill="#d64545" stroke="#a82424" stroke-width="1.4" stroke-linecap="round"/>
+<ellipse cx="41" cy="59" rx="2.4" ry="1.6" fill="#ff8a8a" fill-opacity=".45"/><ellipse cx="59" cy="59" rx="2.4" ry="1.6" fill="#ff8a8a" fill-opacity=".45"/>
+<path d="M34 38 L38 24 L44 33 L50 20 L56 33 L62 24 L66 38Z" fill="#f3b63f" stroke="#a86a00" stroke-width="1.6" stroke-linejoin="round"/>
+<circle cx="50" cy="22" r="2.4" fill="#d64545"/><circle cx="38" cy="26" r="1.8" fill="#d64545"/><circle cx="62" cy="26" r="1.8" fill="#d64545"/></g>`,
+  // Iñaki: el rey de oros de la baraja española, con txapela
+  rey: () => `<g transform="rotate(4 50 52)"><rect x="25" y="13" width="50" height="74" rx="6" fill="#f6e3a8" stroke="#7a4a12" stroke-width="3"/>
+<circle cx="35" cy="26" r="7" fill="#f3b63f" stroke="#a86a00" stroke-width="1.8"/><circle cx="35" cy="26" r="3.6" fill="none" stroke="#a86a00" stroke-width="1.2"/>
+<circle cx="65" cy="76" r="7" fill="#f3b63f" stroke="#a86a00" stroke-width="1.8"/><circle cx="65" cy="76" r="3.6" fill="none" stroke="#a86a00" stroke-width="1.2"/>
+<path d="M34 82 Q50 68 66 82 L66 86 L34 86Z" fill="#b03a2e"/>
+<ellipse cx="50" cy="52" rx="14" ry="16" fill="#e8b78a"/>
+<ellipse cx="50" cy="31" rx="19" ry="7" fill="#1f2a5c"/><circle cx="50" cy="23" r="2.4" fill="#161d42"/>
+<path d="M33 33 Q50 41 67 33" fill="none" stroke="#161d42" stroke-width="2"/>
+${CARA(50, 50, 6, 2.2)}
+<path d="M38 58 Q44 54 50 58 Q56 54 62 58 Q56 64 50 61 Q44 64 38 58Z" fill="#ececec"/>
+<path d="M45 66 Q50 69 55 66" fill="none" stroke="#7a2e2e" stroke-width="1.6" stroke-linecap="round"/>
+<ellipse cx="40" cy="55" rx="2.6" ry="1.7" fill="#ff8a8a" fill-opacity=".4"/><ellipse cx="60" cy="55" rx="2.6" ry="1.7" fill="#ff8a8a" fill-opacity=".4"/></g>`,
+  // Lady Sofía: una copa de champán
+  copa: () => `<ellipse cx="50" cy="90" rx="22" ry="4" fill="#0003"/>
+<ellipse cx="50" cy="86" rx="20" ry="4.5" fill="#e9eef8" stroke="#aab4c8" stroke-width="1.5"/>
+<rect x="47" y="58" width="6" height="28" fill="#e9eef8" stroke="#aab4c8" stroke-width="1.5"/>
+<path d="M30 14 H70 Q72 40 58 56 Q50 62 42 56 Q28 40 30 14Z" fill="#ffe08a" fill-opacity=".92" stroke="#cdd6e6" stroke-width="2.5"/>
+<path d="M31 14 H69 L68.4 21 H31.6Z" fill="#fff" fill-opacity=".7"/>
+<g fill="#fff" fill-opacity=".8"><circle cx="40" cy="40" r="1.8"/><circle cx="60" cy="34" r="1.5"/><circle cx="56" cy="46" r="1.2"/><circle cx="44" cy="30" r="1.2"/><circle cx="62" cy="24" r="1.2"/><circle cx="38" cy="26" r="1"/></g>
+<path d="M38 33 Q41.5 31 45 33 M55 33 Q58.5 31 62 33" fill="none" stroke="#1b1b1b" stroke-width="1.2" stroke-linecap="round"/>
+${CARA(50, 36, 8.5, 2.5)}
+<path d="M44 44 Q50 49 56 44" fill="#d64545" stroke="#a82424" stroke-width="1.4" stroke-linecap="round"/>
+<ellipse cx="38" cy="41" rx="3" ry="2" fill="#ff8a8a" fill-opacity=".5"/><ellipse cx="62" cy="41" rx="3" ry="2" fill="#ff8a8a" fill-opacity=".5"/>
+<path d="M30 14 L34 5 L40 11 L46 3 L52 11 L58 3 L62 11 L66 5 L70 14Z" fill="#f3b63f" stroke="#a86a00" stroke-width="1.5" stroke-linejoin="round" opacity="0"/>`,
+  // Turbo: una tragaperras con la pantalla de cara
+  maquina: () => `<ellipse cx="46" cy="90" rx="30" ry="4.5" fill="#0003"/>
+<path d="M66 40 H80 Q86 40 86 46 V54" fill="none" stroke="#9aa3ad" stroke-width="4" stroke-linecap="round"/><circle cx="86" cy="52" r="5.5" fill="#e0402a" stroke="#8f1c0c" stroke-width="1.5"/>
+<rect x="20" y="16" width="52" height="72" rx="8" fill="#c43a2a" stroke="#6d140a" stroke-width="3"/>
+<path d="M20 28 Q20 16 32 16 H60 Q72 16 72 28Z" fill="#f3b63f" stroke="#a86a00" stroke-width="2"/>
+<text x="46" y="27" text-anchor="middle" font-family="Georgia,serif" font-weight="900" font-size="10" fill="#7a1d0a">777</text>
+<rect x="26" y="34" width="40" height="28" rx="5" fill="#0c1a26" stroke="#f3b63f" stroke-width="2.4"/>
+<circle cx="37" cy="46" r="5.2" fill="#7dffb2"/><circle cx="55" cy="46" r="5.2" fill="#7dffb2"/><circle cx="38.4" cy="46.6" r="2.4" fill="#0c1a26"/><circle cx="56.4" cy="46.6" r="2.4" fill="#0c1a26"/>
+<path d="M36 54 Q46 60 56 54" fill="none" stroke="#7dffb2" stroke-width="2.4" stroke-linecap="round"/>
+<circle cx="31" cy="71" r="3" fill="#f3b63f"/><circle cx="41" cy="71" r="3" fill="#7dffb2"/><circle cx="51" cy="71" r="3" fill="#f3b63f"/><circle cx="61" cy="71" r="3" fill="#7dffb2"/>
+<rect x="32" y="78" width="28" height="7" rx="2" fill="#2a1a14"/>`,
+  // Don Ramiro: la ruleta, con monóculo y bigote
+  ruleta: () => `<ellipse cx="50" cy="90" rx="32" ry="4.5" fill="#0003"/>
+<circle cx="50" cy="50" r="40" fill="#5a3315" stroke="#2f1a08" stroke-width="3"/>
+<circle cx="50" cy="50" r="33" fill="none" stroke="#c0392b" stroke-width="12" stroke-dasharray="5.6 5.6"/>
+<circle cx="50" cy="50" r="33" fill="none" stroke="#1b1b1b" stroke-width="12" stroke-dasharray="5.6 5.6" stroke-dashoffset="5.6"/>
+<circle cx="50" cy="50" r="39" fill="none" stroke="#f3b63f" stroke-width="2"/>
+<circle cx="50" cy="50" r="24" fill="#f3b63f" stroke="#a86a00" stroke-width="2.5"/>
+<circle cx="50" cy="50" r="19" fill="#f2d2ac"/>
+${CARA(50, 46, 7, 2.2)}
+<circle cx="57" cy="46" r="6.5" fill="#cfe9ff" fill-opacity=".35" stroke="#a86a00" stroke-width="1.8"/><path d="M62 51 Q68 58 64 68" fill="none" stroke="#a86a00" stroke-width="1.3"/>
+<path d="M40 56 Q45 52 50 56 Q55 52 60 56 Q55 61 50 58.5 Q45 61 40 56Z" fill="#f2f2f2" stroke="#c9c9c9" stroke-width=".6"/>
+<path d="M45 63 Q50 66 55 63" fill="none" stroke="#7a2e2e" stroke-width="1.6" stroke-linecap="round"/>
+<circle cx="50" cy="12" r="3.4" fill="#fff" stroke="#bbb" stroke-width=".8"/>`,
+};
+
 function avatarPersonaje(p, clase = '') {
-  const sombra = 'rgba(0,0,0,.18)';
-  const ropas = {
-    chaleco: `<path d="M10 100 C12 76 28 68 50 68 C72 68 88 76 90 100Z" fill="#fdfdf8"/><path d="M10 100 C12 78 26 69 40 68 L50 92 L60 68 C74 69 88 78 90 100Z" fill="#1d5a3a"/><path d="M42 69 L50 88 L58 69Z" fill="#fdfdf8"/><path d="M43 68 l7 4 l7 -4 l-3 6 l-4 -2 l-4 2z" fill="#c0392b"/>`,
-    americana: `<path d="M8 100 C10 76 28 68 50 68 C72 68 90 76 92 100Z" fill="#2b2b3a"/><path d="M38 68 L50 94 L62 68Z" fill="#f4f4f0"/><path d="M38 68 L47 100 L30 100Z M62 68 L53 100 L70 100Z" fill="#1d1d28"/>`,
-    jersey: `<path d="M8 100 C10 76 28 68 50 68 C72 68 90 76 92 100Z" fill="#b03a2e"/><path d="M38 68 Q50 80 62 68" fill="none" stroke="#8a2b21" stroke-width="5" stroke-linecap="round"/><path d="M16 88 H84" stroke="#e8d9b0" stroke-width="3" stroke-dasharray="6 4" opacity=".8"/>`,
-    vestido: `<path d="M8 100 C10 76 28 68 50 68 C72 68 90 76 92 100Z" fill="#6c2c91"/><path d="M34 69 Q50 88 66 69 Q50 76 34 69Z" fill="${p.piel}"/><g fill="#fff8e1"><circle cx="38" cy="73" r="1.8"/><circle cx="43" cy="77" r="1.8"/><circle cx="50" cy="79" r="1.8"/><circle cx="57" cy="77" r="1.8"/><circle cx="62" cy="73" r="1.8"/></g>`,
-    mono: `<path d="M8 100 C10 76 28 68 50 68 C72 68 90 76 92 100Z" fill="#e8e8e0"/><path d="M30 100 V82 H70 V100Z M32 82 L36 68 H42 L40 82Z M68 82 L64 68 H58 L60 82Z" fill="#00828a"/><circle cx="38" cy="82" r="2.2" fill="#f3b63f"/><circle cx="62" cy="82" r="2.2" fill="#f3b63f"/>`,
-    traje: `<path d="M8 100 C10 76 28 68 50 68 C72 68 90 76 92 100Z" fill="#f4f1e6"/><path d="M38 68 L50 92 L62 68Z" fill="#fff"/><path d="M38 68 L47 100 L28 100Z M62 68 L53 100 L72 100Z" fill="#e2dccb"/><path d="M42 68 l8 4 l8 -4 l0 8 l-8 -4 l-8 4z" fill="#1c1a24"/>`,
-  };
-  const detras = p.id === 'valeria' ? `<path d="M27 42 Q24 78 34 86 L66 86 Q76 78 73 42 Q50 12 27 42Z" fill="${p.pelo}"/>` : '';
-  const cabello = {
-    rufino: `<path d="M31 42 Q29 24 50 22 Q71 24 69 42 Q66 33 50 32 Q34 33 31 42Z" fill="${p.pelo}"/>`,
-    valeria: `<path d="M30 42 Q28 22 50 21 Q72 22 70 42 Q60 28 44 30 Q36 32 30 42Z" fill="${p.pelo}"/>`,
-    inaki: `<path d="M31 44 Q30 36 34 33 L36 44Z M69 44 Q70 36 66 33 L64 44Z" fill="${p.pelo}"/>`,
-    sofia: `<path d="M30 44 Q27 21 50 20 Q73 21 70 44 Q64 30 52 29 Q40 28 30 44Z" fill="${p.pelo}"/><circle cx="50" cy="17" r="7" fill="${p.pelo}"/>`,
-    turbo: `<path d="M31 40 Q31 24 50 24 Q69 24 69 40Z" fill="${p.pelo}"/>`,
-    ramiro: `<path d="M31 42 Q30 25 50 24 Q70 25 69 42 Q64 34 50 34 Q36 34 31 42Z" fill="${p.pelo}"/>`,
-  }[p.id] || '';
-  const rasgos = {
-    bigote: `<path d="M38 55 Q44 51 50 54.5 Q56 51 62 55 Q56 60 50 56.5 Q44 60 38 55Z" fill="${p.pelo}"/>`,
-    gafas: `<rect x="34" y="40" width="14" height="10" rx="4" fill="#1b2a3a" fill-opacity=".85" stroke="#111" stroke-width="2"/><rect x="52" y="40" width="14" height="10" rx="4" fill="#1b2a3a" fill-opacity=".85" stroke="#111" stroke-width="2"/><path d="M48 44 H52" stroke="#111" stroke-width="2"/><path d="M36 42 l5 0" stroke="#fff" stroke-opacity=".5" stroke-width="1.6" stroke-linecap="round"/>`,
-    txapela: `<ellipse cx="50" cy="29" rx="26" ry="10" fill="#1f2a5c"/><path d="M26 30 Q50 38 74 30" fill="none" stroke="#161d42" stroke-width="2.5"/><circle cx="50" cy="19" r="2.6" fill="#161d42"/>`,
-    pendientes: `<circle cx="31" cy="54" r="3" fill="#f3b63f" stroke="#a86a00" stroke-width="1"/><circle cx="69" cy="54" r="3" fill="#f3b63f" stroke="#a86a00" stroke-width="1"/>`,
-    gorra: `<path d="M30 38 Q30 18 50 18 Q70 18 70 38Z" fill="#e67e22"/><path d="M28 38 Q54 33 78 40 L76 45 Q52 40 28 43Z" fill="#c4691a"/><circle cx="50" cy="19" r="2" fill="#c4691a"/>`,
-    monoculo: `<circle cx="58" cy="45" r="7" fill="#cfe9ff" fill-opacity=".35" stroke="#f3b63f" stroke-width="2"/><path d="M63 50 Q70 58 66 72" fill="none" stroke="#f3b63f" stroke-width="1.5"/><path d="M38 55 Q44 52 50 55 Q56 52 62 55 Q56 59 50 57 Q44 59 38 55Z" fill="${p.pelo}"/>`,
-  };
-  const svg = `<svg viewBox="0 0 100 100" class="pj-svg" aria-hidden="true" focusable="false"><defs><radialGradient id="pg-${p.id}" cx=".5" cy=".3" r=".85"><stop offset="0" stop-color="#fff" stop-opacity=".35"/><stop offset="1" stop-color="#000" stop-opacity=".25"/></radialGradient><clipPath id="pc-${p.id}"><circle cx="50" cy="50" r="48"/></clipPath></defs>
-<circle cx="50" cy="50" r="48" fill="${p.color}"/><circle cx="50" cy="50" r="48" fill="url(#pg-${p.id})"/>
-<g clip-path="url(#pc-${p.id})">${detras}${ropas[p.ropa] || ''}
-<rect x="44" y="56" width="12" height="16" fill="${p.piel}"/><rect x="44" y="62" width="12" height="6" fill="${sombra}"/>
-<circle cx="31" cy="47" r="4.5" fill="${p.piel}"/><circle cx="69" cy="47" r="4.5" fill="${p.piel}"/>
-<ellipse cx="50" cy="44" rx="19" ry="21" fill="${p.piel}"/>
-${cabello}
-<circle cx="42" cy="45" r="2.4" fill="#1b1b1b"/><circle cx="58" cy="45" r="2.4" fill="#1b1b1b"/><circle cx="42.8" cy="44.2" r=".8" fill="#fff"/><circle cx="58.8" cy="44.2" r=".8" fill="#fff"/>
-<path d="M38 39 Q42 37 46 39 M54 39 Q58 37 62 39" fill="none" stroke="${p.pelo}" stroke-width="1.8" stroke-linecap="round"/>
-<path d="M50 46 Q53 52 49 53" fill="none" stroke="${sombra}" stroke-width="1.6" stroke-linecap="round"/>
-<path d="M43 57 Q50 63 57 57" fill="none" stroke="#7a2e2e" stroke-width="2" stroke-linecap="round"/>
-<ellipse cx="38" cy="53" rx="3" ry="2" fill="#ff8a8a" fill-opacity=".3"/><ellipse cx="62" cy="53" rx="3" ry="2" fill="#ff8a8a" fill-opacity=".3"/>
-${rasgos[p.rasgo] || ''}</g><circle cx="50" cy="50" r="47" fill="none" stroke="#f3b63f" stroke-width="2.5"/></svg>`;
+  const dibujo = (PERSONAJES_SVG[p.tipo] || PERSONAJES_SVG.ficha)();
   const nodo = document.createElement('span');
   nodo.className = ('personaje ' + clase).trim();
   nodo.setAttribute('role', 'img');
   nodo.setAttribute('aria-label', `${p.nombre}, ${p.rol}`);
-  nodo.innerHTML = svg;
+  nodo.innerHTML = `<svg viewBox="0 0 100 100" class="pj-svg" aria-hidden="true" focusable="false">${dibujo}</svg>`;
   return nodo;
 }
 
@@ -157,109 +194,8 @@ function mostrarEscena(cap, lineas, alFinal, opciones = {}) {
   pintarLinea();
 }
 
-// ---------- el mapa del capítulo ----------
-function mostrarCapitulo(id, entrada = 'adelante', recientes = []) {
-  alTeclear = null;
-  const cap = CAMPANA.find((c) => c.id === id);
-  const idx = CAMPANA.indexOf(cap);
-  if (!cap || !capDesbloqueado(idx)) return mostrarCampana('atras');
-  const est = campEstado();
-  // la primera vez, el personaje se presenta
-  if (!est.vistos[cap.id]) {
-    est.vistos[cap.id] = true;
-    guardarProgreso();
-    return mostrarEscena(cap, cap.presentacion, () => mostrarCapitulo(cap.id, 'adelante'), { boton: '¡A la mesa!' });
-  }
-  // al terminar el jefe, escena final y medalla
-  if (jefeHecho(cap) && !est.fin[cap.id]) return mostrarEscena(cap, cap.final, () => mostrarMedalla(cap), { boton: 'Recoger medalla' });
-
-  const p = cap.personaje;
-  const curso = cursoCampana(cap);
-  const nodos = nodosDe(cap);
-  const hechoNivel = (l) => !!progreso.completadas[l.id];
-  const desbloqueado = (n) => {
-    if (n.tipo === 'nivel') return n.k === 0 || hechoNivel(nivelesDe(cap)[n.k - 1]);
-    return !!progreso.completadas[n.req];
-  };
-  const siguiente = nodos.find((n) => (n.tipo === 'nivel' || n.tipo === 'jefe') && !hechoNivel(n.leccion));
-
-  const avatar = avatarPersonaje(p, 'mediano');
-  const burbuja = el('p', { class: 'camp-burbuja-txt', 'aria-live': 'polite' }, siguiente ? siguiente.frase : cap.final[0]);
-  const cabecera = el(
-    'div',
-    { class: 'camp-banner' },
-    el('button', { class: 'camp-presenta', type: 'button', 'aria-label': `Ver la presentación de ${p.nombre}`, onclick: () => mostrarEscena(cap, cap.presentacion, () => mostrarCapitulo(cap.id, 'atras'), { boton: 'Volver al mapa' }) }, avatar),
-    el('div', { class: 'camp-banner-txt' }, el('h1', {}, cap.titulo), el('p', { class: 'camp-lugar' }, cap.lugar), barraProgreso(capHechos(cap), capTotal(cap))),
-  );
-  const globo = el('div', { class: 'camp-burbuja' }, el('strong', {}, p.nombre), burbuja);
-
-  const sacudir = (b) => { b.classList.remove('sacudir'); void b.offsetWidth; b.classList.add('sacudir'); setTimeout(() => b.classList.remove('sacudir'), 500); };
-  let hoja = null;
-  const cerrarHoja = () => { if (hoja) { hoja.remove(); hoja = null; } };
-  const abrirHoja = (n) => {
-    cerrarHoja();
-    const esJefe = n.tipo === 'jefe';
-    hoja = el(
-      'div',
-      { class: 'camp-hoja', role: 'dialog', 'aria-label': n.leccion.titulo },
-      avatarPersonaje(p, 'mini'),
-      el('div', { class: 'camp-hoja-txt' }, el('strong', {}, n.leccion.titulo), el('span', {}, `«${n.frase}»`), el('small', {}, `${n.leccion.ejercicios.length} ejercicios · ${n.leccion.xp} XP${esJefe ? ' · +10 fichas' : ''}`)),
-      el('div', { class: 'camp-hoja-acc' },
-        el('button', { class: 'boton oro', type: 'button', 'data-accion': 'jugar', onclick: () => { cerrarHoja(); mostrarIntro(curso, n.leccion); } }, esJefe ? '¡A por el jefe!' : 'Jugar'),
-        el('button', { class: 'boton secundario', type: 'button', onclick: cerrarHoja }, 'Ahora no'))
-    );
-    document.querySelector('main.contenido').append(hoja);
-    hoja.querySelector('button').focus({ preventScroll: true });
-  };
-
-  let numero = 0;
-  const crearNodo = (n, i) => {
-    const desp = DESPLAZAMIENTOS[i % DESPLAZAMIENTOS.length];
-    const estilo = `transform:translateX(${desp}px);--i:${numero++}`;
-    if (n.tipo === 'cofre') {
-      const abierto = !!progreso.cofres[n.id];
-      const listo = !abierto && desbloqueado(n);
-      const b = el('button', {
-        class: 'nodo cofre' + (n.grande ? ' grande' : '') + (abierto ? ' abierto' : listo ? ' listo' : ' bloqueado'), type: 'button',
-        'aria-label': (n.grande ? 'Gran cofre' : 'Cofre') + (abierto ? ' abierto' : listo ? ' listo para abrir' : ' bloqueado'),
-        onclick: () => {
-          if (listo) return mostrarCofre(curso, n.id, () => mostrarCapitulo(cap.id, 'atras'));
-          burbuja.textContent = abierto ? 'Ese cofre ya lo has abierto.' : 'Ese cofre se abre al terminar lo que hay justo antes.';
-          sacudir(b);
-        },
-      }, abierto ? '📭' : listo ? '🎁' : '🔒');
-      return el('div', { class: 'nodo-envoltorio cofre-envoltorio', style: estilo }, listo ? el('span', { class: 'empezar' }, '¡ABRIR!') : null, el('div', { class: 'nodo-fila' }, b), el('span', { class: 'nodo-titulo' }, n.titulo));
-    }
-    const l = n.leccion;
-    const hecha = hechoNivel(l);
-    const esActual = n === siguiente;
-    const libre = hecha || desbloqueado(n);
-    const bloqueado = !hecha && !libre;
-    const b = el('button', {
-      class: 'nodo' + (n.tipo === 'jefe' ? ' jefe' : '') + (hecha ? ' hecho' : '') + (esActual && !bloqueado ? ' actual' : '') + (bloqueado ? ' bloqueado' : ''), type: 'button', 'data-nodo': n.tipo === 'jefe' ? 'jefe' : String(n.k + 1),
-      'aria-label': l.titulo + (bloqueado ? ' (bloqueado)' : hecha ? ' (completado)' : ''),
-      onclick: () => {
-        if (bloqueado) { burbuja.textContent = n.tipo === 'jefe' ? 'Primero tienes que terminar todos los niveles del capítulo.' : 'Termina primero el nivel anterior y se abre este.'; return sacudir(b); }
-        burbuja.textContent = n.frase;
-        abrirHoja(n);
-      },
-    }, hecha ? '✓' : bloqueado ? '🔒' : n.tipo === 'jefe' ? '⚔️' : l.icono);
-    return el('div', { class: 'nodo-envoltorio' + (recientes.includes(l.id) ? ' recien' : ''), style: estilo }, esActual && !bloqueado ? el('span', { class: 'empezar' }, n.tipo === 'jefe' ? 'JEFE' : 'EMPEZAR') : null, el('div', { class: 'nodo-fila' }, b), el('span', { class: 'nodo-titulo' }, n.tipo === 'jefe' ? 'Jefe del capítulo' : l.titulo));
-  };
-
-  pintar(
-    entrada,
-    el('header', { class: 'cabecera' }, el('button', { class: 'volver', type: 'button', 'aria-label': 'Volver a la campaña', onclick: () => mostrarCampana('atras') }, '←'), marcador()),
-    el('main', { class: 'contenido mapa camp-mapa', style: `--acento:${p.color}` }, cabecera, globo, el('section', { class: 'unidad' }, el('div', { class: 'camino' }, nodos.map(crearNodo))))
-  );
-  alTeclear = (e) => { if (e.key === 'Escape') cerrarHoja(); };
-  if (siguiente) {
-    setTimeout(() => {
-      const el0 = document.querySelector('.nodo.actual');
-      if (el0 && el0.isConnected && capHechos(cap) > 0) el0.scrollIntoView({ block: 'center', behavior: sinMovimiento() ? 'auto' : 'smooth' });
-    }, 350);
-  }
-}
+// Volver «al mapa» desde un nivel o un cofre: la torre, enfocando el piso indicado
+const mostrarCapitulo = (id, entrada = 'atras', recientes = []) => mostrarCampana(entrada, recientes, id);
 
 const barraProgreso = (a, b) =>
   el('div', { class: 'camp-barra', role: 'progressbar', 'aria-valuemin': '0', 'aria-valuemax': String(b), 'aria-valuenow': String(a), 'aria-label': `${a} de ${b}` }, el('span', { style: `width:${Math.round((a / b) * 100)}%` }), el('em', {}, `${a}/${b}`));
@@ -283,12 +219,12 @@ function mostrarMedalla(cap) {
     el(
       'main',
       { class: 'contenido centro medalla-pantalla', style: `--acento:${cap.personaje.color}` },
-      el('p', { class: 'esc-lugar' }, ultima ? '¡Has completado la campaña!' : `Capítulo ${idx + 1} completado`),
+      el('p', { class: 'esc-lugar' }, ultima ? '¡Has llegado a la cima!' : `Piso ${idx + 1} superado`),
       el('div', { class: 'medalla-grande', 'aria-hidden': 'true' }, el('span', { class: 'medalla-rayos' }), icono('medalla')),
       el('h1', {}, cap.medalla),
       avatarPersonaje(cap.personaje, 'mini'),
       fichas ? el('p', { class: 'resultado-dato' }, `+${fichas} fichas`) : null,
-      el('p', { class: 'resultado-nuevo' }, ultima ? 'Eres el Campeón del Tapete. Todo lo que has aprendido, a tu servicio.' : `Nuevo capítulo: «${sig.titulo}» con ${sig.personaje.nombre}.`)
+      el('p', { class: 'resultado-nuevo' }, ultima ? 'Eres el Campeón del Tapete. Todo lo que has aprendido, a tu servicio.' : `Ya puedes subir al piso ${idx + 2}: «${sig.titulo}» con ${sig.personaje.nombre}.`)
     ),
     el('div', { class: 'pie' }, el('button', { class: 'boton', type: 'button', onclick: () => mostrarCampana('atras') }, 'Continuar')),
     confeti(ultima ? 110 : 60)
@@ -299,58 +235,155 @@ function mostrarMedalla(cap) {
   if (ultima) sonido('perfecto', 700);
 }
 
-// ---------- la campaña: lista de capítulos ----------
-function mostrarCampana(entrada = 'fundido') {
-  alTeclear = null;
-  const est = campEstado();
-  const hechos = campHechos();
-  const total = campTotal();
-  const actual = CAMPANA.findIndex((c, i) => capDesbloqueado(i) && !capCompleto(c));
-  const completa = CAMPANA.every(capCompleto);
-  const { fila, parrafo } = naiFila(completa ? 'celebrando' : 'feliz', completa
-    ? '¡Eres el Campeón del Tapete! Has completado toda la ruta del casino.'
-    : hechos === 0 ? 'Una ruta por seis mesas del casino. En cada una te espera un personaje que te enseña el juego. ¡Elige la primera!' : `Sigue con «${CAMPANA[Math.max(actual, 0)].titulo}». Llevas ${hechos} de ${total} pasos de la ruta.`);
+// ---------- un aviso corto arriba (reemplaza al globo del personaje) ----------
+function avisarCampana(texto) {
+  document.querySelectorAll('.camp-aviso').forEach((n) => n.remove());
+  const a = el('div', { class: 'camp-aviso', role: 'status' }, texto);
+  document.body.append(a);
+  setTimeout(() => a.remove(), 2800);
+}
 
-  const tarjeta = (cap, i) => {
+// ---------- la torre: un único mapa que se sube de abajo (piso 1) a la cima ----------
+function mostrarCampana(entrada = 'fundido', recientes = [], enfocar = null) {
+  alTeclear = null;
+  document.querySelectorAll('.camp-aviso').forEach((n) => n.remove());
+  const est = campEstado();
+
+  // 1) un jefe vencido: escena final del piso y medalla
+  const pendiente = CAMPANA.find((c) => jefeHecho(c) && !est.fin[c.id]);
+  if (pendiente) return mostrarEscena(pendiente, pendiente.final, () => mostrarMedalla(pendiente), { boton: 'Recoger medalla' });
+
+  // 2) piso nuevo: el personaje se presenta la primera vez
+  const idxActual = CAMPANA.findIndex((c, i) => capDesbloqueado(i) && !capCompleto(c));
+  const completa = idxActual < 0;
+  const capActual = CAMPANA[completa ? CAMPANA.length - 1 : idxActual];
+  if (!completa && !est.vistos[capActual.id]) {
+    est.vistos[capActual.id] = true;
+    guardarProgreso();
+    return mostrarEscena(capActual, capActual.presentacion, () => mostrarCampana('adelante', [], capActual.id), { boton: '¡A subir!' });
+  }
+
+  let hoja = null;
+  const cerrarHoja = () => { if (hoja) { hoja.remove(); hoja = null; } };
+  const abrirHoja = (cap, curso, n) => {
+    cerrarHoja();
+    const esJefe = n.tipo === 'jefe';
+    hoja = el(
+      'div',
+      { class: 'camp-hoja', role: 'dialog', 'aria-label': n.leccion.titulo, style: `--acento:${cap.personaje.color}` },
+      avatarPersonaje(cap.personaje, 'mini'),
+      el('div', { class: 'camp-hoja-txt' }, el('strong', {}, n.leccion.titulo), el('span', {}, `${cap.personaje.nombre}: «${n.frase}»`), el('small', {}, `${n.leccion.ejercicios.length} ejercicios · ${n.leccion.xp} XP${esJefe ? ' · +10 fichas' : ''}`)),
+      el('div', { class: 'camp-hoja-acc' },
+        el('button', { class: 'boton oro', type: 'button', 'data-accion': 'jugar', onclick: () => { cerrarHoja(); mostrarIntro(curso, n.leccion); } }, esJefe ? '¡A por el jefe!' : 'Jugar'),
+        el('button', { class: 'boton secundario', type: 'button', onclick: cerrarHoja }, 'Ahora no'))
+    );
+    document.querySelector('main.contenido').append(hoja);
+    hoja.querySelector('button').focus({ preventScroll: true });
+  };
+  const sacudir = (b) => { b.classList.remove('sacudir'); void b.offsetWidth; b.classList.add('sacudir'); setTimeout(() => b.classList.remove('sacudir'), 500); };
+
+  let numero = 0;
+  const crearPiso = (cap, i) => {
+    const p = cap.personaje;
     const libre = capDesbloqueado(i);
     const hecho = capCompleto(cap);
+    const curso = cursoCampana(cap);
+    const lista = nivelesDe(cap);
+    const hechoNivel = (l) => !!progreso.completadas[l.id];
+    const nodos = nodosDe(cap);
+    const siguiente = libre ? nodos.find((n) => (n.tipo === 'nivel' || n.tipo === 'jefe') && !hechoNivel(n.leccion)) : null;
+    const desbloqueado = (n) => {
+      if (!libre) return false;
+      if (n.tipo === 'nivel') return n.k === 0 || hechoNivel(lista[n.k - 1]);
+      return !!progreso.completadas[n.req];
+    };
+    const crearNodo = (n, j) => {
+      const desp = DESPLAZAMIENTOS[numero % DESPLAZAMIENTOS.length];
+      const estilo = `transform:translateX(${desp}px);--i:${numero++}`;
+      if (n.tipo === 'cofre') {
+        const abierto = !!progreso.cofres[n.id];
+        const listo = !abierto && desbloqueado(n);
+        const b = el('button', {
+          class: 'nodo cofre' + (n.grande ? ' grande' : '') + (abierto ? ' abierto' : listo ? ' listo' : ' bloqueado'), type: 'button',
+          'aria-label': (n.grande ? 'Gran cofre' : 'Cofre') + (abierto ? ' abierto' : listo ? ' listo para abrir' : ' bloqueado'),
+          onclick: () => {
+            if (listo) return mostrarCofre(curso, n.id, () => mostrarCampana('atras', [], cap.id));
+            avisarCampana(abierto ? 'Ese cofre ya lo has abierto.' : 'Ese cofre se abre al terminar lo que hay justo antes.');
+            sacudir(b);
+          },
+        }, abierto ? '📭' : listo ? '🎁' : '🔒');
+        return el('div', { class: 'nodo-envoltorio cofre-envoltorio', style: estilo }, listo ? el('span', { class: 'empezar' }, '¡ABRIR!') : null, el('div', { class: 'nodo-fila' }, b), el('span', { class: 'nodo-titulo' }, n.titulo));
+      }
+      const l = n.leccion;
+      const hecha = hechoNivel(l);
+      const esActual = n === siguiente;
+      const bloqueado = !hecha && !desbloqueado(n);
+      const b = el('button', {
+        class: 'nodo' + (n.tipo === 'jefe' ? ' jefe' : '') + (hecha ? ' hecho' : '') + (esActual && !bloqueado ? ' actual' : '') + (bloqueado ? ' bloqueado' : ''), type: 'button', 'data-nodo': n.tipo === 'jefe' ? 'jefe' : String(n.k + 1),
+        'aria-label': l.titulo + (bloqueado ? ' (bloqueado)' : hecha ? ' (completado)' : ''),
+        onclick: () => {
+          if (bloqueado) {
+            avisarCampana(!libre ? `Primero tienes que vencer al jefe del piso ${i}.` : n.tipo === 'jefe' ? 'Primero tienes que terminar todos los niveles del piso.' : 'Termina primero el nivel anterior y se abre este.');
+            return sacudir(b);
+          }
+          abrirHoja(cap, curso, n);
+        },
+      }, hecha ? '✓' : bloqueado ? '🔒' : n.tipo === 'jefe' ? '⚔️' : l.icono);
+      return el('div', { class: 'nodo-envoltorio' + (recientes.includes(l.id) ? ' recien' : ''), style: estilo }, esActual && !bloqueado ? el('span', { class: 'empezar' }, n.tipo === 'jefe' ? 'JEFE' : 'EMPEZAR') : null, el('div', { class: 'nodo-fila' }, b), el('span', { class: 'nodo-titulo' }, n.tipo === 'jefe' ? 'Jefe del piso' : l.titulo));
+    };
+
     const h = capHechos(cap);
-    const b = el('button', {
-      class: 'camp-cap' + (hecho ? ' completo' : '') + (libre ? '' : ' bloqueado') + (i === actual ? ' actual' : ''), type: 'button', 'data-cap': cap.id, style: `--acento:${cap.personaje.color};--i:${i}`,
-      'aria-label': `Capítulo ${i + 1}: ${cap.titulo}. ${hecho ? 'Completado' : libre ? `${h} de ${capTotal(cap)}` : 'Bloqueado'}`,
-      onclick: () => {
-        if (libre) return mostrarCapitulo(cap.id);
-        parrafo.textContent = `Termina el jefe de «${CAMPANA[i - 1].titulo}» para entrar aquí.`;
-        b.classList.remove('sacudir'); void b.offsetWidth; b.classList.add('sacudir');
-      },
-    },
-    el('span', { class: 'camp-num', 'aria-hidden': 'true' }, String(i + 1)),
-    avatarPersonaje(cap.personaje, 'mediano' + (libre ? '' : ' oculto')),
-    el('span', { class: 'juego-texto' }, el('strong', {}, cap.titulo), el('span', { class: 'juego-desc' }, libre ? `${cap.personaje.nombre} · ${cap.personaje.rol}` : 'Bloqueado'), libre ? barraProgreso(h, capTotal(cap)) : null),
-    el('span', { class: 'camp-estado', 'aria-hidden': 'true' }, hecho ? icono('medalla') : libre ? el('span', { class: 'flecha' }, '›') : icono('candado')));
-    return b;
+    const frase = !libre ? `Vence al jefe del piso ${i} para subir hasta aquí.` : siguiente ? siguiente.frase : cap.final[0];
+    const banner = el(
+      'div',
+      { class: 'piso-entrada' },
+      el('button', { class: 'camp-presenta', type: 'button', 'aria-label': `Ver la presentación de ${p.nombre}`, disabled: !libre || null, onclick: () => mostrarEscena(cap, cap.presentacion, () => mostrarCampana('atras', [], cap.id), { boton: 'Volver a la torre' }) }, avatarPersonaje(p, 'mediano' + (libre ? '' : ' oculto'))),
+      el('div', { class: 'piso-texto' },
+        el('span', { class: 'piso-cinta' }, cap.lugar),
+        el('h2', {}, cap.titulo),
+        el('p', { class: 'piso-quien' }, libre ? `${p.nombre} · ${p.rol}` : 'Piso cerrado'),
+        libre ? barraProgreso(h, capTotal(cap)) : null,
+        el('p', { class: 'piso-frase' }, frase))
+    );
+    return el(
+      'section',
+      { class: 'piso' + (libre ? '' : ' bloqueado') + (hecho ? ' completo' : '') + (i === idxActual ? ' actual' : ''), 'data-piso': cap.id, style: `--acento:${p.color}`, 'aria-label': `${cap.lugar}: ${cap.titulo}` },
+      banner,
+      el('div', { class: 'camino' }, nodos.map(crearNodo))
+    );
   };
 
-  const galeria = el('ul', { class: 'camp-galeria' }, CAMPANA.map((cap, i) => {
-    const vista = !!est.vistos[cap.id];
-    return el('li', { style: `--i:${i}` }, vista
-      ? el('button', { type: 'button', class: 'camp-gal', 'aria-label': `${cap.personaje.nombre}, ${cap.personaje.rol}`, onclick: () => mostrarEscena(cap, cap.presentacion, () => mostrarCampana('atras'), { boton: 'Volver' }) }, avatarPersonaje(cap.personaje, 'mini'), el('span', {}, cap.personaje.nombre))
-      : el('div', { class: 'camp-gal oculto', 'aria-label': 'Personaje sin conocer' }, el('span', { class: 'personaje mini sombra' }, '?'), el('span', {}, '???')));
-  }));
+  const pisos = CAMPANA.map(crearPiso);
+  const cima = el(
+    'div',
+    { class: 'cima' + (completa ? ' lograda' : ''), 'data-cima': completa ? 'si' : 'no' },
+    el('div', { class: 'cima-trofeo', 'aria-hidden': 'true' }, icono('trofeo')),
+    el('strong', {}, 'La cima'),
+    el('span', {}, completa ? '¡Campeón del Tapete!' : 'Vence a los seis jefes para llegar')
+  );
+
+  const hechos = campHechos();
+  const total = campTotal();
+  const irAMiPosicion = () => {
+    const destino = document.querySelector('.nodo.actual') || document.querySelector('.cima');
+    if (destino) destino.scrollIntoView({ block: 'center', behavior: sinMovimiento() ? 'auto' : 'smooth' });
+  };
+  const info = el(
+    'div',
+    { class: 'torre-info' },
+    el('div', { class: 'torre-datos' }, el('strong', {}, completa ? 'En la cima' : `Piso ${idxActual + 1} de ${CAMPANA.length}`), el('span', {}, `${hechos}/${total} pasos · ${medallas()} medallas`)),
+    el('button', { class: 'torre-pos', type: 'button', onclick: irAMiPosicion }, 'Mi posición')
+  );
 
   pintar(
     entrada,
     el('header', { class: 'cabecera' }, logoMarca(), marcador()),
-    el('main', { class: 'contenido camp-hub' },
-      el('div', { class: 'camp-hero' },
-        el('p', { class: 'camp-hero-sup' }, 'Campaña'),
-        el('h1', {}, 'La ruta del casino'),
-        barraProgreso(hechos, total),
-        el('p', { class: 'camp-medallas' }, `${medallas()} de ${CAMPANA.length} medallas`)),
-      fila,
-      el('ol', { class: 'camp-caps' }, CAMPANA.map((c, i) => el('li', {}, tarjeta(c, i)))),
-      el('h2', { class: 'camp-sub' }, 'Personajes'),
-      galeria
-    )
+    el('main', { class: 'contenido torre-pantalla' }, info, el('div', { class: 'torre' }, el('div', { class: 'torre-cielo', 'aria-hidden': 'true' }), pisos, cima))
   );
+  alTeclear = (e) => { if (e.key === 'Escape') cerrarHoja(); };
+  // empiezas abajo y subes: la pantalla se coloca en tu posición actual
+  setTimeout(() => {
+    const dest = (enfocar && document.querySelector(`.piso[data-piso="${enfocar}"] .nodo.actual`)) || document.querySelector('.nodo.actual') || (completa ? document.querySelector('.cima') : null);
+    if (dest && dest.isConnected) dest.scrollIntoView({ block: 'center', behavior: sinMovimiento() || entrada === 'fundido' ? 'auto' : 'smooth' });
+  }, 120);
 }
