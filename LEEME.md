@@ -289,3 +289,6 @@ Al abrir la app aparece una portada (cartas que se reparten, título "Tapete" y 
 - Tarjetas que se hunden al pulsar y se elevan con el ratón; el icono de la barra inferior rebota al activarse.
 - Con scroll (navegadores compatibles): sombra en la cabecera, el héroe se aleja y el fondo se mueve en paralaje.
 - Todo se apaga con «Menos movimiento» o `prefers-reduced-motion`.
+
+## Chuletas y calculadoras animadas (v50)
+Al abrir o cerrar un bloque de la pestaña Útil, su altura se anima (`alternarBloque` en js/util.js); el contenido entra escalonado, el icono da un saltito y la tarjeta se resalta en dorado mientras está abierta. Con «Menos movimiento» cambia al instante.

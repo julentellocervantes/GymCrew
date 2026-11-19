@@ -578,3 +578,19 @@ html[data-calma="si"] .onda { display: none; }
 /* Dentro de un nivel (con cabecera de lección) se mantiene la entrada simple: nada cambia de tamaño mientras respondes */
 #app[data-entrada="adelante"]:has(.cabecera-leccion) { animation: none; -webkit-mask-image: none; mask-image: none; }
 #app[data-entrada="adelante"]:has(.cabecera-leccion) > :not(.confeti) { animation: entra-der 0.42s var(--suave) backwards; }
+
+/* ===== Chuletas y calculadoras: se despliegan con animación ===== */
+.util-bloque { transition: box-shadow .3s, border-color .3s; }
+.util-bloque[open] { border-color: var(--laton); box-shadow: 0 3px 0 var(--laton), 0 10px 22px rgba(8, 42, 50, .14); }
+.util-bloque[open] .util-icono { animation: util-icono .5s var(--rebote); }
+@keyframes util-icono { 40% { scale: 1.25; rotate: -8deg; } }
+.util-bloque .flecha { transition: rotate .35s var(--rebote); }
+.util-bloque[open] .flecha { rotate: 90deg; }
+.util-cuerpo { animation: none; }
+.util-bloque[open] .util-cuerpo > * { animation: util-entra .5s var(--suave) backwards; animation-delay: calc(var(--j, 0) * 55ms + 90ms); }
+.util-cuerpo > :nth-child(1) { --j: 0; } .util-cuerpo > :nth-child(2) { --j: 1; } .util-cuerpo > :nth-child(3) { --j: 2; } .util-cuerpo > :nth-child(4) { --j: 3; }
+.util-cuerpo > :nth-child(5) { --j: 4; } .util-cuerpo > :nth-child(6) { --j: 5; } .util-cuerpo > :nth-child(n+7) { --j: 6; }
+@keyframes util-entra { from { opacity: 0; translate: 0 14px; } }
+/* los resultados de las calculadoras laten al cambiar */
+.resultado-calc { transition: scale .2s var(--rebote); }
+.util-bloque.abriendo .resultado-calc { animation: util-entra .5s var(--suave) .3s backwards; }

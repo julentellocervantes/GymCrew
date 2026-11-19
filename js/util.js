@@ -86,11 +86,34 @@ function segmentos(etiqueta, opciones, inicial, alCambiar) {
   return caja;
 }
 
-const bloque = (icono, titulo, desc, ...contenido) =>
+// Abre y cierra una chuleta o calculadora animando su altura (con «Menos movimiento» cambia al instante)
+function alternarBloque(d, e) {
+  if (d.classList.contains('bloqueada')) return; // las exclusivas de VIP no se abren
+  const resumen = d.querySelector('summary');
+  if (!d.animate || (typeof sinMovimiento === 'function' && sinMovimiento())) return; // el comportamiento normal de <details>
+  e.preventDefault();
+  if (d._anim) { d._anim.cancel(); d._anim = null; }
+  const bordes = d.offsetHeight - d.clientHeight;
+  const inicio = d.offsetHeight;
+  const abrir = !d.open;
+  if (abrir) d.open = true;
+  const fin = abrir ? d.offsetHeight : resumen.offsetHeight + bordes;
+  d._anim = d.animate({ height: [inicio + 'px', fin + 'px'] }, { duration: abrir ? 420 : 300, easing: abrir ? 'cubic-bezier(.2, .85, .25, 1)' : 'cubic-bezier(.5, 0, .75, 0)' });
+  d.classList.toggle('abriendo', abrir);
+  d._anim.onfinish = () => { if (!abrir) d.open = false; d._anim = null; d.classList.remove('abriendo'); };
+  d._anim.oncancel = () => { d.classList.remove('abriendo'); };
+  if (typeof sonido === 'function') sonido('toque');
+}
+
+const bloque = (icono, titulo, desc, ...contenido) => {
+  const d =
   el('details', { class: 'util-bloque' },
     el('summary', {}, el('span', { class: 'util-icono' }, icono), el('span', { class: 'juego-texto' }, el('strong', {}, titulo), el('span', { class: 'juego-desc' }, desc)), el('span', { class: 'flecha', 'aria-hidden': 'true' }, '›')),
     el('div', { class: 'util-cuerpo' }, contenido)
   );
+  d.querySelector('summary').addEventListener('click', (e) => alternarBloque(d, e));
+  return d;
+};
 
 // ---------- calculadoras ----------
 function calcCuentaVerdadera() {
