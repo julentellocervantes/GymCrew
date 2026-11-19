@@ -292,3 +292,10 @@ Al abrir la app aparece una portada (cartas que se reparten, título "Tapete" y 
 
 ## Chuletas y calculadoras animadas (v50)
 Al abrir o cerrar un bloque de la pestaña Útil, su altura se anima (`alternarBloque` en js/util.js); el contenido entra escalonado, el icono da un saltito y la tarjeta se resalta en dorado mientras está abierta. Con «Menos movimiento» cambia al instante.
+
+## Campaña «La ruta del casino» (v51)
+- **Botón central** de la barra (montaña con bandera, dorado y con brillo) que abre la campaña.
+- **6 capítulos**, uno por juego, cada uno con su personaje: Rufino (blackjack), Valeria (póker), Tío Iñaki (mus), Lady Sofía (baccarat), Turbo (vídeo póker) y Don Ramiro (ruleta). Se presentan con una escena la primera vez (pulsa su cara para repetirla).
+- Cada capítulo: 7 niveles (los primeros del curso, el progreso se comparte con el mapa normal), cofres tras el 3 y el 6, un **jefe** que mezcla preguntas del capítulo (+10 fichas), un gran cofre y una **medalla** (+15 fichas; +40 al acabar la campaña). El siguiente capítulo se abre con el jefe.
+- Datos en `data/campana.js` (textos, personajes, cofres); lógica y pantallas en `js/campana.js`. Para añadir un capítulo, copia uno y cambia `curso`; `validar.js` comprueba que existan los niveles.
+- Los personajes son SVG dibujados por código (`avatarPersonaje`).

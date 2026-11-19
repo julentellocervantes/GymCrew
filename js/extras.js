@@ -735,6 +735,7 @@ function mostrarPremium(volver, aviso = '') {
 const PESTANAS = [
   { id: 'juegos', icono: '🃏', texto: 'Juegos', ir: () => mostrarInicio('fundido') },
   { id: 'util', icono: '🧰', texto: 'Útil', ir: () => mostrarUtil('fundido') },
+  { id: 'campana', icono: '🗺️', texto: 'Campaña', central: true, ir: () => mostrarCampana('fundido') },
   { id: 'tienda', icono: '🛍️', texto: 'Tienda', ir: () => mostrarTienda('fundido') },
   { id: 'ajustes', icono: '⚙️', texto: 'Ajustes', ir: () => mostrarAjustes('', 'fundido') },
 ];
@@ -749,7 +750,7 @@ function barra(activa) {
   if (!nav.querySelector('.pestana'))
     nav.append(
       ...PESTANAS.map((t) =>
-        el('button', { class: 'pestana', type: 'button', 'data-pestana': t.id, onclick: () => t.ir() }, el('span', { class: 'pestana-icono', 'aria-hidden': 'true' }, t.icono), el('span', { class: 'pestana-texto' }, t.texto))
+        el('button', { class: 'pestana' + (t.central ? ' pestana-central' : ''), type: 'button', 'data-pestana': t.id, onclick: () => t.ir() }, el('span', { class: 'pestana-icono', 'aria-hidden': 'true' }, t.icono), el('span', { class: 'pestana-texto' }, t.texto))
       )
     );
   // La píldora violeta se desliza hasta la pestaña activa (solo se anima desde la segunda vez que se muestra)
@@ -758,7 +759,7 @@ function barra(activa) {
   const pos = PESTANAS.findIndex((t) => t.id === activa);
   nav.style.setProperty('--pos', String(Math.max(pos, 0)));
   nav.style.setProperty('--n', String(PESTANAS.length));
-  pildora.hidden = pos < 0;
+  pildora.hidden = pos < 0 || activa === 'campana'; // el botón central tiene su propio resalte
   if (!nav.classList.contains('lista')) requestAnimationFrame(() => requestAnimationFrame(() => nav.classList.add('lista')));
   nav.querySelectorAll('.pestana').forEach((b) => {
     const on = b.dataset.pestana === activa;

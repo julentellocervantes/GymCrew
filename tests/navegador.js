@@ -569,7 +569,7 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
   await page.waitForSelector('.juego');
   ok((await estado()).bienvenida === true, 'la bienvenida se recuerda');
   ok(await page.locator('#barra').isVisible(), 'la barra aparece en Juegos');
-  ok(await page.locator('.pestana').count() === 4, 'cuatro pestañas: Juegos, Útil, VIP y Ajustes');
+  ok(await page.locator('.pestana').count() === 5, 'cinco pestañas: Juegos, Útil, Campaña, Tienda y Ajustes');
   await page.locator('.pestana[data-pestana=tienda]').click();
   await page.waitForSelector('.tienda');
   ok(await page.locator('.pestana[data-pestana=tienda]').getAttribute('aria-current') === 'page' && await page.locator('#barra').isVisible(), 'la pestaña Tienda se enciende y la barra se ve');
@@ -1058,6 +1058,45 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
     await pq.goto(base + '?sinportada');
     ok((await pq.locator('#portada').count()) === 0, 'con ?sinportada no hay portada');
     await pp.close(); await pq.close();
+  }
+
+  // 10) Campaña: botón central, presentación del personaje, mapa del capítulo, jefe, medalla y siguiente capítulo
+  {
+    const idsC1 = await page.evaluate(() => nivelesDe(CAMPANA[0]).map((l) => l.id));
+    await inicio({ xp: 50, fichas: 20, energia: { n: 6, t: 0, dia: null }, completadas: Object.fromEntries(idsC1.map((i) => [i, true])) });
+    ok((await page.locator('.pestana').nth(2).getAttribute('data-pestana')) === 'campana' && await page.locator('.pestana-central').count() === 1, 'el botón de campaña está en el centro de la barra');
+    await page.locator('[data-pestana=campana]').click();
+    await page.waitForSelector('.camp-cap');
+    ok(await page.locator('.camp-cap').count() === 6 && await page.locator('.camp-cap.bloqueado').count() === 5, 'seis capítulos y solo el primero abierto');
+    await page.locator('.camp-cap').first().click();
+    await page.waitForSelector('.esc-texto');
+    ok((await page.locator('.esc-placa').innerText()).includes('Rufino'), 'el personaje se presenta la primera vez');
+    await page.getByRole('button', { name: 'Siguiente' }).click();
+    await page.getByRole('button', { name: 'Siguiente' }).click();
+    await page.getByRole('button', { name: '¡A la mesa!' }).click();
+    await page.waitForSelector('.camp-mapa .nodo.jefe');
+    ok(await page.locator('.camp-mapa .nodo.hecho').count() === 7 && await page.locator('.nodo.jefe.actual').count() === 1, 'los siete niveles hechos y el jefe listo');
+    ok(await page.locator('.nodo.cofre.grande.bloqueado').count() === 1, 'el gran cofre espera al jefe');
+    await page.locator('.nodo.jefe').click({ force: true });
+    await page.waitForSelector('.camp-hoja');
+    await page.locator('[data-accion=jugar]').click();
+    await page.getByRole('button', { name: '¡Vamos!' }).click();
+    await terminar(true);
+    await page.waitForSelector('.resultado-titulo');
+    ok((await page.locator('main').innerText()).includes('Jefe derrotado'), 'el resultado menciona al jefe');
+    await page.getByRole('button', { name: 'Continuar' }).click();
+    await page.waitForSelector('.esc-texto');
+    await page.getByRole('button', { name: 'Siguiente' }).click();
+    await page.getByRole('button', { name: 'Recoger medalla' }).click();
+    await page.waitForSelector('.medalla-grande');
+    await page.getByRole('button', { name: 'Continuar' }).click();
+    await page.waitForSelector('.camp-cap');
+    ok((await page.locator('.camp-medallas').innerText()).startsWith('1 de 6') && await page.locator('.camp-cap.bloqueado').count() === 4, 'la medalla desbloquea el siguiente capítulo');
+    const e10 = await estado();
+    ok(e10.campana.fin.c1 === true && e10.campana.vistos.c1 === true, 'la campaña guarda medalla y escena vista');
+    await page.locator('.camp-cap').nth(1).click();
+    await page.waitForSelector('.esc-placa');
+    ok((await page.locator('.esc-placa').innerText()).includes('Valeria'), 'el siguiente capítulo presenta a Valeria');
   }
 
   ok(fallos.length === 0, 'sin errores de consola: ' + fallos.join(' | '));

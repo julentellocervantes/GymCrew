@@ -311,12 +311,13 @@ function verificarInteractivo(e) {
 }
 
 
-for (const f of ['cursos.js', 'blackjack.js', 'poker.js', 'mus.js', 'blackjack-extra.js', 'poker-extra.js', 'mus-extra.js', 'ordenar-extra.js', 'interactivos-extra.js', 'variedad-extra.js', 'ayuda.js', 'generadores.js', 'practica.js', 'videopoker-datos.js', 'perezoso.js', 'casino.js', 'ruleta.js', 'ampliacion.js', 'mas-niveles.js', 'formas-nuevas.js', 'variedad-generada.js', 'premium.js', 'formas-interactivas.js']) vm.runInContext(fs.readFileSync(D + f, 'utf8'), ctx, { filename: f });
+for (const f of ['cursos.js', 'blackjack.js', 'poker.js', 'mus.js', 'blackjack-extra.js', 'poker-extra.js', 'mus-extra.js', 'ordenar-extra.js', 'interactivos-extra.js', 'variedad-extra.js', 'ayuda.js', 'generadores.js', 'practica.js', 'videopoker-datos.js', 'perezoso.js', 'casino.js', 'ruleta.js', 'ampliacion.js', 'mas-niveles.js', 'formas-nuevas.js', 'variedad-generada.js', 'premium.js', 'campana.js', 'formas-interactivas.js']) vm.runInContext(fs.readFileSync(D + f, 'utf8'), ctx, { filename: f });
 const CURSOS = vm.runInContext('CURSOS', ctx);
 const AYUDA = vm.runInContext('AYUDA', ctx);
 const CURSOS_ORO = vm.runInContext('CURSOS_ORO', ctx);
 const ORO = vm.runInContext('ORO', ctx);
 const PREMIUM = vm.runInContext('PREMIUM', ctx);
+
 
 
 const errores = [];
@@ -426,6 +427,27 @@ function ganaMus(lance, a, b) { // devuelve 1 (gana a), -1 (gana b), 0 (empate)
 }
 
 const errores_pre = [];
+// Campaña: cada capítulo apunta a un curso real con niveles suficientes y trae sus textos
+{
+  const CAMPANA = vm.runInContext('CAMPANA', ctx);
+  const ids = new Set();
+  for (const c of CAMPANA) {
+    const curso = CURSOS.find((x) => x.id === c.curso);
+    if (!curso) { errores_pre.push(`campaña ${c.id}: el curso «${c.curso}» no existe`); continue; }
+    if (ids.has(c.id)) errores_pre.push(`campaña: capítulo repetido ${c.id}`);
+    ids.add(c.id);
+    const niv = curso.unidades.flatMap((u) => u.lecciones);
+    if (!/^c\d$/.test(c.id)) errores_pre.push(`campaña ${c.id}: el id debe ser c1, c2…`);
+    if (niv.length < c.niveles) errores_pre.push(`campaña ${c.id}: pide ${c.niveles} niveles y el curso tiene ${niv.length}`);
+    if (c.frases.length !== c.niveles) errores_pre.push(`campaña ${c.id}: debe haber una frase por nivel`);
+    if (c.presentacion.length < 2 || c.final.length < 1 || !c.jefe || !c.medalla) errores_pre.push(`campaña ${c.id}: faltan textos`);
+    if (c.cofres.some((k) => k < 1 || k >= c.niveles)) errores_pre.push(`campaña ${c.id}: cofre fuera de rango`);
+    const p = c.personaje;
+    if (!p || !p.id || !p.nombre || !/^#[0-9a-f]{6}$/i.test(p.color)) errores_pre.push(`campaña ${c.id}: personaje incompleto`);
+    // los niveles que usa la campaña deben tener preguntas para el jefe
+    if (niv.slice(0, c.niveles).flatMap((l) => l.ejercicios).length < 10) errores_pre.push(`campaña ${c.id}: pocas preguntas para el jefe`);
+  }
+}
 // ---------- casino: baccarat y vídeo póker (cálculos independientes) ----------
 const BAC_VAL = { A: 1, 10: 0, J: 0, Q: 0, K: 0 };
 const bacVal = (c) => { const r = c.slice(0, -1); return r in BAC_VAL ? BAC_VAL[r] : Number(r); };

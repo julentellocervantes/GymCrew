@@ -27,6 +27,7 @@ const progresoNuevo = () => ({
   rapida: { partidas: 0, mejor: 0 }, // partida rápida de 60 segundos
   ajustes: { letra: 'normal', calma: false, contraste: false, sonido: true, vibracion: true },
   pasos: { tienda: false, meta: false, ocultar: false }, // «Primeros pasos» del inicio
+  campana: { fin: {}, vistos: {} }, // campaña: capítulos con medalla y escenas ya vistas
   bienvenida: false,              // true cuando ya has visto la pantalla de bienvenida
   vip: { hasta: 0 },              // membresía VIP: instante (ms) hasta el que está activa
   fichas: 20,                     // moneda de la tienda
@@ -83,6 +84,9 @@ function normalizarProgreso(datos) {
   const eq = obj(tn.equipado, {});
   const sl = (s) => (typeof s === 'string' && /^[a-z]{3,12}$/.test(s) ? s : null);
   p.tienda = { comprados: Array.isArray(tn.comprados) ? tn.comprados.filter(idOk).slice(0, 60) : [], equipado: { fondo: sl(eq.fondo) || 'clasico', baraja: sl(eq.baraja) || 'clasica', espanola: sl(eq.espanola) || 'clasica', nai: sl(eq.nai) || 'clasico' } };
+  const cm = obj(p.campana, {});
+  const idCap = (o) => Object.fromEntries(Object.keys(obj(o, {})).filter((k) => /^c\d{1,2}$/.test(k) && o[k] === true).map((k) => [k, true]));
+  p.campana = { fin: idCap(cm.fin), vistos: idCap(cm.vistos) };
   const ps = obj(p.pasos, {});
   p.pasos = { tienda: ps.tienda === true, meta: ps.meta === true, ocultar: ps.ocultar === true };
   // quien ya tenía progreso no necesita la bienvenida
@@ -1059,10 +1063,16 @@ function mostrarLogros() {
 // ============================================================
 // PANTALLA 3: Nai explica el nivel antes de empezar
 // ============================================================
+// Volver «al mapa» desde un nivel: el mapa del curso, el inicio (repasos) o el capítulo de la campaña
+function volverDe(curso, recientes = []) {
+  if (curso.campana) return mostrarCapitulo(curso.campana, 'atras', recientes);
+  return curso.global ? mostrarInicio('atras') : mostrarMapa(curso, 'atras', recientes);
+}
+
 function mostrarIntro(curso, leccion) {
   const empezar = () => {
     // cada nivel gasta 1 ⚡ (el VIP no gasta); sin energía se ofrece esperar, comprar o ir a la tienda
-    if (!tieneEnergia()) return mostrarSinEnergia(() => mostrarIntro(curso, leccion), () => mostrarMapa(curso, 'atras'));
+    if (!tieneEnergia()) return mostrarSinEnergia(() => mostrarIntro(curso, leccion), () => volverDe(curso));
     gastarEnergia();
     mostrarLeccion(curso, leccion);
   };
@@ -1080,7 +1090,7 @@ function mostrarIntro(curso, leccion) {
     el(
       'header',
       { class: 'cabecera-leccion', 'data-oro': leccion.oro ? '1' : null },
-      el('button', { class: 'cerrar', type: 'button', 'aria-label': 'Volver al mapa', onclick: () => mostrarMapa(curso, 'atras') }, '✕')
+      el('button', { class: 'cerrar', type: 'button', 'aria-label': 'Volver al mapa', onclick: () => volverDe(curso) }, '✕')
     ),
     el(
       'main',
@@ -1121,7 +1131,7 @@ function mostrarLeccion(curso, leccion) {
   let comprobar = null; // acción del botón «Comprobar» de la pantalla actual
   let rapidaTimer = null; // partida rápida: 60 s en total
   let rapidaInicio = 0;
-  const salir = () => { clearTimeout(rapidaTimer); return curso.global ? mostrarInicio('atras') : mostrarMapa(curso, 'atras'); };
+  const salir = () => { clearTimeout(rapidaTimer); return volverDe(curso); };
   const aciertosRapida = () => Object.keys(vistos).filter((id) => !fallados[id]).length;
   function terminarRapida() {
     clearTimeout(rapidaTimer);
@@ -1766,6 +1776,15 @@ function mostrarLeccion(curso, leccion) {
 // ============================================================
 // PANTALLA 5: resultado del nivel
 // ============================================================
+// Línea de campaña para la pantalla de resultado
+function notaDeCampana(curso, leccion) {
+  const cap = CAMPANA.find((c) => c.id === curso.campana);
+  if (!cap) return null;
+  return leccion.campanaJefe
+    ? `${cap.personaje.nombre}: «¡Jefe derrotado! Vuelve al mapa a por tu medalla.»`
+    : `Campaña: ${capHechos(cap)} de ${capTotal(cap)} pasos en «${cap.titulo}»`;
+}
+
 function finalizarLeccion(curso, leccion, precision) {
   const rangoAntes = rangoDe(progreso.xp).indice;
   const yaHecha = !!progreso.completadas[leccion.id];
@@ -1775,11 +1794,11 @@ function finalizarLeccion(curso, leccion, precision) {
   const xp = (leccion.repaso ? Math.round((leccion.xp * precision) / 100) : leccion.xp) * vipX;
   const actividad = registrarActividad(xp);
   // fichas: 3 por nivel nuevo (6 si es Oro) y 5 por cumplir la meta diaria
-  const fichas = (!leccion.repaso && !yaHecha ? (leccion.oro ? 6 : 3) : 0) + (actividad.metaCumplida ? 5 : 0);
+  const fichas = (!leccion.repaso && !yaHecha ? (leccion.oro ? 6 : 3) : 0) + (!yaHecha && leccion.fichasExtra ? leccion.fichasExtra : 0) + (actividad.metaCumplida ? 5 : 0);
   const fichasTotal = fichas * vipX;
   progreso.fichas += fichasTotal;
   const idx = niveles(curso).indexOf(leccion);
-  const cofreNuevo = !leccion.repaso && !leccion.oro && !yaHecha && idx >= 0 && (idx + 1) % CADA_COFRE === 0;
+  const cofreNuevo = !curso.campana && !leccion.repaso && !leccion.oro && !yaHecha && idx >= 0 && (idx + 1) % CADA_COFRE === 0;
   if (leccion.repaso) progreso.repasos = (progreso.repasos || 0) + 1;
   else progreso.completadas[leccion.id] = true;
   if (precision === 100 && !leccion.repaso) { progreso.perfectos = (progreso.perfectos || 0) + 1; if (typeof retoSuma === 'function') retoSuma('perfectos'); }
@@ -1790,7 +1809,7 @@ function finalizarLeccion(curso, leccion, precision) {
 
   const nuevoRango = rangoDe(progreso.xp);
   const siguiente = siguienteNivel(curso);
-  const nuevoNivel = !leccion.repaso && !leccion.oro && !yaHecha;
+  const nuevoNivel = !leccion.repaso && !leccion.oro && !yaHecha && !curso.campana;
   mostrarResultado(curso, leccion, precision, {
     xp,
     fichas: fichasTotal,
@@ -1798,6 +1817,7 @@ function finalizarLeccion(curso, leccion, precision) {
     cofreNuevo,
     desbloqueado: nuevoNivel ? siguiente : null,
     cursoCompleto: nuevoNivel && !siguiente,
+    notaCampana: curso.campana && !leccion.repaso ? notaDeCampana(curso, leccion) : null,
     logros,
     actividad,
     rangoNuevo: nuevoRango.indice > rangoAntes ? nuevoRango.actual : null,
@@ -1846,7 +1866,7 @@ function tarjetaPrimerosPasos() {
 function mostrarResultado(curso, leccion, precision, extra) {
   // Al volver al mapa se animan el nivel que acabas de completar y el que se desbloquea
   const volver = () =>
-    curso.global ? mostrarInicio('atras') : mostrarMapa(curso, 'atras', leccion.repaso ? [] : [leccion.id].concat(extra.desbloqueado ? [extra.desbloqueado.id] : []));
+    volverDe(curso, leccion.repaso ? [] : [leccion.id].concat(extra.desbloqueado ? [extra.desbloqueado.id] : []));
   alTeclear = (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
@@ -1885,6 +1905,7 @@ function mostrarResultado(curso, leccion, precision, extra) {
   const act = extra.actividad || {};
   if (extra.vip) notas.push(linea(orden++, 'resultado-dato', '👑 Bonus VIP: el doble de XP y de fichas'));
   if (extra.fichas) notas.push(linea(orden++, 'resultado-dato', `🪙 +${extra.fichas} fichas`));
+  if (extra.notaCampana) notas.push(linea(orden++, 'resultado-nuevo', extra.notaCampana));
   if (extra.cofreNuevo) notas.push(linea(orden++, 'resultado-nuevo', '🎁 ¡Hay un cofre esperándote en el mapa!'));
   if (act.metaCumplida) notas.push(linea(orden++, 'resultado-nuevo', '🎯 ¡Meta diaria cumplida!'));
   if (act.congeladorUsado) notas.push(linea(orden++, 'resultado-dato', '🧊 Un congelador ha salvado tu racha'));
