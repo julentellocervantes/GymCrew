@@ -807,3 +807,25 @@ html[data-calma="si"] .adorno, html[data-calma="si"] .zona-rueda::before, html[d
 @keyframes nai-bota { 50% { translate: 0 -6px; } }
 @media (prefers-reduced-motion: reduce) { .nai-compana { animation: none; } }
 html[data-calma="si"] .nai-compana { animation: none; }
+
+/* Recorrido guiado */
+.tour-velo { position: fixed; inset: 0; z-index: 25; background: rgba(4, 22, 28, .55); animation: tour-vela .3s ease both; }
+@keyframes tour-vela { from { opacity: 0; } }
+.tour { position: fixed; left: 50%; translate: -50% 0; z-index: 31; width: calc(100% - 24px); max-width: 496px; bottom: calc(var(--alto-barra) + 22px + env(safe-area-inset-bottom)); padding: 14px 16px 14px; background: var(--tiza); color: #14312f; border: 3px solid var(--laton); border-radius: 22px; box-shadow: 0 14px 34px rgba(0,0,0,.45); animation: tour-sube .45s var(--rebote) both; }
+@keyframes tour-sube { from { opacity: 0; transform: translateY(24px); } }
+.tour::after { content: ""; position: absolute; bottom: -12px; left: var(--flecha, 50%); width: 20px; height: 20px; margin-left: -10px; background: var(--tiza); border: 3px solid var(--laton); border-width: 0 3px 3px 0; rotate: 45deg; }
+.tour-cab { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-family: var(--serif); font-size: 18px; }
+.tour-puntos { display: flex; gap: 5px; }
+.tour-puntos span { width: 8px; height: 8px; border-radius: 50%; background: #b9c8c0; transition: .3s; }
+.tour-puntos span.on { width: 22px; border-radius: 6px; background: var(--ficha); }
+.tour .nai-fila { margin: 0 0 10px; }
+.tour .globo { background: transparent; box-shadow: none; border: 0; padding: 0; color: #14312f; font-size: 15px; }
+.tour .globo::before { display: none; }
+.tour-botones { display: flex; gap: 8px; align-items: center; }
+.tour-botones .boton { flex: 1; min-height: 44px; padding: 8px 12px; }
+.tour-botones .enlace { margin-right: auto; color: #4d6b66; }
+.pestana.tour-foco { color: #fff; animation: tour-pulso 1.2s ease-in-out infinite; }
+.pestana.tour-foco .pestana-icono { filter: drop-shadow(0 0 8px var(--laton)); scale: 1.2; }
+@keyframes tour-pulso { 50% { background: rgba(243, 182, 63, .3); border-radius: 16px; } }
+@media (prefers-reduced-motion: reduce) { .tour, .tour-velo, .pestana.tour-foco { animation: none; } }
+html[data-calma="si"] .tour, html[data-calma="si"] .pestana.tour-foco { animation: none; }

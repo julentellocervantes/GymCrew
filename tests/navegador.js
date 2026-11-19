@@ -566,7 +566,16 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
   ok(await page.locator('#barra').isHidden(), 'la bienvenida no muestra la barra inferior');
   await foto('11-bienvenida');
   await page.getByRole('button', { name: 'Empezar' }).click();
+  await page.waitForSelector('.tour');
+  ok((await page.locator('.tour').innerText()).includes('Juegos') && await page.locator('.pestana[data-pestana=juegos]').getAttribute('aria-current') === 'page', 'el recorrido empieza explicando Juegos');
+  for (const id of ['util', 'campana', 'tienda', 'ajustes']) {
+    await page.locator('.tour').getByRole('button', { name: 'Siguiente' }).click();
+    await page.waitForFunction((i) => { const t = document.querySelector('.pestana[data-pestana=' + i + ']'); return t && t.getAttribute('aria-current') === 'page' && t.classList.contains('tour-foco'); }, id);
+    ok(await page.locator('.tour').count() === 1, 'el recorrido pasa por la pestaña ' + id);
+  }
+  await page.locator('.tour').getByRole('button', { name: '¡A jugar!' }).click();
   await page.waitForSelector('.juego');
+  ok(await page.locator('.tour').count() === 0 && await page.locator('.tour-velo').count() === 0, 'al terminar el recorrido se quita');
   ok((await estado()).bienvenida === true, 'la bienvenida se recuerda');
   ok(await page.locator('#barra').isVisible(), 'la barra aparece en Juegos');
   ok(await page.locator('.pestana').count() === 5, 'cinco pestañas: Juegos, Útil, Campaña, Tienda y Ajustes');

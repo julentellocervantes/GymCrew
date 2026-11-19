@@ -338,7 +338,7 @@ function mostrarCampana(entrada = 'fundido', recientes = [], enfocar = null) {
   const idxActual = CAMPANA.findIndex((c, i) => capDesbloqueado(i) && !capCompleto(c));
   const completa = idxActual < 0;
   const capActual = CAMPANA[completa ? CAMPANA.length - 1 : idxActual];
-  if (!completa && !est.vistos[capActual.id]) {
+  if (!completa && !est.vistos[capActual.id] && !(typeof tourActivo !== 'undefined' && tourActivo)) {
     est.vistos[capActual.id] = true;
     guardarProgreso();
     return mostrarEscena(capActual, capActual.presentacion, () => mostrarCampana('adelante', [], capActual.id), { boton: '¡A subir!' });

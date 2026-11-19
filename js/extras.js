@@ -391,7 +391,8 @@ function mostrarAjustes(aviso = '', animacion = 'fundido') {
         { class: 'ajuste' },
         el('h2', {}, '👋 Bienvenida'),
         el('p', {}, 'Vuelve a ver la pantalla de presentación.'),
-        el('button', { class: 'boton secundario', type: 'button', onclick: () => mostrarBienvenida(true) }, 'Ver la bienvenida')
+        el('button', { class: 'boton secundario', type: 'button', onclick: () => mostrarBienvenida(true) }, 'Ver la bienvenida'),
+        el('button', { class: 'boton secundario', type: 'button', onclick: () => iniciarTour() }, 'Ver el recorrido')
       ),
       el(
         'section',
@@ -595,7 +596,7 @@ function mostrarBienvenida(repetida = false) {
   alTeclear = (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      empezar(() => mostrarInicio('adelante'));
+      empezar(() => (repetida ? mostrarInicio('adelante') : iniciarTour()));
     }
   };
   const ventaja = (icono, titulo, desc, i) =>
@@ -615,9 +616,54 @@ function mostrarBienvenida(repetida = false) {
         ventaja('⏱️', 'Entrena el conteo', 'Cartas a toda velocidad con el sistema Hi-Lo.', 3)),
       el('p', { class: 'aviso' }, 'Contenido educativo. Sin dinero real. Solo para mayores de 18 años.')),
     el('div', { class: 'pie' },
-      el('button', { class: 'boton', type: 'button', onclick: () => empezar(() => mostrarInicio('adelante')) }, repetida ? 'Volver a los juegos' : 'Empezar'),
+      el('button', { class: 'boton', type: 'button', onclick: () => empezar(() => (repetida ? mostrarInicio('adelante') : iniciarTour())) }, repetida ? 'Volver a los juegos' : 'Empezar'),
       el('button', { class: 'enlace', type: 'button', onclick: () => empezar(() => mostrarUtil('adelante')) }, 'Ya sé jugar: ir a las herramientas'))
   );
+}
+
+// ============================================================
+// RECORRIDO GUIADO: Nai pasa por cada pestaña y explica qué se puede hacer
+// ============================================================
+const PASOS_TOUR = [
+  { id: 'juegos', estado: 'feliz', titulo: 'Juegos', texto: 'Aquí eliges el juego: blackjack, póker, mus, baccarat, vídeo póker o ruleta. Cada uno es un camino de niveles cortos; ve superándolos y repasaré contigo lo que falles.' },
+  { id: 'util', estado: 'pensando', titulo: 'Útil', texto: 'Tu caja de herramientas: chuletas de estrategia, glosario, el entrenador de conteo Hi-Lo y calculadoras (algunas son VIP). Perfecto para consultar en plena partida.' },
+  { id: 'campana', estado: 'celebrando', titulo: 'Campaña', texto: 'Una torre de seis pisos, uno por juego. En cada piso conoces a un personaje del casino, subes nivel a nivel, abres cofres y vences al jefe para ganar su medalla.' },
+  { id: 'tienda', estado: 'feliz', titulo: 'Tienda', texto: 'Aquí gastas las fichas que ganas: fondos, barajas y looks nuevos para mí. Los cofres que encuentres por el camino también dan premios.' },
+  { id: 'ajustes', estado: 'normal', titulo: 'Ajustes', texto: 'Cambia el tamaño de letra, el sonido, la vibración o el modo calma. Y si quieres volver a ver este recorrido, lo encontrarás aquí.' },
+];
+let tourActivo = false;
+function cerrarTour() {
+  tourActivo = false;
+  document.querySelectorAll('.tour, .tour-velo').forEach((n) => n.remove());
+  document.querySelectorAll('.pestana.tour-foco').forEach((n) => n.classList.remove('tour-foco'));
+}
+function iniciarTour(i = 0, alFinal) {
+  cerrarTour();
+  tourActivo = true;
+  const paso = PASOS_TOUR[i];
+  const ultimo = i === PASOS_TOUR.length - 1;
+  const fin = () => {
+    cerrarTour();
+    progreso.bienvenida = true;
+    guardarProgreso();
+    if (alFinal) alFinal(); else mostrarInicio('fundido');
+  };
+  PESTANAS.find((t) => t.id === paso.id).ir();
+  const { fila } = naiFila(paso.estado, paso.texto, 'pequena');
+  const puntos = el('div', { class: 'tour-puntos', 'aria-hidden': 'true' }, ...PASOS_TOUR.map((_, k) => el('span', { class: k === i ? 'on' : '' })));
+  const siguiente = el('button', { class: 'boton', type: 'button', onclick: () => (ultimo ? fin() : iniciarTour(i + 1, alFinal)) }, ultimo ? '¡A jugar!' : 'Siguiente');
+  const tarjeta = el('div', { class: 'tour', role: 'dialog', 'aria-label': 'Recorrido: ' + paso.titulo },
+    el('div', { class: 'tour-cab' }, el('strong', {}, `${i + 1}/${PASOS_TOUR.length} · ${paso.titulo}`), puntos),
+    fila,
+    el('div', { class: 'tour-botones' },
+      el('button', { class: 'enlace', type: 'button', onclick: fin }, ultimo ? '' : 'Saltar'),
+      i > 0 ? el('button', { class: 'boton secundario', type: 'button', onclick: () => iniciarTour(i - 1, alFinal) }, 'Atrás') : null,
+      siguiente));
+  document.body.append(el('div', { class: 'tour-velo', 'aria-hidden': 'true' }), tarjeta);
+  const tab = document.querySelector(`.pestana[data-pestana=${paso.id}]`);
+  if (tab) tab.classList.add('tour-foco');
+  tarjeta.style.setProperty('--flecha', ((PESTANAS.findIndex((t) => t.id === paso.id) + 0.5) / PESTANAS.length * 100).toFixed(1) + '%');
+  siguiente.focus({ preventScroll: true });
 }
 
 // ============================================================
