@@ -829,3 +829,46 @@ html[data-calma="si"] .nai-compana { animation: none; }
 @keyframes tour-pulso { 50% { background: rgba(243, 182, 63, .3); border-radius: 16px; } }
 @media (prefers-reduced-motion: reduce) { .tour, .tour-velo, .pestana.tour-foco { animation: none; } }
 html[data-calma="si"] .tour, html[data-calma="si"] .pestana.tour-foco { animation: none; }
+
+/* ===== La Torre: marca, carrera, vitrina, botón Continuar ===== */
+.torre-datos { text-align: left; background: none; border: 0; color: inherit; font: inherit; padding: 0; cursor: pointer; min-width: 0; }
+.torre-datos span { display: block; }
+.torre-datos::after { content: "Ver mi carrera ›"; display: block; font-size: 11px; font-weight: 800; color: var(--laton); }
+.camp-continuar { position: fixed; z-index: 24; left: 50%; bottom: calc(var(--alto-barra) + 16px + env(safe-area-inset-bottom)); translate: -50% 30px; width: calc(100% - 28px); max-width: 480px; display: none; align-items: center; gap: 12px; padding: 10px 16px 10px 10px; border: 0; border-radius: 999px; background: linear-gradient(180deg, #ea4a31, #c93219); color: #fff; box-shadow: 0 5px 0 var(--ficha-osc), 0 12px 22px rgba(0, 0, 0, .4); font: inherit; text-align: left; cursor: pointer; opacity: 0; }
+.camp-continuar.visible { display: flex; animation: continuar-entra .45s var(--rebote) forwards; }
+@keyframes continuar-entra { to { opacity: 1; translate: -50% 0; } }
+.camp-continuar:has(~ .camp-hoja) { display: none; }
+.camp-continuar-ico { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: #fff; color: var(--ficha); font-size: 16px; padding-left: 3px; }
+.camp-continuar small { display: block; font-size: 11px; font-weight: 800; opacity: .85; }
+.camp-continuar strong { display: block; font-size: 16px; line-height: 1.15; }
+.rango-nuevo { margin: 4px 0; padding: 6px 16px; border-radius: 999px; background: var(--laton); color: #3a2500; font-weight: 800; box-shadow: 0 3px 0 #a86a00; animation: tour-sube .6s var(--rebote) .8s both; }
+.esc-cartel { display: flex; align-items: center; gap: 12px; padding: 8px 18px 8px 8px; border-radius: 999px; background: rgba(0, 0, 0, .5); border: 2px solid var(--laton); color: #fff; animation: tour-sube .6s var(--rebote) both; }
+.esc-cartel-num { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 50%; background: linear-gradient(180deg, #ffe58a, #f3b63f); color: #3a2500; font-family: var(--serif); font-weight: 900; font-size: 34px; line-height: 1; }
+.esc-cartel-txt small { display: block; font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; opacity: .8; text-align: left; }
+.esc-cartel-txt strong { display: block; font-family: var(--serif); font-size: 24px; line-height: 1; text-align: left; }
+.escena[class*="zona-"] { position: relative; isolation: isolate; overflow: hidden; border-radius: 0 0 28px 28px; }
+.escena[class*="zona-"] > * { position: relative; z-index: 2; }
+/* Mi carrera */
+.carrera h2 { margin: 22px 0 10px; font-family: var(--serif); font-size: 24px; }
+.carrera-hero { position: relative; overflow: hidden; padding: 22px 18px; border-radius: 24px; text-align: center; color: #fff; background: radial-gradient(90% 70% at 50% 0%, rgba(243, 182, 63, .35), transparent 70%), linear-gradient(160deg, #123f4a, #082a32); border: 3px solid var(--laton); box-shadow: 0 10px 24px rgba(0, 0, 0, .3); }
+.carrera-hero.campeon { background: radial-gradient(90% 70% at 50% 0%, rgba(255, 229, 138, .6), transparent 70%), linear-gradient(160deg, #6b2a8a, #2a1245); }
+.carrera-rango-pre { font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--laton); }
+.carrera-hero h1 { margin: 4px 0; font-family: var(--serif); font-size: 40px; line-height: 1; color: #ffe9a0; text-shadow: 0 2px 0 rgba(0, 0, 0, .4); }
+.carrera-hero p { margin: 6px 0; opacity: .9; }
+.carrera-sig { font-weight: 700; }
+.vitrina { list-style: none; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 0; margin: 0; }
+.vitrina-hueco { display: grid; justify-items: center; gap: 2px; padding: 12px 6px; text-align: center; border-radius: 18px; background: rgba(8, 42, 50, .08); border: 2px dashed rgba(8, 42, 50, .25); }
+.vitrina-hueco.tengo { background: linear-gradient(180deg, #fff6d6, #ffe9a0); border: 2px solid var(--laton); box-shadow: 0 4px 0 #a86a00; color: #3a2500; }
+.vitrina-medalla { display: grid; place-items: center; width: 54px; height: 54px; }
+.vitrina-medalla .ico, .vitrina-medalla .ico-svg { width: 50px; height: 50px; }
+.vitrina-candado { font-size: 26px; opacity: .55; }
+.vitrina-hueco strong { font-size: 12px; line-height: 1.1; }
+.vitrina-hueco small { font-size: 11px; opacity: .75; }
+.vitrina-hueco .personaje { width: 34px; height: 34px; }
+.carrera-datos { list-style: none; display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 0; margin: 0; }
+.carrera-datos li { padding: 12px; border-radius: 16px; background: rgba(8, 42, 50, .08); text-align: center; }
+.carrera-datos strong { display: block; font-family: var(--serif); font-size: 30px; line-height: 1; }
+.carrera-datos span { font-size: 13px; opacity: .8; }
+.diploma { margin-top: 18px; padding: 18px; text-align: center; border: 4px double var(--laton); border-radius: 14px; background: #fff9e3; color: #3a2500; }
+.diploma strong { display: block; font-family: var(--serif); font-size: 28px; }
+@media (prefers-reduced-motion: reduce) { .camp-continuar.visible, .rango-nuevo, .esc-cartel { animation: none; opacity: 1; translate: -50% 0; } .rango-nuevo, .esc-cartel { translate: none; } }

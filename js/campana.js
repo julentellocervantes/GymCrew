@@ -5,9 +5,9 @@
 // (progreso.campana.vistos) y qué medallas has recogido (progreso.campana.fin).
 
 // Icono propio del botón central: una montaña con una bandera
-ICONOS.campana = S(`<ellipse cx="24" cy="43" rx="18" ry="3" fill="#0003"/><path d="M2 42 L19 14 L28 28 L34 20 L46 42Z" fill="url(#gVerde)" stroke="#1e6b1c" stroke-width="2.2" stroke-linejoin="round"/><path d="M14 22 L19 14 L24 22 L21 20 L19 23 L17 20Z" fill="#fff" stroke="#cfd7e6" stroke-width="1"/><path d="M19 14 V3" stroke="#6b4a1e" stroke-width="2.4" stroke-linecap="round"/><path class="i-bota" d="M19.5 3.5 L31 7 L19.5 11Z" fill="url(#gRojo)" stroke="#a02020" stroke-width="1.6" stroke-linejoin="round"/>${BR}`);
+ICONOS.campana = S(`<ellipse cx="24" cy="44" rx="17" ry="3" fill="#0003"/><path d="M13 43 V17 H35 V43Z" fill="url(#gRojo)" stroke="#8a1c1c" stroke-width="2.2" stroke-linejoin="round"/><path d="M10 17 V10 H15 V13 H19 V10 H23 V13 H25 V10 H29 V13 H33 V10 H38 V17Z" fill="#f3b63f" stroke="#a86a00" stroke-width="2" stroke-linejoin="round"/><path d="M24 10 V2" stroke="#6b4a1e" stroke-width="2.2" stroke-linecap="round"/><path class="i-bota" d="M24.5 2.5 L35 5.5 L24.5 9Z" fill="#fff" stroke="#cfd7e6" stroke-width="1.4" stroke-linejoin="round"/><rect x="21" y="32" width="6" height="11" rx="3" fill="#3a1010"/><rect x="18.5" y="21" width="4" height="6" rx="2" fill="#ffe58a"/><rect x="25.5" y="21" width="4" height="6" rx="2" fill="#ffe58a"/>${BR}`);
 EMOJI_A_ICONO['🗺'] = 'campana';
-NOMBRE_ICONO.campana = 'campaña';
+NOMBRE_ICONO.campana = 'la torre';
 
 // ---------- estado ----------
 const campEstado = () => progreso.campana || (progreso.campana = { fin: {}, vistos: {} });
@@ -26,7 +26,7 @@ const medallas = () => CAMPANA.filter((c) => campEstado().fin[c.id]).length;
 // El curso «envuelto»: es el mismo curso pero marca que se juega desde la campaña (para volver al mapa de la campaña)
 function cursoCampana(cap) {
   const base = cursoDe(cap);
-  return Object.assign({}, base, { campana: cap.id, nombre: `Campaña · ${cap.titulo}`, color: cap.personaje.color });
+  return Object.assign({}, base, { campana: cap.id, nombre: `La Torre · ${cap.titulo}`, color: cap.personaje.color });
 }
 
 // El jefe mezcla preguntas de todos los niveles del capítulo (se construye una vez por sesión)
@@ -182,8 +182,8 @@ function mostrarEscena(cap, lineas, alFinal, opciones = {}) {
     el('header', { class: 'cabecera-leccion' }, el('button', { class: 'cerrar', type: 'button', 'aria-label': 'Saltar la escena', onclick: () => alFinal() }, '✕')),
     el(
       'main',
-      { class: 'contenido centro escena', style: `--acento:${p.color}` },
-      el('p', { class: 'esc-lugar' }, cap.lugar),
+      { class: 'contenido centro escena ' + ZONAS[cap.id].clase, style: `--acento:${p.color}` },
+      el('div', { class: 'esc-cartel' }, el('span', { class: 'esc-cartel-num' }, String(CAMPANA.indexOf(cap) + 1)), el('span', { class: 'esc-cartel-txt' }, el('small', {}, 'Piso'), el('strong', {}, cap.titulo))),
       avatar,
       el('div', { class: 'esc-placa' }, el('strong', {}, p.nombre), el('span', {}, p.rol)),
       el('div', { class: 'esc-globo' }, texto),
@@ -224,6 +224,7 @@ function mostrarMedalla(cap) {
       el('h1', {}, cap.medalla),
       avatarPersonaje(cap.personaje, 'mini'),
       fichas ? el('p', { class: 'resultado-dato' }, `+${fichas} fichas`) : null,
+      primera ? el('p', { class: 'rango-nuevo' }, `Nuevo rango: ${rangoTorre().nombre}`) : null,
       el('p', { class: 'resultado-nuevo' }, ultima ? 'Eres el Campeón del Tapete. Todo lo que has aprendido, a tu servicio.' : `Ya puedes subir al piso ${idx + 2}: «${sig.titulo}» con ${sig.personaje.nombre}.`)
     ),
     el('div', { class: 'pie' }, el('button', { class: 'boton', type: 'button', onclick: () => mostrarCampana('atras') }, 'Continuar')),
@@ -233,6 +234,58 @@ function mostrarMedalla(cap) {
   sonido('logro', 500);
   if (fichas) sonido('monedas', 1000);
   if (ultima) sonido('perfecto', 700);
+}
+
+// ---------- rangos de la Torre: suben con cada medalla ----------
+const RANGOS_TORRE = [
+  { n: 0, nombre: 'Aprendiz de tapete', lema: 'Todo gran crupier empezó sin saber barajar.' },
+  { n: 1, nombre: 'Repartidor', lema: 'Ya sabes por dónde se coge la baraja.' },
+  { n: 2, nombre: 'Crupier', lema: 'La mesa empieza a respetarte.' },
+  { n: 3, nombre: 'Jefe de sala', lema: 'Los novatos te piden consejo.' },
+  { n: 4, nombre: 'Pit boss', lema: 'Nada se te escapa en el casino.' },
+  { n: 5, nombre: 'Director del casino', lema: 'Solo queda un piso entre tú y la gloria.' },
+  { n: 6, nombre: 'Campeón del Tapete', lema: 'Has subido toda la Torre. Leyenda.' },
+];
+const rangoTorre = () => RANGOS_TORRE[Math.min(medallas(), RANGOS_TORRE.length - 1)];
+const cofresTorre = () => Object.keys(progreso.cofres || {}).filter((k) => k.startsWith('camp-') && progreso.cofres[k]).length;
+
+// Mi carrera: rango, vitrina de medallas y cifras de la Torre
+function mostrarCarrera(volver) {
+  alTeclear = (e) => { if (e.key === 'Escape') volver(); };
+  const m = medallas();
+  const r = rangoTorre();
+  const sig = RANGOS_TORRE[m + 1];
+  const total = CAMPANA.length;
+  const vitrina = el('ul', { class: 'vitrina' }, CAMPANA.map((c, i) => {
+    const tengo = !!campEstado().fin[c.id];
+    return el('li', { class: 'vitrina-hueco' + (tengo ? ' tengo' : ''), style: `--acento:${c.personaje.color}`, 'aria-label': `${c.medalla}${tengo ? '' : ' (por conseguir)'}` },
+      el('span', { class: 'vitrina-medalla' }, tengo ? icono('medalla') : el('span', { class: 'vitrina-candado' }, '🔒')),
+      avatarPersonaje(c.personaje, 'mini' + (tengo ? '' : ' oculto')),
+      el('strong', {}, tengo ? c.medalla : `Piso ${i + 1}`),
+      el('small', {}, tengo ? c.personaje.nombre : 'Por conseguir'));
+  }));
+  const dato = (valor, texto) => el('li', {}, el('strong', {}, valor), el('span', {}, texto));
+  pintar(
+    'adelante',
+    el('header', { class: 'cabecera' }, el('button', { class: 'volver', type: 'button', 'aria-label': 'Volver a la Torre', onclick: volver }, '←'), marcador()),
+    el('main', { class: 'contenido carrera' },
+      el('section', { class: 'carrera-hero' + (m === total ? ' campeon' : '') },
+        el('span', { class: 'carrera-rango-pre' }, 'Tu rango en la Torre'),
+        el('h1', {}, r.nombre),
+        el('p', {}, r.lema),
+        sig ? el('p', { class: 'carrera-sig' }, `Siguiente: ${sig.nombre}, con tu próxima medalla.`) : el('p', { class: 'carrera-sig' }, 'Has conseguido el rango máximo.'),
+        barraProgreso(m, total)),
+      el('h2', {}, 'Vitrina de medallas'),
+      vitrina,
+      el('h2', {}, 'Tu ascenso'),
+      el('ul', { class: 'carrera-datos' },
+        dato(`${campHechos()}/${campTotal()}`, 'pasos hechos'),
+        dato(`${CAMPANA.filter(jefeHecho).length}/${total}`, 'jefes vencidos'),
+        dato(String(cofresTorre()), 'cofres abiertos'),
+        dato(String(m), m === 1 ? 'medalla' : 'medallas')),
+      m === total ? el('div', { class: 'diploma' }, el('strong', {}, 'Diploma de la Torre'), el('span', {}, 'Has vencido a los seis jefes del casino. Campeón del Tapete.')) : null),
+    el('div', { class: 'pie' }, el('button', { class: 'boton', type: 'button', onclick: volver }, 'Volver a la Torre'))
+  );
 }
 
 // ---------- zonas: cada piso es un ambiente distinto del casino ----------
@@ -444,7 +497,8 @@ function mostrarCampana(entrada = 'fundido', recientes = [], enfocar = null) {
     { class: 'cima' + (completa ? ' lograda' : ''), 'data-cima': completa ? 'si' : 'no' },
     el('div', { class: 'cima-trofeo', 'aria-hidden': 'true' }, icono('trofeo')),
     el('strong', {}, 'La cima'),
-    el('span', {}, completa ? '¡Campeón del Tapete!' : 'Vence a los seis jefes para llegar')
+    el('span', {}, completa ? '¡Campeón del Tapete!' : 'Vence a los seis jefes para llegar'),
+    completa ? el('button', { class: 'boton oro', type: 'button', onclick: () => mostrarCarrera(() => mostrarCampana('atras')) }, 'Ver mi diploma') : null
   );
 
   const hechos = campHechos();
@@ -456,7 +510,7 @@ function mostrarCampana(entrada = 'fundido', recientes = [], enfocar = null) {
   const info = el(
     'div',
     { class: 'torre-info' },
-    el('div', { class: 'torre-datos' }, el('strong', { class: 'torre-zona' }, completa ? 'En la cima' : `Piso ${idxActual + 1} · ${CAMPANA[idxActual].titulo}`), el('span', {}, `${hechos}/${total} pasos · ${medallas()} medallas`)),
+    el('button', { class: 'torre-datos', type: 'button', 'aria-label': 'Ver mi carrera', onclick: () => mostrarCarrera(() => mostrarCampana('atras')) }, el('strong', { class: 'torre-zona' }, completa ? 'En la cima' : `Piso ${idxActual + 1} · ${CAMPANA[idxActual].titulo}`), el('span', {}, `${rangoTorre().nombre} · ${hechos}/${total} pasos`)),
     el('button', { class: 'torre-pos', type: 'button', onclick: irAMiPosicion }, 'Mi posición')
   );
 
@@ -467,6 +521,19 @@ function mostrarCampana(entrada = 'fundido', recientes = [], enfocar = null) {
   );
   alTeclear = (e) => { if (e.key === 'Escape') cerrarHoja(); };
   seguirZona(info);
+  // botón flotante «Continuar»: aparece cuando tu nivel queda fuera de la pantalla
+  const actual = document.querySelector('.nodo.actual');
+  if (actual) {
+    const titulo = actual.closest('.nodo-envoltorio').querySelector('.nodo-titulo');
+    const cta = el('button', { class: 'camp-continuar', type: 'button', onclick: () => { irAMiPosicion(); setTimeout(() => actual.click(), sinMovimiento() ? 0 : 450); } },
+      el('span', { class: 'camp-continuar-ico', 'aria-hidden': 'true' }, '▶'),
+      el('span', {}, el('small', {}, 'Continuar'), el('strong', {}, titulo ? titulo.textContent : 'Mi nivel')));
+    document.querySelector('main.contenido').append(cta);
+    if ('IntersectionObserver' in window) {
+      const vigia = new IntersectionObserver(([en]) => cta.classList.toggle('visible', !en.isIntersecting), { threshold: 0.6 });
+      vigia.observe(actual);
+    } else cta.classList.add('visible');
+  }
   // empiezas abajo y subes: la pantalla se coloca en tu posición actual
   setTimeout(() => {
     const dest = (enfocar && document.querySelector(`.piso[data-piso="${enfocar}"] .nodo.actual`)) || document.querySelector('.nodo.actual') || (completa ? document.querySelector('.cima') : null);

@@ -1110,6 +1110,11 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
     await page.waitForSelector('.torre');
     await page.waitForFunction(() => (document.querySelector('.torre-info')||{}).innerText?.includes('Piso 2'), null, { timeout: 4000 }).catch(() => {});
     ok(await page.locator('.torre .piso.bloqueado').count() === 4 && (await page.locator('.torre-info').innerText()).includes('Piso 2'), 'la torre muestra que estás en el piso 2');
+    await page.locator('.torre-datos').click();
+    await page.waitForSelector('.carrera');
+    ok((await page.locator('.carrera').innerText()).includes('Repartidor') && await page.locator('.vitrina-hueco.tengo').count() === 1 && await page.locator('.vitrina-hueco').count() === 6, 'Mi carrera muestra el rango y la vitrina de medallas');
+    await page.locator('.pie').getByRole('button', { name: 'Volver a la Torre' }).click();
+    await page.waitForSelector('.torre');
   }
 
   ok(fallos.length === 0, 'sin errores de consola: ' + fallos.join(' | '));

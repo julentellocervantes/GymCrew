@@ -627,7 +627,7 @@ function mostrarBienvenida(repetida = false) {
 const PASOS_TOUR = [
   { id: 'juegos', estado: 'feliz', titulo: 'Juegos', texto: 'Aquí eliges el juego: blackjack, póker, mus, baccarat, vídeo póker o ruleta. Cada uno es un camino de niveles cortos; ve superándolos y repasaré contigo lo que falles.' },
   { id: 'util', estado: 'pensando', titulo: 'Útil', texto: 'Tu caja de herramientas: chuletas de estrategia, glosario, el entrenador de conteo Hi-Lo y calculadoras (algunas son VIP). Perfecto para consultar en plena partida.' },
-  { id: 'campana', estado: 'celebrando', titulo: 'Campaña', texto: 'Una torre de seis pisos, uno por juego. En cada piso conoces a un personaje del casino, subes nivel a nivel, abres cofres y vences al jefe para ganar su medalla.' },
+  { id: 'campana', estado: 'celebrando', titulo: 'La Torre', texto: 'Mi modo favorito: una torre de seis pisos, uno por juego. En cada piso conoces a un personaje del casino, abres cofres, vences al jefe y ganas su medalla. ¡Con cada medalla subes de rango!' },
   { id: 'tienda', estado: 'feliz', titulo: 'Tienda', texto: 'Aquí gastas las fichas que ganas: fondos, barajas y looks nuevos para mí. Los cofres que encuentres por el camino también dan premios.' },
   { id: 'ajustes', estado: 'normal', titulo: 'Ajustes', texto: 'Cambia el tamaño de letra, el sonido, la vibración o el modo calma. Y si quieres volver a ver este recorrido, lo encontrarás aquí.' },
 ];
@@ -781,7 +781,7 @@ function mostrarPremium(volver, aviso = '') {
 const PESTANAS = [
   { id: 'juegos', icono: '🃏', texto: 'Juegos', ir: () => mostrarInicio('fundido') },
   { id: 'util', icono: '🧰', texto: 'Útil', ir: () => mostrarUtil('fundido') },
-  { id: 'campana', icono: '🗺️', texto: 'Campaña', central: true, ir: () => mostrarCampana('fundido') },
+  { id: 'campana', icono: '🗺️', texto: 'La Torre', central: true, ir: () => mostrarCampana('fundido') },
   { id: 'tienda', icono: '🛍️', texto: 'Tienda', ir: () => mostrarTienda('fundido') },
   { id: 'ajustes', icono: '⚙️', texto: 'Ajustes', ir: () => mostrarAjustes('', 'fundido') },
 ];
