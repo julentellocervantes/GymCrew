@@ -947,3 +947,25 @@ html[data-calma="si"] .rareza.r-legendario { animation: none; }
 @keyframes es-brillo { 0%, 60% { background-position: 130% 0; } 100% { background-position: -30% 0; } }
 @media (prefers-reduced-motion: reduce) { .carta-es.grande::after { animation: none; display: none; } }
 html[data-calma="si"] .carta-es.grande::after { animation: none; display: none; }
+
+/* ===== Calidad: detalles de acabado ===== */
+.aviso-app { position: fixed; z-index: 1200; top: calc(12px + env(safe-area-inset-top)); left: 50%; translate: -50% 0; display: flex; align-items: center; gap: 12px; max-width: min(92vw, 440px); padding: 10px 14px 10px 18px; border-radius: 999px; background: var(--pano); color: var(--tiza); border: 2px solid var(--laton); font-weight: 700; font-size: 14px; box-shadow: 0 10px 22px rgba(0, 0, 0, .35); animation: aviso-app-entra .45s var(--rebote) both; }
+.aviso-app.sale { animation: aviso-app-sale .3s ease forwards; }
+.aviso-app button { border: 0; border-radius: 999px; padding: 8px 14px; min-height: 36px; font: inherit; font-weight: 800; color: #3a2500; background: linear-gradient(180deg, #ffe58a, #f3b63f); box-shadow: 0 2px 0 #a86a00; cursor: pointer; }
+@keyframes aviso-app-entra { from { opacity: 0; translate: -50% -20px; } }
+@keyframes aviso-app-sale { to { opacity: 0; translate: -50% -14px; } }
+.marcador .dato.pop { animation: dato-pop .45s var(--rebote); color: #ffe58a; }
+@keyframes dato-pop { 40% { transform: scale(1.22); } }
+/* nada de seleccionar texto ni menú de pulsación larga en los controles */
+button, .opcion, .juego, .nodo, .pestana, .articulo, .repaso, .nodo-titulo, .marcador, .barra-pestanas { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+img, svg { -webkit-user-drag: none; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .aviso-app, .marcador .dato.pop { animation: none; } }
+/* botones con volumen: un brillo arriba y una pulsación con rebote */
+.boton:not(.secundario):not(:disabled) { box-shadow: inset 0 2px 0 rgba(255, 255, 255, .35), inset 0 -2px 0 rgba(0, 0, 0, .06); }
+.boton:not(:disabled):active, .opcion:not(:disabled):active, .juego:active, .articulo:active { scale: .97; transition-duration: .08s; }
+/* el foco con teclado siempre se ve, también sobre fondos oscuros */
+:focus-visible { outline: 3px solid var(--laton); outline-offset: 3px; box-shadow: 0 0 0 6px rgba(0, 0, 0, .25); }
+/* el texto largo no se corta mal */
+.contenido p, .contenido li { text-wrap: pretty; }
+.contenido h1, .contenido h2 { text-wrap: balance; }

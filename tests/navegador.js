@@ -1135,6 +1135,11 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
     await page.waitForSelector('.torre');
   }
 
+  await page.evaluate(() => window.dispatchEvent(new Event('offline')));
+  await page.waitForSelector('.aviso-app');
+  ok((await page.locator('.aviso-app').innerText()).includes('Sin conexión'), 'la app avisa cuando se pierde la conexión');
+  await page.evaluate(() => window.dispatchEvent(new Event('online')));
+  await page.waitForFunction(() => (document.querySelector('.aviso-app') || {}).innerText?.includes('conectado'));
   ok(fallos.length === 0, 'sin errores de consola: ' + fallos.join(' | '));
   await b.close();
   console.log(`NAVEGADOR OK: ${hechos} comprobaciones`);
