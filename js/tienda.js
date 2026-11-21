@@ -83,6 +83,16 @@ const CATALOGO = {
     { id: 'atardecer', nombre: 'Ruleta al atardecer', precio: 60, vista: 'linear-gradient(135deg,#ffb88a,#ff7a9c)' },
     { id: 'neon', nombre: 'Tragaperras neón', precio: 90, vista: 'linear-gradient(135deg,#7a2cff,#17d3ff)' },
     { id: 'dorado', nombre: 'Salón dorado', precio: 120, vista: 'linear-gradient(135deg,#ffe58a,#e0a100)' },
+    { id: 'oceano', nombre: 'Crucero de lujo', precio: 55, vista: 'linear-gradient(135deg,#1d6f8f,#08283a)' },
+    { id: 'vegas', nombre: 'Noche en Las Vegas', precio: 80, vista: 'linear-gradient(135deg,#c1121f,#3a0a10)' },
+    { id: 'galaxia', nombre: 'Casino galáctico', precio: 110, vista: 'linear-gradient(135deg,#6a2cff,#0a0820)' },
+    { id: 'ceniza', nombre: 'Sala de humo', precio: 45, vista: 'linear-gradient(135deg,#59616e,#1c1f26)' },
+    { id: 'cobre', nombre: 'Taberna de cobre', precio: 65, vista: 'linear-gradient(135deg,#c77d3c,#3a1f0d)' },
+    { id: 'hielo', nombre: 'Casino de hielo', precio: 50, vista: 'linear-gradient(135deg,#e6f6ff,#a6d8f5)' },
+    { id: 'lavanda', nombre: 'Salón lavanda', precio: 60, vista: 'linear-gradient(135deg,#f1e8ff,#c9b2f2)' },
+    { id: 'menta', nombre: 'Terraza de menta', precio: 55, vista: 'linear-gradient(135deg,#e3fbee,#9fe3bd)' },
+    { id: 'caramelo', nombre: 'Barra de caramelo', precio: 70, vista: 'linear-gradient(135deg,#ffe3cf,#f5a98a)' },
+    { id: 'amanecer', nombre: 'Amanecer en la mesa', precio: 100, vista: 'linear-gradient(135deg,#fff3b8,#ffb26b)' },
   ],
   baraja: [
     { id: 'clasica', nombre: 'Clásica', precio: 0 },
@@ -91,6 +101,14 @@ const CATALOGO = {
     { id: 'retro', nombre: 'Retro', precio: 70 },
     { id: 'dorada', nombre: 'Dorada', precio: 60 },
     { id: 'neon', nombre: 'Neón', precio: 90 },
+    { id: 'hielo', nombre: 'Hielo', precio: 45 },
+    { id: 'bosque', nombre: 'Bosque', precio: 55 },
+    { id: 'lava', nombre: 'Lava', precio: 80 },
+    { id: 'jade', nombre: 'Jade', precio: 65 },
+    { id: 'galaxia', nombre: 'Galaxia', precio: 100 },
+    { id: 'caramelo', nombre: 'Caramelo', precio: 50 },
+    { id: 'carbon', nombre: 'Carbón', precio: 60 },
+    { id: 'rubi', nombre: 'Rubí', precio: 110 },
   ],
   espanola: [
     { id: 'clasica', nombre: 'Clásica', precio: 0 },
@@ -99,6 +117,14 @@ const CATALOGO = {
     { id: 'dorada', nombre: 'Dorada', precio: 60 },
     { id: 'nocturna', nombre: 'Nocturna', precio: 70 },
     { id: 'neon', nombre: 'Neón', precio: 90 },
+    { id: 'rubi', nombre: 'Rubí', precio: 75 },
+    { id: 'esmeralda', nombre: 'Esmeralda', precio: 75 },
+    { id: 'zafiro', nombre: 'Zafiro', precio: 75 },
+    { id: 'marfil', nombre: 'Marfil', precio: 55 },
+    { id: 'tinta', nombre: 'Tinta china', precio: 65 },
+    { id: 'ocaso', nombre: 'Ocaso', precio: 80 },
+    { id: 'glaciar', nombre: 'Glaciar', precio: 60 },
+    { id: 'cobre', nombre: 'Cobre antiguo', precio: 85 },
   ],
   nai: [
     { id: 'clasico', nombre: 'Nai clásica', precio: 0 },
@@ -106,9 +132,46 @@ const CATALOGO = {
     { id: 'copa', nombre: 'Sombrero de copa', precio: 60 },
     { id: 'corona', nombre: 'Corona', precio: 100 },
     { id: 'oro', nombre: 'Nai de oro', precio: 150 },
+    { id: 'vaquero', nombre: 'Sombrero vaquero', precio: 55 },
+    { id: 'mago', nombre: 'Sombrero de mago', precio: 80 },
+    { id: 'pirata', nombre: 'Parche pirata', precio: 65 },
+    { id: 'detective', nombre: 'Detective', precio: 70 },
+    { id: 'cascos', nombre: 'Auriculares', precio: 50 },
+    { id: 'antifaz', nombre: 'Antifaz de gala', precio: 90 },
+    { id: 'bigote', nombre: 'Bigotón', precio: 45 },
+    { id: 'laurel', nombre: 'Corona de laurel', precio: 120 },
   ],
 };
+// Rareza según el precio (solo para la etiqueta)
+const rarezaDe = (a) => (a.precio >= 110 ? 'legendario' : a.precio >= 80 ? 'epico' : a.precio >= 60 ? 'raro' : 'comun');
+const NOMBRE_RAREZA = { comun: 'Común', raro: 'Raro', epico: 'Épico', legendario: 'Legendario' };
+// ---------- rotación diaria: cada apartado muestra 6 artículos que cambian cada 24 h ----------
+const OFERTAS_POR_DIA = 6;
+function semillaDe(texto) { let h = 2166136261; for (const c of texto) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
+function mezclaDeterminista(lista, semilla) {
+  const a = lista.slice();
+  let x = semilla || 1;
+  const azar = () => { x ^= x << 13; x >>>= 0; x ^= x >>> 17; x ^= x << 5; x >>>= 0; return x / 4294967296; };
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(azar() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+// Los de hoy: 6 de los que cuestan fichas, siempre los mismos durante el día (y distintos mañana)
+function ofertasDe(tipo, dia = hoy()) {
+  const fijas = typeof window !== 'undefined' && window.OFERTAS_FIJAS && window.OFERTAS_FIJAS[tipo];
+  if (fijas) return CATALOGO[tipo].filter((a) => fijas.includes(a.id));
+  const ids = CATALOGO[tipo].filter((a) => a.precio > 0).map((a) => a.id);
+  const orden = mezclaDeterminista(ids, semillaDe(`${tipo}|${dia}`));
+  return orden.slice(0, OFERTAS_POR_DIA).map((id) => articuloDe(tipo, id));
+}
+// segundos hasta la medianoche local (cuando cambian las ofertas)
+function segundosParaRotacion() {
+  const d = new Date();
+  const m = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1);
+  return Math.max(1, Math.ceil((m - d) / 1000));
+}
+const relojLargo = (s) => `${pad(Math.floor(s / 3600))}:${pad(Math.floor((s % 3600) / 60))}:${pad(s % 60)}`;
 let pestanaTienda = 'fondo';
+let vistaTienda = 'ofertas'; // 'ofertas' (las 6 de hoy) o 'coleccion' (lo que ya tienes)
 const SECCIONES_TIENDA = [
   { tipo: 'fondo', titulo: 'Fondos', icono: '🖼' },
   { tipo: 'baraja', titulo: 'Barajas', icono: '🃏' },
@@ -314,7 +377,7 @@ function mostrarTienda(entrada = 'fundido') {
 
   // Cosméticos
   const vistaArticulo = (tipo, a) => {
-    if (tipo === 'fondo') return el('span', { class: 'vista vista-fondo', 'data-glifo': ({ clasico: '♠', mesa: '♣', medianoche: '♥', atardecer: '◉', neon: '7', dorado: '♦' })[a.id] || '♠', style: `background:${a.vista}` });
+    if (tipo === 'fondo') return el('span', { class: 'vista vista-fondo', 'data-glifo': ({ clasico: '♠', mesa: '♣', medianoche: '♥', atardecer: '◉', neon: '7', dorado: '♦', oceano: '⚓', vegas: '7', galaxia: '✦', ceniza: '♠', cobre: '♣', hielo: '❄', lavanda: '♥', menta: '♦', caramelo: '◉', amanecer: '☀' })[a.id] || '♠', style: `background:${a.vista}` });
     if (tipo === 'baraja') return el('span', { class: 'vista vista-baraja', 'data-baraja': a.id }, el('span', { class: 'carta' }, 'A♠'), el('span', { class: 'carta roja' }, 'K♥'));
     if (tipo === 'espanola') return el('span', { class: 'vista vista-es', 'data-espanola': a.id }, cartaEspanola('Rey', 0), cartaEspanola('As', 2));
     const caja = el('span', { class: 'vista vista-nai' });
@@ -330,13 +393,19 @@ function mostrarTienda(entrada = 'fundido') {
       sonido('ficha');
       recargar();
     } }, puesto ? 'Equipado' : mio ? 'Equipar' : `${a.precio} 🪙`);
-    return el('div', { class: 'articulo' + (puesto ? ' puesto' : ''), 'data-articulo': tipo + ':' + a.id }, puesto ? el('span', { class: 'sello-puesto' }, 'Puesto') : null, vistaArticulo(tipo, a), el('strong', {}, a.nombre), boton);
+    return el('div', { class: 'articulo' + (puesto ? ' puesto' : ''), 'data-articulo': tipo + ':' + a.id }, puesto ? el('span', { class: 'sello-puesto' }, 'Puesto') : null, el('span', { class: 'rareza r-' + rarezaDe(a) }, NOMBRE_RAREZA[rarezaDe(a)]), vistaArticulo(tipo, a), el('strong', {}, a.nombre), boton);
   };
   if (!SECCIONES_TIENDA.some((x) => x.tipo === pestanaTienda)) pestanaTienda = 'fondo';
-  const panel = el('div', { class: 'articulos', role: 'tabpanel', id: 'panel-tienda', 'aria-labelledby': 'tab-tienda-' + pestanaTienda }, CATALOGO[pestanaTienda].map((a) => articulo(pestanaTienda, a)));
+  const lista = vistaTienda === 'coleccion' ? CATALOGO[pestanaTienda].filter((a) => loTengo(pestanaTienda, a.id)) : ofertasDe(pestanaTienda);
+  const panel = el('div', { class: 'articulos', role: 'tabpanel', id: 'panel-tienda', 'aria-labelledby': 'tab-tienda-' + pestanaTienda }, lista.length ? lista.map((a) => articulo(pestanaTienda, a)) : el('p', { class: 'aviso' }, 'Aún no tienes nada aquí. Mira las ofertas de hoy.'));
+  const reloj24 = el('span', { class: 'rota-reloj', id: 'rota-reloj' });
+  const pintarReloj = () => { reloj24.textContent = relojLargo(segundosParaRotacion()); if (segundosParaRotacion() >= 86399 && reloj24.isConnected && vistaTienda === 'ofertas') recargar(); return reloj24.isConnected; };
+  const conmutador = el('div', { class: 'tienda-vista', role: 'group', 'aria-label': 'Qué ver' },
+    ...[['ofertas', 'Ofertas de hoy'], ['coleccion', 'Mi colección']].map(([v, t]) => el('button', { class: 'tienda-vista-b' + (vistaTienda === v ? ' activa' : ''), type: 'button', 'aria-pressed': vistaTienda === v ? 'true' : 'false', 'data-vista': v, onclick: () => { vistaTienda = v; sonido('toque'); recargar(); } }, t)));
+  const cabOfertas = vistaTienda === 'ofertas' ? el('p', { class: 'rota-aviso' }, el('span', { 'aria-hidden': 'true' }, '⏳ '), 'Las 6 ofertas cambian en ', reloj24) : el('p', { class: 'rota-aviso' }, `${lista.length} de ${CATALOGO[pestanaTienda].length} artículos conseguidos`);
   const pestanas = el('div', { class: 'pestanas-tienda', role: 'tablist', 'aria-label': 'Categorías de la tienda' }, SECCIONES_TIENDA.map((x) =>
     el('button', { class: 'pestana-tienda' + (x.tipo === pestanaTienda ? ' activa' : ''), type: 'button', role: 'tab', id: 'tab-tienda-' + x.tipo, 'aria-selected': x.tipo === pestanaTienda ? 'true' : 'false', 'aria-controls': 'panel-tienda', 'data-pestana': x.tipo, onclick: () => { pestanaTienda = x.tipo; sonido('toque'); recargar(); } }, x.icono, ' ' + x.titulo)));
-  const secciones = el('section', { class: 'tienda-seccion' }, pestanas, panel);
+  const secciones = el('section', { class: 'tienda-seccion' }, pestanas, conmutador, cabOfertas, panel);
 
   pintar(
     entrada,
@@ -353,5 +422,6 @@ function mostrarTienda(entrada = 'fundido') {
     )
   );
   pintarEnergia();
-  vigilar(pintarEnergia);
+  pintarReloj();
+  vigilar(() => { const a = pintarEnergia(); const b = pintarReloj(); return a && b; });
 }

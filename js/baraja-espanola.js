@@ -15,7 +15,7 @@ const PALO_SVG = {
   espadas: () => `<path d="M0 -15 L3.6 6 H-3.6Z" class="f2 s2"/><path d="M0 -12 V5" class="n brillo"/><rect x="-9" y="5.5" width="18" height="3.6" rx="1.8" class="f2d s2"/><rect x="-1.7" y="9" width="3.4" height="6" class="f2d s2"/><circle cy="16.5" r="2.3" class="f2d s2"/>`,
   bastos: () => `<path d="M-3 15 L-4.6 -7 C-10 -9 -8 -16 -1.5 -14.5 C3 -17 9 -12 5.5 -7 L3.2 15Z" class="f3 s3"/><circle cx="-4" cy="-3" r="2.2" class="f3h s3d"/><circle cx="3.6" cy="3" r="2.2" class="f3h s3d"/><circle cx="-3" cy="9" r="1.9" class="f3h s3d"/><path d="M-4 -10 C-3 -13 0 -14 2 -13" class="n brillo"/>`,
 };
-const pipES = (palo, x, y, e = 1) => `<g transform="translate(${x} ${y}) scale(${e})">${PALO_SVG[palo]()}</g>`;
+const pipES = (palo, x, y, e = 1) => `<g class="pip" transform="translate(${x} ${y}) scale(${e})">${PALO_SVG[palo]()}</g>`;
 
 const PIPS_ES = {
   2: [[35, 32], [35, 78]],
@@ -30,7 +30,7 @@ const PIEL = '#f2c49b';
 // Figuras: Sota (10), Caballo (11) y Rey (12). El manto lleva el color del palo.
 function figuraES(rango, palo, p) {
   const manto = `class="f${p}"`;
-  const marco = `<rect x="11" y="21" width="48" height="66" rx="4" class="fondo-fig"/><rect x="11" y="21" width="48" height="66" rx="4" class="n marco-fig"/>`;
+  const marco = `<rect x="11" y="21" width="48" height="66" rx="4" class="fondo-fig"/><path d="M11 25 A4 4 0 0 1 15 21 H59 V28 L11 87Z" class="fig-mitad f${p}" opacity=".16"/><path d="M59 87 H15 A4 4 0 0 1 11 83 V60 L59 24Z" class="fig-mitad f${p}" opacity=".1"/><rect x="11" y="21" width="48" height="66" rx="4" class="n marco-fig"/><rect x="14" y="24" width="42" height="60" rx="2.5" class="n marco-fig-in"/>`;
   if (rango === 'Rey') {
     return `${marco}
 <path d="M17 87 L21 62 Q35 52 49 62 L53 87Z" ${manto}/><path d="M22 62 Q35 70 48 62 L47 58 Q35 66 23 58Z" class="armino"/>
@@ -60,19 +60,26 @@ function figuraES(rango, palo, p) {
 <g transform="translate(51 78) scale(.52)">${PALO_SVG[palo]()}</g>`;
 }
 
+const NOMBRE_PALO_ES = { oros: 'OROS', copas: 'COPAS', espadas: 'ESPADAS', bastos: 'BASTOS' };
+const NOMBRE_FIG_ES = { Sota: 'SOTA', Caballo: 'CABALLO', Rey: 'REY' };
 function svgCartaES(rango, palo) {
   const num = NUM_ES[rango], p = PALOS_ES.indexOf(palo);
   let centro;
-  if (num === 1) centro = `<rect x="9" y="19" width="52" height="70" rx="6" class="n marco-as"/>${pipES(palo, 35, 54, 1.9)}`;
-  else if (num <= 7) centro = PIPS_ES[num].map(([x, y]) => pipES(palo, x, y, num >= 6 ? 0.72 : num >= 4 ? 0.82 : 0.9)).join('');
+  if (num === 1) {
+    const rayos = Array.from({ length: 16 }, (_, k) => { const a = (k * Math.PI * 2) / 16; return `M${(35 + Math.cos(a) * 24).toFixed(1)} ${(54 + Math.sin(a) * 24).toFixed(1)} L${(35 + Math.cos(a) * 29).toFixed(1)} ${(54 + Math.sin(a) * 29).toFixed(1)}`; }).join(' ');
+    centro = `<rect x="9" y="19" width="52" height="70" rx="6" class="n marco-as"/><circle cx="35" cy="54" r="23" class="n marco-as-c"/><path d="${rayos}" class="n rayos-as"/><path d="M13 23 q5 0 5 5 M57 23 q-5 0 -5 5 M13 85 q5 0 5 -5 M57 85 q-5 0 -5 -5" class="n florones"/>${pipES(palo, 35, 54, 1.9)}`;
+  } else if (num <= 7) centro = PIPS_ES[num].map(([x, y]) => pipES(palo, x, y, num >= 6 ? 0.72 : num >= 4 ? 0.82 : 0.9)).join('');
   else centro = figuraES(rango, palo, p);
   const etiqueta = String(num);
+  const pie = num > 7 ? NOMBRE_FIG_ES[rango] : NOMBRE_PALO_ES[palo];
   return `<svg viewBox="0 0 70 108" class="es-svg" aria-hidden="true" focusable="false">
-<rect x="1.5" y="1.5" width="67" height="105" rx="8" class="es-papel"/><rect x="1.5" y="1.5" width="67" height="105" rx="8" class="n es-borde"/>
+<defs><linearGradient id="esLuz" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".16"/></linearGradient></defs>
+<rect x="1.5" y="1.5" width="67" height="105" rx="8" class="es-papel"/><rect x="1.5" y="1.5" width="67" height="105" rx="8" fill="url(#esLuz)"/><rect x="1.5" y="1.5" width="67" height="105" rx="8" class="n es-borde"/>
 <rect x="5" y="5" width="60" height="98" rx="5" class="n es-filete"/>
 <text x="9" y="17" class="es-num">${etiqueta}</text>
 <text x="61" y="97" text-anchor="end" class="es-num">${etiqueta}</text>
 ${centro}
+<text x="35" y="99.5" text-anchor="middle" class="es-pie">${pie}</text>
 </svg>`;
 }
 

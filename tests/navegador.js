@@ -12,6 +12,8 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
   const b = await chromium.launch();
   const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, acceptDownloads: true });
   await ctx.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.abort()); // sin internet de fuentes: la app usa la tipografía del sistema
+  // las ofertas de la tienda rotan cada día; para que los tests sean estables se fijan las de siempre
+  await ctx.addInitScript(() => { window.OFERTAS_FIJAS = { fondo: ['clasico', 'mesa', 'medianoche', 'atardecer', 'neon', 'dorado'], baraja: ['clasica', 'rosa', 'oscura', 'retro', 'dorada', 'neon'], espanola: ['clasica', 'taberna', 'pergamino', 'dorada', 'nocturna', 'neon'], nai: ['clasico', 'gafas', 'copa', 'corona', 'oro'] }; });
   const page = await ctx.newPage();
   const fallos = [];
   page.on('pageerror', (e) => fallos.push(e.message));
@@ -592,6 +594,22 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
   ok(await page.evaluate(() => !document.documentElement.dataset.fondo), 'volver al fondo clásico es gratis');
   await page.locator('[data-pestana=baraja]').click();
   ok(await page.locator('[data-articulo^="baraja:"]').count() === 6 && await page.locator('[data-articulo^="fondo:"]').count() === 0, 'las pestañas de la tienda muestran una categoría cada vez');
+  // rotación diaria: 6 por apartado, estable durante el día y distinta otro día
+  const rot = await page.evaluate(() => {
+    const f = window.OFERTAS_FIJAS; window.OFERTAS_FIJAS = null;
+    const r = {};
+    for (const t of Object.keys(CATALOGO)) {
+      const hoyIds = ofertasDe(t, '2026-11-20').map((a) => a.id);
+      r[t] = { n: hoyIds.length, igual: JSON.stringify(hoyIds) === JSON.stringify(ofertasDe(t, '2026-11-20').map((a) => a.id)), otro: JSON.stringify(hoyIds) !== JSON.stringify(ofertasDe(t, '2026-11-21').map((a) => a.id)), gratis: ofertasDe(t, '2026-11-20').some((a) => a.precio === 0), pool: CATALOGO[t].length };
+    }
+    window.OFERTAS_FIJAS = f;
+    return r;
+  });
+  ok(Object.values(rot).every((x) => x.n === 6 && x.igual && x.otro && !x.gratis && x.pool >= 13), 'cada apartado ofrece 6 artículos de pago que cambian cada día: ' + JSON.stringify(rot));
+  await page.locator('[data-vista=coleccion]').click();
+  ok(await page.locator('[data-articulo^="baraja:"]').count() >= 1 && await page.locator('#rota-reloj').count() === 0, 'Mi colección muestra lo que ya tienes');
+  await page.locator('[data-vista=ofertas]').click();
+  ok(await page.locator('#rota-reloj').count() === 1, 'las ofertas muestran la cuenta atrás hasta el cambio');
   await page.locator('[data-articulo="baraja:dorada"] button').click();
   ok(await page.locator('[data-pestana=baraja]').getAttribute('aria-selected') === 'true', 'tras comprar se queda en la misma pestaña');
   ok(await page.evaluate(() => document.documentElement.dataset.baraja === 'dorada' && progreso.fichas === 0), 'comprar una baraja la aplica a las cartas');
