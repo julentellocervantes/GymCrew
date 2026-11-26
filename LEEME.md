@@ -1,14 +1,14 @@
-# Tapete · Entrenador de cartas (estilo Duolingo)
+# Ases · Escuela de cartas (estilo Duolingo)
 
 ## La marca
 
-**Tapete** es el sitio donde se aprende a jugar: un tapete de paño verde azulado, con líneas de tiza, ficha roja y latón.
+**Ases** (antes «Tapete») es una baraja impresa de toda la vida: papel crema con grano, tinta azul marino, rojo de naipe y ocre. Los rótulos van en Abril Fatface (didona de cartel) y el texto en Libre Franklin. Las tarjetas llevan filete de tinta y sombra dura, los botones son sellos rojos y la portada es un cartel con rayos de sol y doble marco.
 - Nombre, logo y portada: `js/marca.js` (constante `MARCA`, `logoMarca()`, `heroInicio()`).
-- Colores y tipografía: `css/marca.css` (se carga después de `estilos.css`). Titulares en Big Shoulders Display, texto en Instrument Sans.
+- Colores y tipografía: `css/marca.css` (se carga después de `estilos.css`); el bloque «ASES · ACABADO DE BARAJA IMPRESA» del final es el que da el aspecto impreso.
 - La portada muestra dónde te quedaste y un botón «Seguir jugando». Los juegos son «mesas» en una rejilla de dos.
 - **Fondos animados de casino** (`montarFondo()` en `js/marca.js`, estilos en `css/marca.css`): cada fondo de la tienda es una escena con su propio movimiento. Tapete (cartas, fichas y dados suben), Mesa de casino (se reparten cartas y cabecean fichas), Noche de póker (cartas que caen y palos que centellean), Ruleta al atardecer (ruleta gigante con bola), Tragaperras neón (carretes con 7, BAR y cerezas) y Salón dorado (lluvia de fichas y monedas). Las muestras de la tienda también se mueven. Se apaga con el modo calma de Ajustes y con «reducir movimiento» del sistema.
 - **Modo claro único**: la app ya no tiene modo oscuro.
-- Iconos de la app en `icons/` (ficha roja con pica sobre el paño).
+- Iconos de la app en `icons/` (dos naipes con el As sobre fondo marino). Capturas de `capturas/` regeneradas con el nuevo estilo.
 
 
 Web app hecha solo con HTML, CSS y JavaScript. No necesita Node, Expo ni instalar paquetes: se abre con **Live Server** en Visual Studio Code.

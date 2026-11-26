@@ -1,9 +1,9 @@
-// MARCA: Tapete. Todo lo que define la identidad (nombre, logo, hero de inicio) vive aquí.
-// Esencia: el tapete verde donde se aprende a jugar. Paño, tiza, ficha roja y latón.
-const MARCA = { nombre: 'Tapete', descriptor: 'Entrenador de cartas', lema: 'Aprende en el tapete. Juega sin miedo.' };
+// MARCA: Ases. Todo lo que define la identidad (nombre, logo, hero de inicio) vive aquí.
+// Esencia: una baraja impresa de toda la vida. Tinta marino, papel crema, rojo de naipe y ocre.
+const MARCA = { nombre: 'Ases', descriptor: 'Escuela de cartas', lema: 'Aprende la baraja. Juega con cabeza.' };
 
-// Logo: ficha roja con borde de puntos sobre el paño
-const LOGO_FICHA = '<svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true" focusable="false"><circle cx="16" cy="16" r="15" fill="#0c3a44" stroke="#f3b63f" stroke-width="1.6"/><circle cx="16" cy="16" r="11.5" fill="#f0472b"/><circle cx="16" cy="16" r="10.4" fill="none" stroke="#fff6df" stroke-width="2.6" stroke-dasharray="3.6 3.6"/><circle cx="16" cy="16" r="7" fill="#d93a20" stroke="#fff6df" stroke-width="1"/><text x="16" y="20.4" text-anchor="middle" font-size="11.5" fill="#fff6df" font-family="Georgia,serif" font-weight="700">♠</text></svg>';
+// Logo: dos naipes cruzados con el As
+const LOGO_FICHA = '<svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true" focusable="false"><rect x="6" y="2.5" width="20" height="27" rx="3.2" fill="#f7edd3" stroke="#e3a82d" stroke-width="1.6" transform="rotate(-8 16 16)"/><rect x="6" y="2.5" width="20" height="27" rx="3.2" fill="#f7edd3" stroke="#131b30" stroke-width="1.8" transform="rotate(6 16 16)"/><text x="16.6" y="17.5" text-anchor="middle" font-size="14" fill="#c8372d" font-family="Georgia,serif" font-weight="700" transform="rotate(6 16 16)">A</text><text x="16.6" y="26" text-anchor="middle" font-size="9.5" fill="#131b30" font-family="Georgia,serif" transform="rotate(6 16 16)">♠</text></svg>';
 
 function logoMarca() {
   const marca = el('span', { class: 'logo-ficha' });

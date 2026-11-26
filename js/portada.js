@@ -10,17 +10,17 @@ function mostrarPortada(alEntrar) {
     el('span', { class: 'por-carta' + (p === '♥' || p === '♦' ? ' roja' : ''), style: `--i:${i};--a:${(i - 2) * 13}deg` },
       el('b', {}, r), el('i', {}, p), el('em', {}, p))
   );
-  const palabras = Array.from('Tapete').map((c, k) => el('span', { class: 'por-letra', style: `--k:${k}` }, c));
+  const palabras = Array.from('Ases').map((c, k) => el('span', { class: 'por-letra', style: `--k:${k}` }, c));
   let hecho = false;
   const portada = el(
     'div',
-    { id: 'portada', class: 'portada', role: 'button', tabindex: '0', 'aria-label': 'Tapete, entrenador de cartas. Toca la pantalla para entrar.' },
+    { id: 'portada', class: 'portada', role: 'button', tabindex: '0', 'aria-label': 'Ases, escuela de cartas. Toca la pantalla para entrar.' },
     el('div', { class: 'por-luz', 'aria-hidden': 'true' }),
     el('div', { class: 'por-palos', 'aria-hidden': 'true' }, ['♠', '♥', '♣', '♦', '♠', '♥'].map((p, i) => el('span', { class: i % 2 ? 'r' : '', style: `--i:${i}` }, p))),
     el('div', { class: 'por-centro' },
       el('div', { class: 'por-abanico', 'aria-hidden': 'true' }, cartas),
       el('h1', { class: 'por-titulo', 'aria-hidden': 'true' }, palabras),
-      el('p', { class: 'por-sub' }, 'Entrenador de cartas'),
+      el('p', { class: 'por-sub' }, 'Escuela de cartas'),
     ),
     el('p', { class: 'por-toca' }, el('span', { class: 'por-anillo', 'aria-hidden': 'true' }), 'Toca para entrar'),
     el('p', { class: 'por-nota' }, 'Solo mayores de 18 años · Sin dinero real')

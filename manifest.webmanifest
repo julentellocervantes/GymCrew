@@ -1,14 +1,14 @@
 {
-  "name": "Tapete · Entrenador de cartas",
-  "short_name": "Tapete",
+  "name": "Ases · Escuela de cartas",
+  "short_name": "Ases",
   "description": "Aprende blackjack, póker, mus, baccarat, ruleta y vídeo póker con 600 niveles cortos, como en Duolingo.",
   "lang": "es",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#082a32",
-  "theme_color": "#0c3a44",
+  "background_color": "#131b30",
+  "theme_color": "#1c2742",
   "categories": [
     "education",
     "games"
@@ -47,7 +47,7 @@
       ]
     },
     {
-      "name": "Acerca de Tapete",
+      "name": "Acerca de Ases",
       "short_name": "Acerca de",
       "url": "./acerca.html",
       "icons": [
@@ -92,7 +92,7 @@
       "sizes": "2560x1440",
       "type": "image/webp",
       "form_factor": "wide",
-      "label": "Tapete en el ordenador"
+      "label": "Ases en el ordenador"
     }
   ]
 }

@@ -564,7 +564,7 @@ const ok = (c, m) => { assert.ok(c, m); hechos++; if (process.env.DEBUG) console
   await page.evaluate(() => localStorage.clear());
   await page.reload();
   await page.waitForSelector('.bienvenida');
-  ok((await page.locator('main').innerText()).includes('Bienvenido a Tapete'), 'un usuario nuevo ve la bienvenida');
+  ok((await page.locator('main').innerText()).includes('Bienvenido a Ases'), 'un usuario nuevo ve la bienvenida');
   ok(await page.locator('#barra').isHidden(), 'la bienvenida no muestra la barra inferior');
   await foto('11-bienvenida');
   await page.getByRole('button', { name: 'Empezar' }).click();

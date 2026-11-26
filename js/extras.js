@@ -367,10 +367,10 @@ function mostrarAjustes(aviso = '', animacion = 'fundido') {
       el(
         'section',
         { class: 'ajuste' },
-        el('h2', {}, '📲 Compartir Tapete'),
+        el('h2', {}, '📲 Compartir Ases'),
         el('p', {}, 'Pásasela a quien quiera aprender contigo.'),
         (() => {
-          const datos = { title: 'Tapete · Entrenador de cartas', text: 'Aprende blackjack, póker, mus, baccarat, ruleta y vídeo póker con niveles cortos:', url: 'https://entrenador-cartas.onrender.com/acerca.html' };
+          const datos = { title: 'Ases · Escuela de cartas', text: 'Aprende blackjack, póker, mus, baccarat, ruleta y vídeo póker con niveles cortos:', url: 'https://entrenador-cartas.onrender.com/acerca.html' };
           const b = el('button', { class: 'boton secundario', type: 'button' }, 'Compartir enlace');
           b.onclick = async () => {
             try {
@@ -580,10 +580,10 @@ function resultadoConteo(cartas, total, dicho) {
 // ============================================================
 // Cabecera de la bienvenida: un trozo de mesa con cuatro cartas en abanico y dos fichas
 function heroMesa() {
-  const carta = (a, rango, palo, rojo, i) => `<g class="hero-carta" style="--a:${a}deg;--i:${i}"><rect x="-25" y="-100" width="50" height="72" rx="6" fill="#fffdf5" stroke="#17241d" stroke-width="1.6"/><text x="-19" y="-82" font-size="14" font-weight="800" font-family="Georgia,serif" fill="${rojo ? '#c93a3a' : '#17241d'}">${rango}</text><text x="-19" y="-68" font-size="13" fill="${rojo ? '#c93a3a' : '#17241d'}">${palo}</text><text x="0" y="-48" font-size="26" text-anchor="middle" fill="${rojo ? '#c93a3a' : '#17241d'}">${palo}</text></g>`;
+  const carta = (a, rango, palo, rojo, i) => `<g class="hero-carta" style="--a:${a}deg;--i:${i}"><rect x="-25" y="-100" width="50" height="72" rx="6" fill="#fbf3dc" stroke="#1c2742" stroke-width="1.6"/><text x="-19" y="-82" font-size="14" font-weight="800" font-family="Georgia,serif" fill="${rojo ? '#c93a3a' : '#17241d'}">${rango}</text><text x="-19" y="-68" font-size="13" fill="${rojo ? '#c93a3a' : '#17241d'}">${palo}</text><text x="0" y="-48" font-size="26" text-anchor="middle" fill="${rojo ? '#c93a3a' : '#17241d'}">${palo}</text></g>`;
   const ficha = (x, y, c) => `<g class="hero-ficha" transform="translate(${x} ${y})"><ellipse cy="5" rx="19" ry="8" fill="rgba(0,0,0,.28)"/><circle r="18" fill="${c}"/><circle r="16.5" fill="${c}" stroke="#fff6df" stroke-width="3" stroke-dasharray="6 6"/><circle r="10" fill="${c}" stroke="#fff6df" stroke-width="1.4"/></g>`;
   const nodo = el('div', { class: 'hero-mesa', 'aria-hidden': 'true' });
-  nodo.innerHTML = `<svg viewBox="0 0 320 150" focusable="false"><defs><pattern id="hero-ro" width="16" height="16" patternUnits="userSpaceOnUse"><path d="M8 0 L16 8 L8 16 L0 8Z" fill="none" stroke="#fff4d2" stroke-opacity=".08" stroke-width="1.2"/></pattern><linearGradient id="hero-fe" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#16795a"/><stop offset="1" stop-color="#083427"/></linearGradient></defs><rect width="320" height="150" rx="24" fill="url(#hero-fe)"/><rect width="320" height="150" rx="24" fill="url(#hero-ro)"/><rect x="5" y="5" width="310" height="140" rx="20" fill="none" stroke="#d4a548" stroke-width="2.5"/>${carta(-27, 'A', '♠', false, 0)}${carta(-9, 'K', '♥', true, 1)}${carta(9, 'Q', '♦', true, 2)}${carta(27, '10', '♣', false, 3)}${ficha(52, 118, '#c93a3a')}${ficha(268, 118, '#2f6fd6')}${ficha(268, 108, '#2f6fd6')}</svg>`;
+  nodo.innerHTML = `<svg viewBox="0 0 320 150" focusable="false"><defs><pattern id="hero-ro" width="16" height="16" patternUnits="userSpaceOnUse"><path d="M8 0 L16 8 L8 16 L0 8Z" fill="none" stroke="#f7edd3" stroke-opacity=".22" stroke-width="1.2"/></pattern><linearGradient id="hero-fe" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2d3d63"/><stop offset="1" stop-color="#131b30"/></linearGradient></defs><rect width="320" height="150" rx="24" fill="url(#hero-fe)"/><rect width="320" height="150" rx="24" fill="url(#hero-ro)"/><rect x="5" y="5" width="310" height="140" rx="20" fill="none" stroke="#e3a82d" stroke-width="2.5"/>${carta(-27, 'A', '♠', false, 0)}${carta(-9, 'K', '♥', true, 1)}${carta(9, 'Q', '♦', true, 2)}${carta(27, '10', '♣', false, 3)}${ficha(52, 118, '#c93a3a')}${ficha(268, 118, '#2f6fd6')}${ficha(268, 108, '#2f6fd6')}</svg>`;
   return nodo;
 }
 function mostrarBienvenida(repetida = false) {
@@ -607,7 +607,7 @@ function mostrarBienvenida(repetida = false) {
       heroMesa(),
       fila,
       almacenamientoFallo ? el('p', { class: 'alerta', role: 'alert' }, 'Tu navegador no deja guardar el progreso (¿modo privado?). Puedes seguir, pero al cerrar se perderá.') : null,
-      el('h1', { class: 'bienvenida-titulo' }, 'Bienvenido a Tapete'),
+      el('h1', { class: 'bienvenida-titulo' }, 'Bienvenido a Ases'),
       el('p', { class: 'bienvenida-sub' }, 'Aprende blackjack, póker, mus, baccarat, ruleta y vídeo póker practicando situaciones reales, poco a poco y sin dinero.'),
       el('ul', { class: 'bienvenida-lista' },
         ventaja('🎮', 'Aprende jugando', 'Niveles cortos con preguntas de todo tipo: test, ordenar, unir, tocar cartas…', 0),
