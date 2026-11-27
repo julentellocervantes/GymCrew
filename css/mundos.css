@@ -1,0 +1,164 @@
+/* ======================================================================
+   MUNDOS · cada apartado y cada juego con su propia identidad
+   Se activa con <html data-seccion="..."> y <html data-juego="...">  (js/mundos.js)
+   ====================================================================== */
+
+/* ---------- 1 · JUEGOS: el salón de carteles del casino ---------- */
+html[data-seccion="juegos"] {
+  --fondo: #1b0b16; --tarjeta: #2c1423; --tarjeta-hover: #3a1a2e; --borde: #5e2c48; --texto: #fbeedd; --texto-suave: #d9b8c6; --sombra: rgba(0, 0, 0, .55);
+  --pano: #2a0f1e; --pano-osc: #14060e; --pano-claro: #4a1c35; --tinta: #0d0409; --laton: #ffd36b; --foco: #ffd36b; --marca: #ffd36b;
+  --bien-fondo: #17402a; --mal-fondo: #4a1a22; --bloqueado: #3a1d2e; --bloqueado-sombra: #25101d; --bloqueado-texto: #9d7f8c;
+  --display: "Bebas Neue", Impact, "Arial Narrow", sans-serif;
+}
+html[data-seccion="juegos"] body { background-image: radial-gradient(80% 50% at 50% -5%, rgba(255, 190, 90, .28), transparent 70%), repeating-linear-gradient(90deg, rgba(255, 255, 255, .02) 0 2px, transparent 2px 22px); }
+html[data-seccion="juegos"] .cabecera::after { content: ""; position: absolute; left: 0; right: 0; bottom: -9px; height: 8px; background: radial-gradient(circle, #ffe9a0 2.2px, transparent 2.8px) 0 50% / 16px 8px repeat-x; animation: bombillas 1.2s steps(2) infinite; }
+@keyframes bombillas { 50% { background-position: 8px 50%; } }
+html[data-seccion="juegos"] h1, html[data-seccion="juegos"] .hero-titulo { font-family: var(--display); font-size: clamp(38px, 11vw, 52px); letter-spacing: .04em; line-height: .95; color: #ffd36b; text-shadow: 0 2px 0 #7a1f2e; }
+html[data-seccion="juegos"] .hero-tapete { border: 3px solid #ffd36b; border-radius: 6px; background: linear-gradient(135deg, #7a1424, #2a0a14); box-shadow: 0 0 0 4px #14060e, 0 0 0 6px #ffd36b, 0 0 26px rgba(255, 190, 90, .35); }
+html[data-seccion="juegos"] .hero-tapete::before { content: ""; position: absolute; inset: 8px; border: 2px dotted rgba(255, 233, 160, .6); border-radius: 3px; pointer-events: none; }
+html[data-seccion="juegos"] .boton:not(.secundario):not(.oro), html[data-seccion="juegos"] .hero-boton { background: #ffd36b; color: #3a0f1a; border-color: #14060e; box-shadow: 0 5px 0 #8a5a10; font-family: var(--display); font-size: 24px; letter-spacing: .05em; }
+html[data-seccion="juegos"] .meta, html[data-seccion="juegos"] .rango, html[data-seccion="juegos"] .reto, html[data-seccion="juegos"] .primeros-pasos { border: 2px solid #5e2c48; box-shadow: none; border-radius: 6px; background: #2c1423; }
+/* los juegos pasan a ser carteles verticales */
+html[data-seccion="juegos"] #panel-juegos { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+html[data-seccion="juegos"] #panel-juegos > h1, html[data-seccion="juegos"] #panel-juegos > :not(.juego) { grid-column: 1 / -1; }
+html[data-seccion="juegos"] #panel-juegos .juego { position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; align-items: flex-start; gap: 6px; min-height: 218px; padding: 14px 12px 12px; border: 3px solid #ffd36b; border-radius: 6px; box-shadow: 0 0 0 3px #14060e, 4px 6px 0 3px rgba(0, 0, 0, .5); text-align: left; color: #fff; background: var(--fondo-cartel, linear-gradient(160deg, #5a2a45, #20091a)); }
+html[data-seccion="juegos"] #panel-juegos .juego::before { content: var(--glifo, "♠"); position: absolute; right: -8px; top: -16px; font-size: 132px; line-height: 1; color: rgba(255, 255, 255, .13); pointer-events: none; font-family: Georgia, serif; }
+html[data-seccion="juegos"] #panel-juegos .juego::after { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(0deg, rgba(0, 0, 0, .12) 0 2px, transparent 2px 4px); pointer-events: none; mix-blend-mode: multiply; }
+html[data-seccion="juegos"] #panel-juegos .juego-icono { position: absolute; left: 12px; top: 12px; }
+html[data-seccion="juegos"] #panel-juegos .juego-texto { display: grid; gap: 4px; width: 100%; position: relative; z-index: 2; }
+html[data-seccion="juegos"] #panel-juegos .juego-texto strong { font-family: var(--display); font-size: 36px; letter-spacing: .04em; line-height: .9; color: #fff; text-shadow: 0 2px 0 rgba(0, 0, 0, .45); }
+html[data-seccion="juegos"] #panel-juegos .juego-desc { font-size: 12px; line-height: 1.25; color: rgba(255, 255, 255, .85); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+html[data-seccion="juegos"] #panel-juegos .juego-niveles { font-size: 12px; font-weight: 800; color: #ffd36b; }
+html[data-seccion="juegos"] #panel-juegos .flecha { display: none; }
+html[data-seccion="juegos"] #panel-juegos .juego[data-curso="blackjack"] { --fondo-cartel: linear-gradient(160deg, #137a4c, #06281a); --glifo: "♠"; }
+html[data-seccion="juegos"] #panel-juegos .juego[data-curso="poker"] { --fondo-cartel: linear-gradient(160deg, #a3182b, #1a0508); --glifo: "♥"; }
+html[data-seccion="juegos"] #panel-juegos .juego[data-curso="mus"] { --fondo-cartel: linear-gradient(160deg, #a8672a, #3a1d0b); --glifo: "♣"; }
+html[data-seccion="juegos"] #panel-juegos .juego[data-curso="baccarat"] { --fondo-cartel: linear-gradient(160deg, #2a4ec0, #0a1340); --glifo: "♦"; }
+html[data-seccion="juegos"] #panel-juegos .juego[data-curso="videopoker"] { --fondo-cartel: linear-gradient(160deg, #8a2bff, #0a0620); --glifo: "7"; }
+html[data-seccion="juegos"] #panel-juegos .juego[data-curso="ruleta"] { --fondo-cartel: linear-gradient(160deg, #c1121f, #0b0b0b); --glifo: "◉"; }
+html[data-seccion="juegos"] .pestanas-inicio { border-radius: 4px; background: #14060e; }
+html[data-seccion="juegos"] .pestana-inicio { font-family: var(--display); font-size: 22px; letter-spacing: .06em; }
+
+/* ---------- 2 · ÚTIL: el cuaderno de apuntes ---------- */
+html[data-seccion="util"] {
+  --fondo: #f7f0c8; --tarjeta: #fffbe3; --tarjeta-hover: #fff6c4; --borde: #b9d1ea; --texto: #24366b; --texto-suave: #5a6a9a; --sombra: rgba(80, 60, 20, .22);
+  --pano: #5a3d22; --pano-osc: #3a2512; --pano-claro: #7a5632; --tiza: #fff3d0; --laton: #f2c14e; --tinta: #24366b; --foco: #d64545; --marca: #d64545;
+  --letra: "Caveat", "Segoe Print", "Bradley Hand", cursive;
+}
+html[data-seccion="util"] body { background-image: linear-gradient(90deg, transparent 46px, rgba(214, 69, 69, .55) 46px 48px, transparent 48px), repeating-linear-gradient(transparent 0 29px, rgba(120, 160, 210, .45) 29px 30px); background-attachment: scroll; }
+html[data-seccion="util"] .decor { display: none; }
+html[data-seccion="util"] main.contenido { padding-left: 38px; }
+html[data-seccion="util"] h1, html[data-seccion="util"] h2 { font-family: var(--letra); font-weight: 700; letter-spacing: 0; font-size: 40px; line-height: 1; color: #24366b; text-decoration: underline wavy #d64545 2px; text-underline-offset: 6px; text-decoration-skip-ink: none; }
+html[data-seccion="util"] h2 { font-size: 32px; }
+html[data-seccion="util"] main.contenido > h2::before { content: "✎"; color: #d64545; }
+html[data-seccion="util"] .util-bloque { background: #fff7a8; border: 0; border-radius: 2px 2px 14px 2px; box-shadow: 2px 5px 10px rgba(80, 60, 20, .3); rotate: -.8deg; position: relative; margin-top: 18px; }
+html[data-seccion="util"] .util-bloque:nth-of-type(even) { background: #ffd6e0; rotate: .9deg; }
+html[data-seccion="util"] .util-bloque:nth-of-type(3n) { background: #cfeeff; rotate: -.4deg; }
+html[data-seccion="util"] .util-bloque::before { content: ""; position: absolute; top: -11px; left: 50%; width: 76px; height: 22px; margin-left: -38px; background: rgba(255, 255, 255, .55); border-left: 2px dashed rgba(0, 0, 0, .12); border-right: 2px dashed rgba(0, 0, 0, .12); rotate: -2deg; }
+html[data-seccion="util"] .util-bloque summary strong { font-family: var(--letra); font-size: 28px; font-weight: 700; line-height: 1; }
+html[data-seccion="util"] .util-bloque.exclusivo-vip { background: #ffe9a8; }
+html[data-seccion="util"] .pestanas-inicio, html[data-seccion="util"] .pestanas-util { background: none; padding: 0; gap: 6px; border-radius: 0; }
+html[data-seccion="util"] .pestana-inicio { border: 2px solid #24366b; border-bottom: 0; border-radius: 12px 12px 0 0; background: #fff3a8; font-family: var(--letra); font-size: 26px; font-weight: 700; color: #24366b; }
+html[data-seccion="util"] .pestana-inicio.activa { background: #fffbe3; translate: 0 2px; }
+html[data-seccion="util"] .boton:not(.secundario):not(.oro) { background: #d64545; border: 2px solid #24366b; box-shadow: 3px 4px 0 #24366b; border-radius: 4px 14px 4px 14px; font-family: var(--letra); font-size: 28px; }
+
+/* ---------- 3 · TIENDA: la boutique ---------- */
+html[data-seccion="tienda"] {
+  --fondo: #fdf3fa; --tarjeta: #ffffff; --tarjeta-hover: #fff0f8; --borde: #f3d3e7; --texto: #2a1636; --texto-suave: #7a5c88; --sombra: rgba(138, 92, 240, .22);
+  --pano: #7b3ff2; --pano-osc: #4d1fb5; --pano-claro: #9d66ff; --tiza: #ffffff; --laton: #ffb23f; --tinta: #2a1636; --foco: #ff3d8b; --marca: #ff3d8b; --ficha: #ff3d8b; --ficha-osc: #c71f66;
+  --bloqueado: #f1e1f1; --bloqueado-sombra: #dfc8e0; --bloqueado-texto: #a287ab;
+  --boutique: "Syne", "Libre Franklin", system-ui, sans-serif;
+}
+html[data-seccion="tienda"] body { background-image: radial-gradient(60% 40% at 90% 0%, rgba(255, 61, 139, .16), transparent 70%), radial-gradient(60% 40% at 0% 30%, rgba(123, 63, 242, .14), transparent 70%); }
+html[data-seccion="tienda"] h1, html[data-seccion="tienda"] h2, html[data-seccion="tienda"] .logo-nombre { font-family: var(--boutique); font-weight: 800; letter-spacing: -.01em; }
+html[data-seccion="tienda"] .cabecera { box-shadow: 0 8px 24px rgba(77, 31, 181, .35); }
+html[data-seccion="tienda"] .tienda-fichas, html[data-seccion="tienda"] .tienda-tarjeta { border: 0; border-radius: 28px; box-shadow: 0 14px 34px rgba(138, 92, 240, .22); background: linear-gradient(145deg, #fff, #fbeaff); color: var(--texto); }
+html[data-seccion="tienda"] .tienda-fichas strong { font-family: var(--boutique); font-size: 32px; }
+html[data-seccion="tienda"] .pestanas-tienda { gap: 8px; }
+html[data-seccion="tienda"] .pestana-tienda { border: 0; border-radius: 999px; background: #fff; box-shadow: 0 4px 12px rgba(138, 92, 240, .18); font-family: var(--boutique); font-weight: 700; font-size: 14px; }
+html[data-seccion="tienda"] .pestana-tienda[aria-selected="true"], html[data-seccion="tienda"] .pestana-tienda.activa { background: linear-gradient(135deg, #ff3d8b, #7b3ff2); color: #fff; }
+html[data-seccion="tienda"] .tienda-vista { background: #f3e5fb; }
+html[data-seccion="tienda"] .tienda-vista-b.activa { background: #fff; box-shadow: 0 4px 10px rgba(138, 92, 240, .25); }
+html[data-seccion="tienda"] .articulo { border: 0; border-radius: 30px; box-shadow: 0 16px 34px rgba(138, 92, 240, .2); background: #fff; padding-top: 14px; overflow: visible; }
+html[data-seccion="tienda"] .articulo .vista { height: 124px; border-radius: 50%; width: 124px; margin: 0 auto; background: radial-gradient(circle at 50% 35%, #fff, #f1e0ff 70%); box-shadow: inset 0 -10px 18px rgba(138, 92, 240, .18), 0 10px 0 -2px #e8d4f7; display: grid; place-items: center; overflow: hidden; }
+html[data-seccion="tienda"] .articulo .vista-fondo { border-radius: 50%; }
+html[data-seccion="tienda"] .articulo strong { font-family: var(--boutique); font-size: 15px; letter-spacing: 0; text-align: center; justify-content: center; }
+html[data-seccion="tienda"] .articulo .mini-boton, html[data-seccion="tienda"] .articulo button { border: 0; border-radius: 999px; background: linear-gradient(135deg, #ff3d8b, #ff8a3d); color: #fff; box-shadow: 0 6px 14px rgba(255, 61, 139, .35); font-family: var(--boutique); font-weight: 800; }
+html[data-seccion="tienda"] .articulo.puesto { box-shadow: 0 0 0 3px #7b3ff2, 0 16px 34px rgba(138, 92, 240, .3); }
+html[data-seccion="tienda"] .sello-puesto { background: #7b3ff2; color: #fff; }
+html[data-seccion="tienda"] .rareza { border-radius: 999px; }
+html[data-seccion="tienda"] .boton:not(.secundario):not(.oro) { background: linear-gradient(135deg, #ff3d8b, #7b3ff2); border: 0; box-shadow: 0 8px 18px rgba(123, 63, 242, .4); border-radius: 999px; font-family: var(--boutique); font-weight: 800; font-size: 17px; }
+
+/* ---------- 4 · LA TORRE: sigue siendo su propio mundo (zonas por piso) ---------- */
+html[data-seccion="campana"] { --pano: #0b1230; --pano-osc: #050a1c; --pano-claro: #1a2756; --laton: #ffd36b; }
+
+/* ---------- 5 · AJUSTES: la consola técnica ---------- */
+html[data-seccion="ajustes"] {
+  --fondo: #0d1217; --tarjeta: #151c24; --tarjeta-hover: #1b2430; --borde: #2a3744; --texto: #d7f6e4; --texto-suave: #78a58e; --sombra: rgba(0, 0, 0, .6);
+  --pano: #06090c; --pano-osc: #000; --pano-claro: #121a22; --tiza: #d7f6e4; --laton: #39ff88; --tinta: #000; --foco: #39ff88; --marca: #39ff88; --ficha: #ff4d5e; --ficha-osc: #a31f2c;
+  --bien-fondo: #0f3a24; --mal-fondo: #3a1219; --bloqueado: #1b2430; --bloqueado-sombra: #0f151b; --bloqueado-texto: #5d7f6c;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+html[data-seccion="ajustes"] body, html[data-seccion="ajustes"] button, html[data-seccion="ajustes"] input { font-family: var(--mono); }
+html[data-seccion="ajustes"] body { background-image: linear-gradient(rgba(57, 255, 136, .045) 1px, transparent 1px), linear-gradient(90deg, rgba(57, 255, 136, .045) 1px, transparent 1px); background-size: 28px 28px; }
+html[data-seccion="ajustes"] .decor { display: none; }
+html[data-seccion="ajustes"] h1, html[data-seccion="ajustes"] h2, html[data-seccion="ajustes"] .logo-nombre { font-family: var(--mono); font-weight: 700; letter-spacing: .02em; color: #39ff88; text-shadow: 0 0 10px rgba(57, 255, 136, .45); }
+html[data-seccion="ajustes"] h1 { font-size: 26px; }
+html[data-seccion="ajustes"] h1::after { content: "_"; animation: parpadeo-cursor 1s steps(1) infinite; }
+@keyframes parpadeo-cursor { 50% { opacity: 0; } }
+html[data-seccion="ajustes"] h2 { font-size: 17px; }
+html[data-seccion="ajustes"] h2::before { content: "> "; color: #39ff88; }
+html[data-seccion="ajustes"] .ajuste { position: relative; border: 1px solid #2a3744; border-radius: 6px; background: linear-gradient(180deg, #18212b, #121920); box-shadow: inset 0 0 0 3px #0d1217, inset 0 0 0 4px #2a3744; padding: 18px; }
+html[data-seccion="ajustes"] .ajuste::before, html[data-seccion="ajustes"] .ajuste::after { content: ""; position: absolute; top: 7px; width: 7px; height: 7px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #8aa0b0, #3a4a58); }
+html[data-seccion="ajustes"] .ajuste::before { left: 7px; } html[data-seccion="ajustes"] .ajuste::after { right: 7px; }
+html[data-seccion="ajustes"] .ajuste-vip { border-color: #8a6a10; }
+html[data-seccion="ajustes"] .seg { border-radius: 3px; border: 1px solid #2a3744; background: #0d1217; color: #78a58e; font-family: var(--mono); font-size: 13px; text-transform: none; }
+html[data-seccion="ajustes"] .seg.on { background: #0f3a24; color: #39ff88; border-color: #39ff88; box-shadow: 0 0 10px rgba(57, 255, 136, .45), inset 0 0 8px rgba(57, 255, 136, .25); }
+html[data-seccion="ajustes"] .palanca { width: 56px; height: 26px; border-radius: 3px; background: #0d1217; border: 1px solid #2a3744; padding: 2px; }
+html[data-seccion="ajustes"] .palanca span { width: 24px; height: 20px; border-radius: 2px; background: linear-gradient(#6a7a86, #3a4650); box-shadow: 0 2px 0 #000; }
+html[data-seccion="ajustes"] .interruptor.on .palanca { background: #0f3a24; border-color: #39ff88; box-shadow: 0 0 10px rgba(57, 255, 136, .45); }
+html[data-seccion="ajustes"] .interruptor.on .palanca span { background: linear-gradient(#aaffd0, #39ff88); }
+html[data-seccion="ajustes"] .interruptor .juego-texto strong::before { content: "● "; color: #3a4650; }
+html[data-seccion="ajustes"] .interruptor.on .juego-texto strong::before { color: #39ff88; text-shadow: 0 0 6px #39ff88; }
+html[data-seccion="ajustes"] .boton:not(.secundario):not(.oro) { background: #0f3a24; color: #39ff88; border: 1px solid #39ff88; border-radius: 3px; box-shadow: 0 0 12px rgba(57, 255, 136, .35); font-family: var(--mono); font-weight: 700; font-size: 16px; }
+html[data-seccion="ajustes"] .boton.secundario { background: #0d1217; color: #d7f6e4; border: 1px solid #2a3744; border-radius: 3px; box-shadow: none; font-family: var(--mono); font-size: 15px; }
+html[data-seccion="ajustes"] .globo, html[data-seccion="ajustes"] .instalar, html[data-seccion="ajustes"] .atajo { border-radius: 4px; border: 1px solid #2a3744; box-shadow: none; }
+
+/* ---------- 6 · CADA JUEGO, SU PROPIA MESA ---------- */
+html[data-juego] { --bien-fondo: #123f29; --mal-fondo: #4a1a22; --bien-titulo: #8ff0a8; --mal-titulo: #ff9aa5; --bloqueado-texto: #8a8a8a; }
+/* Blackjack: el tapete verde de siempre */
+html[data-juego="blackjack"] { --fondo: #0b4a31; --tarjeta: #137049; --tarjeta-hover: #178a58; --borde: #24935f; --texto: #f2fbf4; --texto-suave: #b8e3c7; --pano: #06301f; --pano-osc: #031d12; --pano-claro: #0d4a30; --laton: #f3c04a; --foco: #f3c04a; --marca: #f3c04a; --serif: "Abril Fatface", Georgia, serif; --sombra: rgba(0, 0, 0, .45); --bloqueado: #1a6a45; --bloqueado-sombra: #0f4a2f; }
+html[data-juego="blackjack"] body { background-image: repeating-linear-gradient(45deg, rgba(255, 255, 255, .035) 0 4px, transparent 4px 8px), repeating-linear-gradient(-45deg, rgba(0, 0, 0, .06) 0 4px, transparent 4px 8px), radial-gradient(70% 45% at 50% 100%, rgba(0, 0, 0, .35), transparent 70%); }
+/* Póker: terciopelo negro y rojo, palos en el fondo */
+html[data-juego="poker"] { --fondo: #140a10; --tarjeta: #2a111c; --tarjeta-hover: #381826; --borde: #692236; --texto: #fbeef0; --texto-suave: #dcb1ba; --pano: #3a0b16; --pano-osc: #1f050b; --pano-claro: #5a1425; --laton: #ff5a70; --foco: #ff5a70; --marca: #ff5a70; --ficha: #e0263c; --serif: "Bebas Neue", Impact, sans-serif; --sombra: rgba(0, 0, 0, .6); --bloqueado: #3a1824; --bloqueado-sombra: #240d16; }
+html[data-juego="poker"] body { background-image: radial-gradient(circle at 20px 20px, rgba(224, 38, 60, .14) 0 9px, transparent 10px), radial-gradient(circle at 60px 60px, rgba(255, 255, 255, .05) 0 9px, transparent 10px); background-size: 80px 80px; }
+html[data-juego="poker"] h1, html[data-juego="poker"] h2 { letter-spacing: .05em; font-size: 1.15em; }
+/* Mus: taberna de madera y pergamino */
+html[data-juego="mus"] { --fondo: #3a2312; --tarjeta: #5a3a20; --tarjeta-hover: #6a4528; --borde: #8a5e36; --texto: #fbefd5; --texto-suave: #e0c79e; --pano: #2a190b; --pano-osc: #1a0f06; --pano-claro: #4a2d16; --laton: #f2b24a; --foco: #f2b24a; --marca: #f2b24a; --serif: "Abril Fatface", Georgia, serif; --sombra: rgba(0, 0, 0, .55); --bloqueado: #6a4a2a; --bloqueado-sombra: #4a321c; }
+html[data-juego="mus"] body { background-image: repeating-linear-gradient(90deg, rgba(0, 0, 0, .22) 0 2px, transparent 2px 46px), repeating-linear-gradient(90deg, rgba(255, 220, 160, .05) 0 22px, transparent 22px 46px), radial-gradient(60% 40% at 50% 0%, rgba(255, 190, 90, .22), transparent 70%); }
+html[data-juego="mus"] .opcion, html[data-juego="mus"] .juego, html[data-juego="mus"] .meta { border-radius: 6px 18px 6px 18px; }
+/* Baccarat: art déco azul real y oro */
+html[data-juego="baccarat"] { --fondo: #0b1744; --tarjeta: #142a72; --tarjeta-hover: #1b3790; --borde: #c9a24a; --texto: #fff6dc; --texto-suave: #d9c78e; --pano: #060e2e; --pano-osc: #030720; --pano-claro: #11205c; --laton: #e8c15a; --foco: #e8c15a; --marca: #e8c15a; --serif: "Abril Fatface", Georgia, serif; --sombra: rgba(0, 0, 0, .5); --bloqueado: #1b3080; --bloqueado-sombra: #101e58; }
+html[data-juego="baccarat"] body { background-image: radial-gradient(circle at 50% 100%, transparent 0 14px, rgba(232, 193, 90, .22) 14px 16px, transparent 16px 24px, rgba(232, 193, 90, .14) 24px 26px, transparent 26px), radial-gradient(60% 40% at 50% 0%, rgba(232, 193, 90, .2), transparent 70%); background-size: 52px 28px, auto; }
+html[data-juego="baccarat"] .opcion, html[data-juego="baccarat"] .meta, html[data-juego="baccarat"] .globo { border-color: #c9a24a; box-shadow: 0 0 0 2px #0b1744, 0 0 0 3px #c9a24a; }
+/* Vídeo póker: recreativa neón */
+html[data-juego="videopoker"] { --fondo: #0a0720; --tarjeta: #150f3a; --tarjeta-hover: #1e1550; --borde: #3df5ff; --texto: #e8fbff; --texto-suave: #9fe8f5; --pano: #050314; --pano-osc: #020109; --pano-claro: #130b36; --laton: #ff4fd8; --foco: #3df5ff; --marca: #3df5ff; --ficha: #ff4fd8; --serif: "Bebas Neue", Impact, sans-serif; --sombra: rgba(0, 0, 0, .6); --bloqueado: #1c1450; --bloqueado-sombra: #100a33; }
+html[data-juego="videopoker"] body { background-image: linear-gradient(rgba(61, 245, 255, .09) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 79, 216, .09) 1px, transparent 1px), radial-gradient(70% 40% at 50% 100%, rgba(255, 79, 216, .25), transparent 70%); background-size: 36px 36px, 36px 36px, auto; }
+html[data-juego="videopoker"] .opcion, html[data-juego="videopoker"] .meta, html[data-juego="videopoker"] .globo, html[data-juego="videopoker"] .boton:not(.secundario) { border-color: #3df5ff; box-shadow: 0 0 12px rgba(61, 245, 255, .5); }
+html[data-juego="videopoker"] h1, html[data-juego="videopoker"] h2 { text-shadow: 0 0 12px #3df5ff; letter-spacing: .05em; }
+/* Ruleta: negro, rojo y oro */
+html[data-juego="ruleta"] { --fondo: #0d0d0d; --tarjeta: #1c1c1c; --tarjeta-hover: #272727; --borde: #b8861a; --texto: #f8f1dc; --texto-suave: #cbbf9c; --pano: #6e0d0d; --pano-osc: #3d0606; --pano-claro: #8a1414; --laton: #ffcf4a; --foco: #ffcf4a; --marca: #ffcf4a; --ficha: #d4202a; --serif: "Abril Fatface", Georgia, serif; --sombra: rgba(0, 0, 0, .7); --bloqueado: #2a2a2a; --bloqueado-sombra: #181818; }
+html[data-juego="ruleta"] body { background-image: conic-gradient(from 0deg at 50% 40%, rgba(176, 38, 26, .22) 0 4.86deg, transparent 4.86deg 9.72deg), radial-gradient(60% 40% at 50% 40%, transparent 30%, #0d0d0d 70%); background-attachment: fixed; }
+/* dentro de cada juego, el botón principal toma el color de su mesa */
+html[data-juego="blackjack"] .boton:not(.secundario):not(.oro) { background: #f3c04a; color: #2a1c00; box-shadow: 0 5px 0 #7a5a0a; }
+html[data-juego="poker"] .boton:not(.secundario):not(.oro) { background: #e0263c; }
+html[data-juego="mus"] .boton:not(.secundario):not(.oro) { background: #f2b24a; color: #2a1708; box-shadow: 0 5px 0 #6a4a10; }
+html[data-juego="baccarat"] .boton:not(.secundario):not(.oro) { background: #e8c15a; color: #0b1744; box-shadow: 0 5px 0 #7a5a10; }
+html[data-juego="videopoker"] .boton:not(.secundario):not(.oro) { background: #ff4fd8; color: #1a0620; }
+html[data-juego="ruleta"] .boton:not(.secundario):not(.oro) { background: #d4202a; }
+html[data-juego] .opcion, html[data-juego] .meta, html[data-juego] .globo { box-shadow: 3px 4px 0 rgba(0, 0, 0, .45); border-color: var(--borde); }
+html[data-juego] .opcion:hover { border-color: var(--laton); }
+/* legibilidad: en la boutique las tarjetas de saldo son claras, el texto va oscuro */
+html[data-seccion="tienda"] .cartera, html[data-seccion="tienda"] .cartera *:not(.mini-boton):not(button) { color: #2a1636; text-shadow: none; }
+html[data-seccion="tienda"] .cartera .tienda-nota, html[data-seccion="tienda"] .cartera small, html[data-seccion="tienda"] .cartera p { color: #6b4d7a; }
+html[data-seccion="tienda"] .globo, html[data-seccion="tienda"] .globo * { color: #2a1636; }
